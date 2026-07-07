@@ -21,6 +21,7 @@ import { HUD } from './ui/hud.js';
 import { InventoryUI } from './ui/inventory.js';
 import { B, blockById, isWater, isLava, faceTexKey } from './blocks.js';
 import { itemByKey } from './items.js';
+import { tickFurnace } from './crafting.js';
 import { BIOME_NAMES } from './world/gen/terrain.js';
 import {
   DAY_LENGTH, TICK_DT, MODE_BUILDER, MAX_AIR, GAME_NAME, GAME_TAGLINE, CHUNK_X,
@@ -193,7 +194,9 @@ class Game {
     entityAudio.creature = (species, kind) => {
       if (kind === 'idle') return;
       const pitch = { bristleback: 0.55, mosshopper: 1.5, embermoth: 1.9,
-        gloomstalker: 0.7, cinderling: 1.1, hollowshade: 0.85, sovereign: 0.4 }[species] ?? 1;
+        gloomstalker: 0.7, cinderling: 1.1, hollowshade: 0.85, sovereign: 0.4,
+        pig: 0.6, cow: 0.42, sheep: 0.8, chicken: 1.6,
+        zombie: 0.55, skeleton: 0.95, creeper: 0.7 }[species] ?? 1;
       this.audio.play(kind === 'death' ? 'death' : 'hurt', { pitch, vol: 0.45 });
     };
     this.entities = new EntitySystem(this.world, {
@@ -231,12 +234,14 @@ class Game {
       toast: (m) => this.hud.toast(m),
       onBroken: (x, y, z, id) => {
         if (id === B.STOWBOX) this._spillContainer(x, y, z);
+        if (id === B.FURNACE) this._spillFurnace(x, y, z);
         this.mods.emit('blockBroken', { x, y, z, id, key: blockById(id).key });
       },
       onPlaced: (x, y, z, id) =>
         this.mods.emit('blockPlaced', { x, y, z, id, key: blockById(id).key }),
       sleep: (x, y, z) => this._trySleep(x, y, z),
       openContainer: (x, y, z) => this._openContainer(x, y, z),
+      openFurnace: (x, y, z) => this._openFurnace(x, y, z),
       ignite: (x, y, z) => {
         const dim = tryIgnite(this.world, x, y, z);
         if (dim) this.hud.toast(`A rift to ${DIMENSIONS[dim].name} tears open…`);
@@ -421,6 +426,51 @@ class Game {
     delete store[key];
     const drops = slots.filter(Boolean).map((s) => ({ key: s.key, count: s.count, dur: s.dur }));
     if (drops.length) this.entities.spawnDrops(x + 0.5, y + 0.5, z + 0.5, drops);
+  }
+
+  // ── Furnaces ─────────────────────────────────────────────────────
+  // Per-block smelting state lives in meta.furnaces[dim]["x,y,z"] and is
+  // advanced every frame (below) whether or not its menu is open.
+  _furnaceState(x, y, z) {
+    if (!this.meta.furnaces) this.meta.furnaces = {};
+    if (!this.meta.furnaces[this.dimKey]) this.meta.furnaces[this.dimKey] = {};
+    const store = this.meta.furnaces[this.dimKey];
+    const key = `${x},${y},${z}`;
+    if (!store[key]) store[key] = { input: null, fuel: null, output: null, burn: 0, burnMax: 0, cook: 0 };
+    return store[key];
+  }
+
+  _openFurnace(x, y, z) {
+    const state = this._furnaceState(x, y, z);
+    this.input.releaseLock();
+    if (this.inventory.openFurnace) this.inventory.openFurnace('Furnace', state);
+    else this.openInventory(null);
+  }
+
+  _spillFurnace(x, y, z) {
+    const store = this.meta.furnaces?.[this.dimKey];
+    if (!store) return;
+    const key = `${x},${y},${z}`;
+    const f = store[key];
+    if (!f) return;
+    delete store[key];
+    const drops = [f.input, f.fuel, f.output].filter(Boolean).map((s) => ({ key: s.key, count: s.count }));
+    if (drops.length) this.entities.spawnDrops(x + 0.5, y + 0.5, z + 0.5, drops);
+  }
+
+  // Advance every furnace in the current dimension; GC ones that have gone
+  // cold and empty (but never the one whose menu is open).
+  _tickFurnaces(dt) {
+    const store = this.meta.furnaces?.[this.dimKey];
+    if (!store) return;
+    const openState = this.inventory && this.inventory.furnace;
+    for (const key in store) {
+      const f = store[key];
+      tickFurnace(f, dt);
+      if (f !== openState && !f.input && !f.fuel && !f.output && f.burn <= 0 && f.cook <= 0) {
+        delete store[key];
+      }
+    }
   }
 
   pause() {
@@ -655,6 +705,7 @@ class Game {
       const dim = dimension(this.dimKey);
       const env = computeEnv(this.timeOfDay, dim.hasWeather ? this.weather : null, dim);
       this.entities.update(dt, p.pos, now / 1000, env.sunLevel);
+      this._tickFurnaces(dt);
       if (dim.hasWeather) this.weather.update(dt, p.pos, this.timeOfDay, now / 1000);
       this.particles.update(dt, this.world);
 
@@ -662,7 +713,7 @@ class Game {
       if (this._riftCooldown > 0) this._riftCooldown -= dt;
       const feetId = this.world.getBlock(
         Math.floor(p.pos[0]), Math.floor(p.pos[1] + 0.4), Math.floor(p.pos[2]));
-      if ((feetId === B.RIFT_SMOLDER || feetId === B.RIFT_HOLLOW) &&
+      if ((feetId === B.NETHER_PORTAL || feetId === B.END_PORTAL) &&
           this._riftCooldown <= 0 && !this._traveling) {
         this._riftDwell = (this._riftDwell ?? 0) + dt;
         if (this._riftDwell >= 1.2) {

@@ -15,7 +15,7 @@ const CREATURE_CAP = 10;
 const DESPAWN_DIST = 72;        // creatures vanish quietly beyond this
 const ITEM_LIFE = 240;          // seconds before a dropped item fades
 const ITEM_CAP = 128;
-const SPAWN_GROUND = new Set([B.GRASS, B.SNOW, B.SOIL]);
+const SPAWN_GROUND = new Set([B.GRASS, B.SNOW, B.SOIL, B.SAND]);
 
 // ── Species table ─────────────────────────────────────────────────
 const SPECIES = {
@@ -23,22 +23,22 @@ const SPECIES = {
     hw: 0.5, h: 1.0, health: 10, walkSpeed: 1.5, grazes: true, hopper: false,
     biomes: new Set([BIOME.PLAINS, BIOME.FOREST, BIOME.SWAMP]),
     drops(rng) {
-      const out = [{ key: 'meat_raw', count: 1 + (rng() * 2 | 0) }];
-      if (rng() < 0.5) out.push({ key: 'hide', count: 1 });
+      const out = [{ key: 'raw_porkchop', count: 1 + (rng() * 2 | 0) }];
+      if (rng() < 0.5) out.push({ key: 'leather', count: 1 });
       return out;
     },
   },
   mosshopper: {
     hw: 0.3, h: 0.78, health: 5, walkSpeed: 2.4, grazes: true, hopper: true,
     biomes: new Set([BIOME.PLAINS, BIOME.FOREST, BIOME.TUNDRA]),
-    drops(rng) { return rng() < 0.6 ? [{ key: 'meat_raw', count: 1 }] : []; },
+    drops(rng) { return rng() < 0.6 ? [{ key: 'raw_porkchop', count: 1 }] : []; },
   },
   embermoth: {
     hw: 0.25, h: 0.3, health: 3, walkSpeed: 1.3, grazes: false, hopper: false,
     flying: true, nightOnly: true,
     biomes: new Set([BIOME.BEACH, BIOME.PLAINS, BIOME.FOREST, BIOME.DESERT,
                      BIOME.SWAMP, BIOME.TUNDRA, BIOME.MOUNTAIN]),
-    drops(rng) { return [{ key: 'glimmer_dust', count: 1 + (rng() * 2 | 0) }]; },
+    drops(rng) { return [{ key: 'glowstone_dust', count: 1 + (rng() * 2 | 0) }]; },
   },
   // ── Hostiles ──
   gloomstalker: {
@@ -46,28 +46,84 @@ const SPECIES = {
     hostile: true, nightOnly: true, dmg: 4,
     biomes: new Set([BIOME.PLAINS, BIOME.FOREST, BIOME.SWAMP,
                      BIOME.TUNDRA, BIOME.MOUNTAIN, BIOME.DESERT]),
-    drops(rng) { return [{ key: 'glimmer_dust', count: 1 + (rng() * 2 | 0) }]; },
+    drops(rng) { return [{ key: 'glowstone_dust', count: 1 + (rng() * 2 | 0) }]; },
   },
   cinderling: {
     hw: 0.35, h: 0.7, health: 8, walkSpeed: 2.2, grazes: false, hopper: false,
     hostile: true, dmg: 3, dims: new Set(['smolder']),
     biomes: new Set(),
-    drops(rng) { return rng() < 0.6 ? [{ key: 'smolder_shard', count: 1 }] : []; },
+    drops(rng) { return rng() < 0.6 ? [{ key: 'netherite_scrap', count: 1 }] : []; },
   },
   hollowshade: {
     hw: 0.4, h: 1.1, health: 12, walkSpeed: 1.7, grazes: false, hopper: false,
     hostile: true, flying: true, dmg: 3, dims: new Set(['hollow']),
     biomes: new Set(),
-    drops(rng) { return [{ key: 'glimmer_dust', count: 1 }]; },
+    drops(rng) { return [{ key: 'glowstone_dust', count: 1 }]; },
   },
   sovereign: {
     hw: 0.9, h: 3.0, health: 220, walkSpeed: 1.6, grazes: false, hopper: false,
     hostile: true, boss: true, dmg: 9, dims: new Set(['hollow']),
     biomes: new Set(),
     drops(rng) {
-      return [{ key: 'sovereign_core', count: 1 },
-              { key: 'glimmer_dust', count: 3 + (rng() * 3 | 0) }];
+      return [{ key: 'dragon_core', count: 1 },
+              { key: 'glowstone_dust', count: 3 + (rng() * 3 | 0) }];
     },
+  },
+  // ── Minecraft farm animals (passive, overworld daylight-safe) ──
+  pig: {
+    hw: 0.45, h: 0.9, health: 10, walkSpeed: 1.5, grazes: true, hopper: false,
+    biomes: new Set([BIOME.PLAINS, BIOME.FOREST]),
+    drops(rng) { return [{ key: 'raw_porkchop', count: 1 + (rng() * 2 | 0) }]; },
+  },
+  cow: {
+    hw: 0.5, h: 1.1, health: 12, walkSpeed: 1.3, grazes: true, hopper: false,
+    biomes: new Set([BIOME.PLAINS, BIOME.FOREST]),
+    drops(rng) {
+      const o = [{ key: 'raw_beef', count: 1 + (rng() * 2 | 0) }];
+      if (rng() < 0.7) o.push({ key: 'leather', count: 1 + (rng() * 1 | 0) });
+      return o;
+    },
+  },
+  sheep: {
+    hw: 0.45, h: 1.1, health: 8, walkSpeed: 1.3, grazes: true, hopper: false,
+    biomes: new Set([BIOME.PLAINS, BIOME.FOREST, BIOME.TUNDRA]),
+    drops(rng) { return [{ key: 'wool', count: 1 + (rng() * 2 | 0) }]; },
+  },
+  chicken: {
+    hw: 0.3, h: 0.6, health: 4, walkSpeed: 1.5, grazes: false, hopper: false,
+    glide: true, laysEggs: true,
+    biomes: new Set([BIOME.PLAINS, BIOME.FOREST, BIOME.BEACH]),
+    drops(rng) {
+      const o = [{ key: 'raw_chicken', count: 1 }];
+      if (rng() < 0.6) o.push({ key: 'feather', count: 1 + (rng() * 2 | 0) });
+      return o;
+    },
+  },
+  // ── Minecraft hostiles (overworld night) ──
+  zombie: {
+    hw: 0.4, h: 1.8, health: 20, walkSpeed: 1.5, grazes: false, hopper: false,
+    hostile: true, nightOnly: true, dmg: 3,
+    biomes: new Set([BIOME.PLAINS, BIOME.FOREST, BIOME.SWAMP,
+                     BIOME.TUNDRA, BIOME.MOUNTAIN, BIOME.DESERT]),
+    drops(rng) { return rng() < 0.05 ? [{ key: 'iron_ingot', count: 1 }] : []; },
+  },
+  skeleton: {
+    hw: 0.4, h: 1.8, health: 16, walkSpeed: 1.5, grazes: false, hopper: false,
+    hostile: true, nightOnly: true, dmg: 2, ranged: true,
+    biomes: new Set([BIOME.PLAINS, BIOME.FOREST, BIOME.SWAMP,
+                     BIOME.TUNDRA, BIOME.MOUNTAIN, BIOME.DESERT]),
+    drops(rng) {
+      const o = [{ key: 'bone', count: 1 + (rng() * 2 | 0) }];
+      if (rng() < 0.4) o.push({ key: 'feather', count: 1 });   // arrow fletching
+      return o;
+    },
+  },
+  creeper: {
+    hw: 0.4, h: 1.7, health: 12, walkSpeed: 1.7, grazes: false, hopper: false,
+    hostile: true, nightOnly: true, dmg: 0, explodes: true,
+    biomes: new Set([BIOME.PLAINS, BIOME.FOREST, BIOME.SWAMP,
+                     BIOME.TUNDRA, BIOME.MOUNTAIN, BIOME.DESERT]),
+    drops(rng) { return rng() < 0.85 ? [{ key: 'gunpowder', count: 1 + (rng() * 2 | 0) }] : []; },
   },
 };
 
@@ -106,6 +162,18 @@ const C = {
   svTrim:  [0.176, 0.114, 0.278],
   svCore:  [0.925, 0.878, 1.000],   // bright pale core
   svSpike: [0.278, 0.196, 0.408],
+  // ── Minecraft-family mobs ──
+  pigBody: [0.918, 0.627, 0.667], pigSnout: [0.859, 0.518, 0.565], pigLeg: [0.780, 0.510, 0.545],
+  cowBody: [0.227, 0.188, 0.165], cowSpot: [0.910, 0.894, 0.863], cowLeg: [0.180, 0.149, 0.133],
+  cowHorn: [0.863, 0.839, 0.784], cowSnout: [0.788, 0.639, 0.596],
+  chkBody: [0.949, 0.949, 0.933], chkWing: [0.871, 0.871, 0.851], chkBeak: [0.949, 0.745, 0.275],
+  chkComb: [0.839, 0.275, 0.259], chkLeg: [0.910, 0.667, 0.235],
+  shpWool: [0.918, 0.910, 0.890], shpFace: [0.859, 0.808, 0.745], shpLeg: [0.353, 0.306, 0.267],
+  zomSkin: [0.290, 0.471, 0.290], zomShirt: [0.259, 0.337, 0.471], zomLimb: [0.235, 0.376, 0.235],
+  zomEye: [0.110, 0.157, 0.110],
+  crpBody: [0.361, 0.659, 0.337], crpDark: [0.259, 0.518, 0.251], crpFace: [0.114, 0.153, 0.114],
+  crpLeg: [0.306, 0.573, 0.290],
+  skBone: [0.878, 0.871, 0.831], skBone2: [0.745, 0.737, 0.694], skEye: [0.118, 0.118, 0.133],
 };
 
 // ── Matrix helpers ────────────────────────────────────────────────
@@ -279,6 +347,123 @@ function sovereignParts(e, parts, nowS) {
   addPart(parts, b, C.svSpike, 0.16, 2.94, 0.04, -0.35, 0, 0, 0, 0.07, 0.26, 0.07);
 }
 
+// ── Minecraft farm animals ──
+function pigParts(e, parts) {
+  const b = baseMat(e);
+  const moving = Math.hypot(e.vel[0], e.vel[2]) > 0.2;
+  const sw = moving ? Math.sin(e.walkPhase) * 0.5 : 0;
+  for (const [lx, lz, sgn] of [[-0.22, 0.28, 1], [0.22, 0.28, -1], [-0.22, -0.28, -1], [0.22, -0.28, 1]]) {
+    addPart(parts, b, C.pigLeg, lx, 0.24, lz, sw * sgn, 0, -0.12, 0, 0.15, 0.26, 0.15);
+  }
+  addPart(parts, b, C.pigBody, 0, 0.5, -0.02, 0, 0, 0, 0, 0.68, 0.5, 0.92);
+  const dip = grazeDip(e) * 0.7;
+  addPart(parts, b, C.pigBody, 0, 0.54, 0.5, dip, 0, 0, 0.08, 0.44, 0.42, 0.36);   // head
+  addPart(parts, b, C.pigSnout, 0, 0.5, 0.5, dip, 0, -0.02, 0.28, 0.22, 0.18, 0.1); // snout
+  addPart(parts, b, C.pigLeg, -0.13, 0.72, 0.44, dip, 0, 0, 0, 0.08, 0.09, 0.05);   // ears
+  addPart(parts, b, C.pigLeg, 0.13, 0.72, 0.44, dip, 0, 0, 0, 0.08, 0.09, 0.05);
+}
+
+function cowParts(e, parts) {
+  const b = baseMat(e);
+  const moving = Math.hypot(e.vel[0], e.vel[2]) > 0.2;
+  const sw = moving ? Math.sin(e.walkPhase) * 0.5 : 0;
+  for (const [lx, lz, sgn] of [[-0.26, 0.32, 1], [0.26, 0.32, -1], [-0.26, -0.32, -1], [0.26, -0.32, 1]]) {
+    addPart(parts, b, C.cowLeg, lx, 0.3, lz, sw * sgn, 0, -0.15, 0, 0.16, 0.3, 0.16);
+  }
+  addPart(parts, b, C.cowBody, 0, 0.62, -0.04, 0, 0, 0, 0, 0.76, 0.56, 1.02);
+  addPart(parts, b, C.cowSpot, 0.2, 0.66, 0.22, 0, 0, 0, 0, 0.34, 0.4, 0.32);       // hide patches
+  addPart(parts, b, C.cowSpot, -0.24, 0.58, -0.26, 0, 0, 0, 0, 0.26, 0.3, 0.3);
+  const dip = grazeDip(e) * 0.6;
+  addPart(parts, b, C.cowBody, 0, 0.66, 0.58, dip, 0, 0, 0.06, 0.4, 0.4, 0.42);     // head
+  addPart(parts, b, C.cowSnout, 0, 0.56, 0.58, dip, 0, -0.04, 0.28, 0.3, 0.22, 0.12); // muzzle
+  addPart(parts, b, C.cowHorn, -0.16, 0.86, 0.5, dip, 0, 0, 0, 0.06, 0.1, 0.06);    // horns
+  addPart(parts, b, C.cowHorn, 0.16, 0.86, 0.5, dip, 0, 0, 0, 0.06, 0.1, 0.06);
+}
+
+function sheepParts(e, parts) {
+  const b = baseMat(e);
+  const moving = Math.hypot(e.vel[0], e.vel[2]) > 0.2;
+  const sw = moving ? Math.sin(e.walkPhase) * 0.45 : 0;
+  for (const [lx, lz, sgn] of [[-0.2, 0.28, 1], [0.2, 0.28, -1], [-0.2, -0.28, -1], [0.2, -0.28, 1]]) {
+    addPart(parts, b, C.shpLeg, lx, 0.24, lz, sw * sgn, 0, -0.12, 0, 0.12, 0.28, 0.12);
+  }
+  addPart(parts, b, C.shpWool, 0, 0.66, -0.02, 0, 0, 0, 0, 0.74, 0.66, 0.96);       // fleece body
+  const dip = grazeDip(e) * 0.6;
+  addPart(parts, b, C.shpFace, 0, 0.62, 0.52, dip, 0, 0, 0.06, 0.3, 0.34, 0.3);     // face
+  addPart(parts, b, C.shpWool, 0, 0.78, 0.42, dip, 0, 0, 0, 0.36, 0.22, 0.28);      // headwool
+}
+
+function chickenParts(e, parts, nowS) {
+  const b = baseMat(e);
+  const moving = Math.hypot(e.vel[0], e.vel[2]) > 0.2;
+  const flap = !e.onGround ? Math.sin(nowS * 24 + e.phase) * 0.8
+    : (moving ? Math.sin(e.walkPhase) * 0.2 : 0);
+  const sw = moving ? Math.sin(e.walkPhase) * 0.6 : 0;
+  addPart(parts, b, C.chkLeg, -0.09, 0.14, 0, sw, 0, -0.07, 0, 0.05, 0.28, 0.05);
+  addPart(parts, b, C.chkLeg, 0.09, 0.14, 0, -sw, 0, -0.07, 0, 0.05, 0.28, 0.05);
+  addPart(parts, b, C.chkBody, 0, 0.36, -0.02, 0, 0, 0, 0, 0.3, 0.34, 0.4);         // body
+  addPart(parts, b, C.chkWing, -0.17, 0.42, -0.02, flap, 0, 0, 0, 0.05, 0.24, 0.3); // wings
+  addPart(parts, b, C.chkWing, 0.17, 0.42, -0.02, -flap, 0, 0, 0, 0.05, 0.24, 0.3);
+  addPart(parts, b, C.chkBody, 0, 0.56, 0.14, 0, 0, 0, 0, 0.22, 0.22, 0.22);        // head
+  addPart(parts, b, C.chkComb, 0, 0.7, 0.14, 0, 0, 0, 0, 0.08, 0.09, 0.14);         // comb
+  addPart(parts, b, C.chkBeak, 0, 0.56, 0.28, 0, 0, 0, 0, 0.08, 0.06, 0.1);         // beak
+  addPart(parts, b, C.chkComb, 0, 0.49, 0.26, 0, 0, 0, 0, 0.05, 0.06, 0.06);        // wattle
+}
+
+// ── Minecraft hostiles ──
+function zombieParts(e, parts) {
+  const b = baseMat(e);
+  const moving = Math.hypot(e.vel[0], e.vel[2]) > 0.2;
+  const sw = moving ? Math.sin(e.walkPhase) * 0.6 : 0;
+  addPart(parts, b, C.zomLimb, -0.13, 0.44, 0, sw, 0, -0.22, 0, 0.16, 0.46, 0.16);   // legs
+  addPart(parts, b, C.zomLimb, 0.13, 0.44, 0, -sw, 0, -0.22, 0, 0.16, 0.46, 0.16);
+  addPart(parts, b, C.zomShirt, 0, 1.02, 0, 0, 0, 0, 0, 0.42, 0.62, 0.24);           // torso
+  addPart(parts, b, C.zomSkin, -0.29, 1.28, 0.02, -1.45, 0, -0.24, 0, 0.14, 0.5, 0.14); // arms out
+  addPart(parts, b, C.zomSkin, 0.29, 1.28, 0.02, -1.45, 0, -0.24, 0, 0.14, 0.5, 0.14);
+  addPart(parts, b, C.zomSkin, 0, 1.5, 0.02, 0, 0, 0, 0, 0.34, 0.34, 0.34);          // head
+  addPart(parts, b, C.zomEye, -0.08, 1.54, 0.18, 0, 0, 0, 0, 0.06, 0.05, 0.04);
+  addPart(parts, b, C.zomEye, 0.08, 1.54, 0.18, 0, 0, 0, 0, 0.06, 0.05, 0.04);
+}
+
+function skeletonParts(e, parts) {
+  const b = baseMat(e);
+  const moving = Math.hypot(e.vel[0], e.vel[2]) > 0.2;
+  const sw = moving ? Math.sin(e.walkPhase) * 0.6 : 0;
+  addPart(parts, b, C.skBone, -0.11, 0.44, 0, sw, 0, -0.22, 0, 0.1, 0.48, 0.1);      // legs
+  addPart(parts, b, C.skBone, 0.11, 0.44, 0, -sw, 0, -0.22, 0, 0.1, 0.48, 0.1);
+  addPart(parts, b, C.skBone2, 0, 1.02, 0, 0, 0, 0, 0, 0.3, 0.6, 0.18);              // ribcage
+  addPart(parts, b, C.skBone, 0, 1.28, 0, 0, 0, 0, 0, 0.36, 0.12, 0.2);             // shoulders
+  addPart(parts, b, C.skBone, -0.24, 1.32, 0.02, -1.4, 0, -0.24, 0, 0.09, 0.46, 0.09); // arms aiming
+  addPart(parts, b, C.skBone, 0.24, 1.32, 0.02, -1.4, 0, -0.24, 0, 0.09, 0.46, 0.09);
+  addPart(parts, b, C.skBone, 0, 1.5, 0.02, 0, 0, 0, 0, 0.3, 0.3, 0.3);              // skull
+  addPart(parts, b, C.skEye, -0.07, 1.52, 0.16, 0, 0, 0, 0, 0.06, 0.06, 0.04);
+  addPart(parts, b, C.skEye, 0.07, 1.52, 0.16, 0, 0, 0, 0, 0.06, 0.06, 0.04);
+}
+
+function creeperParts(e, parts) {
+  const b = baseMat(e);
+  const moving = Math.hypot(e.vel[0], e.vel[2]) > 0.2;
+  const sw = moving ? Math.sin(e.walkPhase) * 0.5 : 0;
+  const swell = e.fuse ? 1 + Math.min(0.35, e.fuse * 0.3) : 1;   // puff up while priming
+  for (const [lx, lz, sgn] of [[-0.16, 0.2, 1], [0.16, 0.2, -1], [-0.16, -0.2, -1], [0.16, -0.2, 1]]) {
+    addPart(parts, b, C.crpLeg, lx, 0.16, lz, sw * sgn, 0, -0.08, 0, 0.16, 0.28, 0.16);
+  }
+  addPart(parts, b, C.crpBody, 0, 0.86 * swell, 0, 0, 0, 0, 0, 0.44 * swell, 0.86 * swell, 0.3 * swell); // torso
+  addPart(parts, b, C.crpBody, 0, 1.36 * swell, 0.02, 0, 0, 0, 0, 0.42, 0.42, 0.42); // head
+  addPart(parts, b, C.crpFace, -0.1, 1.4, 0.2, 0, 0, 0, 0, 0.08, 0.09, 0.03);         // eyes
+  addPart(parts, b, C.crpFace, 0.1, 1.4, 0.2, 0, 0, 0, 0, 0.08, 0.09, 0.03);
+  addPart(parts, b, C.crpFace, 0, 1.28, 0.2, 0, 0, 0, 0, 0.1, 0.14, 0.03);            // mouth
+  addPart(parts, b, C.crpFace, -0.09, 1.24, 0.2, 0, 0, 0, 0, 0.07, 0.07, 0.03);
+  addPart(parts, b, C.crpFace, 0.09, 1.24, 0.2, 0, 0, 0, 0, 0.07, 0.07, 0.03);
+}
+
+// A loosed arrow: a thin dark shaft with a pale tip.
+function arrowParts(e, parts) {
+  const b = baseMat(e);
+  addPart(parts, b, [0.35, 0.27, 0.18], 0, 0, 0, e.pitch || 0, 0, 0, 0, 0.05, 0.05, 0.5);
+  addPart(parts, b, [0.82, 0.82, 0.86], 0, 0, 0, e.pitch || 0, 0, 0, 0.28, 0.07, 0.07, 0.1);
+}
+
 const PART_BUILDERS = {
   bristleback: bristlebackParts,
   mosshopper: mosshopperParts,
@@ -287,6 +472,14 @@ const PART_BUILDERS = {
   cinderling: cinderlingParts,
   hollowshade: hollowshadeParts,
   sovereign: sovereignParts,
+  pig: pigParts,
+  cow: cowParts,
+  sheep: sheepParts,
+  chicken: chickenParts,
+  zombie: zombieParts,
+  skeleton: skeletonParts,
+  creeper: creeperParts,
+  arrow: arrowParts,
 };
 
 // Stable mid-tone tint per item key.
@@ -365,6 +558,7 @@ export class EntitySystem {
       const e = list[i];
       if (!e.dead) {
         if (e.kind === 'item') this._updateItem(e, dt, playerPos);
+        else if (e.kind === 'arrow') this._updateArrow(e, dt, playerPos);
         else this._updateCreature(e, dt, playerPos, sunLevel, nowS);
         if (e.pos[1] < -10) e.dead = true;
         if (e.kind === 'creature') {
@@ -467,7 +661,7 @@ export class EntitySystem {
   bossInfo() {
     for (const e of this.entities) {
       if (e.kind === 'creature' && e.def.boss && !e.dead) {
-        return { name: 'The Hollow Sovereign', health: Math.max(0, e.health), max: e.def.health };
+        return { name: 'Ender Dragon', health: Math.max(0, e.health), max: e.def.health };
       }
     }
     return null;
@@ -489,6 +683,8 @@ export class EntitySystem {
       driftT: 0, lightT: r() * 0.6,
       phase: r() * TWO_PI,
       alt: 2 + r() * 4,                       // embermoth cruising height
+      eggT: 20 + r() * 40,                    // chicken egg-lay countdown
+      fuse: 0,                                // creeper detonation timer
       variant: species === 'mosshopper' && biome === BIOME.TUNDRA ? 'snow' : null,
       aabb: makeAabb(),
     };
@@ -502,6 +698,16 @@ export class EntitySystem {
     if (s.flying) { this._updateMoth(e, dt, sun, nowS); return; }
 
     if (this.rng() < dt * 0.05) this.hooks.audio?.creature?.(e.species, 'idle');
+
+    // chickens lay an egg on a timer while on the ground
+    if (s.laysEggs) {
+      e.eggT -= dt;
+      if (e.eggT <= 0 && e.onGround) {
+        e.eggT = 30 + this.rng() * 40;
+        this.spawnDrops(e.pos[0], e.pos[1] + 0.2, e.pos[2], [{ key: 'egg', count: 1 }]);
+        this.hooks.audio?.creature?.(e.species, 'idle');
+      }
+    }
 
     // mosshoppers bolt when a sprinting player gets close
     if (s.hopper && e.state !== 'flee') {
@@ -632,14 +838,35 @@ export class EntitySystem {
     if (chasing) {
       e.targetYaw = Math.atan2(dx, dz);
       moving = true;
-      // melee when close and cooldown ready
-      if (distSq < 1.6 * 1.6 && e.atkCd <= 0) {
+      if (s.explodes) {
+        // Creeper: close in, then prime a fuse and detonate; retreating
+        // out of range lets the fuse cool back down.
+        if (distSq < 3 * 3) {
+          if (!e.fuse) this.hooks.audio?.creature?.(e.species, 'attack');   // hiss
+          e.fuse = (e.fuse || 0) + dt;
+          e.flash = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(e.fuse * 22));         // blink white
+          moving = distSq > 1.4 * 1.4;                                       // stop right on top
+          if (e.fuse >= 1.5) { this._explode(e, pp); e.dead = true; return; }
+        } else {
+          e.fuse = Math.max(0, (e.fuse || 0) - dt * 0.6);
+        }
+      } else if (s.ranged) {
+        // Skeleton: loose arrows from a distance, back off if crowded.
+        if (distSq > 3.2 * 3.2 && distSq < 14 * 14 && e.atkCd <= 0) {
+          this._shootArrow(e, pp, s.dmg);
+          e.atkCd = 1.5 + this.rng() * 0.6;
+          this.hooks.audio?.creature?.(e.species, 'attack');
+        }
+        if (distSq < 4 * 4) { e.targetYaw = Math.atan2(dx, dz) + Math.PI; }  // strafe away
+      } else if (distSq < 1.6 * 1.6 && e.atkCd <= 0) {
+        // melee when close and cooldown ready
         const d = Math.sqrt(distSq) || 1;
         this.hooks.attackPlayer?.(s.dmg, [dx / d, 0, dz / d]);
         e.atkCd = 1;
         this.hooks.audio?.creature?.(e.species, 'attack');
       }
     } else if (wandering) {
+      if (e.fuse) e.fuse = 0;
       // idle wander (reuse existing timed state machine)
       e.stateT -= dt;
       if (e.stateT <= 0) {
@@ -747,6 +974,7 @@ export class EntitySystem {
       e.vel[0] *= f; e.vel[2] *= f;
     }
     if (e.vel[1] < -38) e.vel[1] = -38;
+    if (e.def && e.def.glide && e.vel[1] < -2.5) e.vel[1] = -2.5;   // chickens flutter down
 
     const hitX = this._moveAxis(e, 0, e.vel[0] * dt);
     const hitZ = this._moveAxis(e, 2, e.vel[2] * dt);
@@ -785,6 +1013,72 @@ export class EntitySystem {
       }
     }
     return false;
+  }
+
+  // ── Creeper explosion + skeleton archery ─────────────────────────
+  _explode(e, pp) {
+    const R = 3;
+    const cx = e.pos[0], cy = e.pos[1] + 0.6, cz = e.pos[2];
+    const w = this.world;
+    for (let dx = -R; dx <= R; dx++) {
+      for (let dy = -R; dy <= R; dy++) {
+        for (let dz = -R; dz <= R; dz++) {
+          if (dx * dx + dy * dy + dz * dz > R * R) continue;
+          const bx = Math.floor(cx) + dx, by = Math.floor(cy) + dy, bz = Math.floor(cz) + dz;
+          const id = w.getBlock(bx, by, bz);
+          if (id === B.AIR || id === B.BEDROCK || isWater(id) || isLava(id)) continue;
+          w.setBlock(bx, by, bz, B.AIR);
+        }
+      }
+    }
+    const d = Math.hypot(pp[0] - cx, (pp[1] + 0.9) - cy, pp[2] - cz);
+    if (d < R + 1.5) {
+      const dmg = Math.max(2, Math.round((1 - d / (R + 1.5)) * 18));
+      const kx = pp[0] - cx, kz = pp[2] - cz, kl = Math.hypot(kx, kz) || 1;
+      this.hooks.attackPlayer?.(dmg, [kx / kl, 0, kz / kl]);
+    }
+    this.hooks.audio?.creature?.(e.species, 'death');
+    this.hooks.particles?.burstBlock?.(
+      Math.floor(cx), Math.floor(cy), Math.floor(cz), 0, 44, 1.3, this.rng);
+  }
+
+  _shootArrow(e, pp, dmg) {
+    if (this._arrowCount() > 24) return;
+    const ex = e.pos[0], ey = e.pos[1] + e.h * 0.75, ez = e.pos[2];
+    let vx = pp[0] - ex, vy = (pp[1] + 0.9) - ey, vz = pp[2] - ez;
+    const L = Math.hypot(vx, vy, vz) || 1;
+    vx /= L; vy = vy / L + 0.09; vz /= L;                    // slight upward arc
+    const n = Math.hypot(vx, vy, vz) || 1;
+    this.entities.push({
+      kind: 'arrow', species: 'arrow',
+      pos: [ex + vx * 0.6, ey, ez + vz * 0.6], vel: [vx / n * 22, vy / n * 22, vz / n * 22],
+      yaw: Math.atan2(vx, vz), pitch: Math.atan2(vy, Math.hypot(vx, vz)),
+      hw: 0.1, h: 0.1, dmg, age: 0, dead: false,
+    });
+  }
+
+  _arrowCount() {
+    let n = 0;
+    for (const e of this.entities) if (e.kind === 'arrow') n++;
+    return n;
+  }
+
+  _updateArrow(e, dt, pp) {
+    e.age += dt;
+    if (e.age > 4) { e.dead = true; return; }
+    e.vel[1] += GRAVITY * dt * 0.35;                          // light drop
+    const dx = pp[0] - e.pos[0], dy = (pp[1] + 0.9) - e.pos[1], dz = pp[2] - e.pos[2];
+    if (dx * dx + dy * dy + dz * dz < 0.55 * 0.55) {
+      const d = Math.hypot(dx, dz) || 1;
+      this.hooks.attackPlayer?.(e.dmg, [dx / d, 0, dz / d]);
+      e.dead = true; return;
+    }
+    const hx = this._moveAxis(e, 0, e.vel[0] * dt);
+    const hz = this._moveAxis(e, 2, e.vel[2] * dt);
+    const hy = this._moveAxis(e, 1, e.vel[1] * dt);
+    if (hx || hy || hz) { e.dead = true; return; }            // stick on impact
+    e.yaw = Math.atan2(e.vel[0], e.vel[2]);
+    e.pitch = Math.atan2(e.vel[1], Math.hypot(e.vel[0], e.vel[2]));
   }
 
   // ── Item entities ────────────────────────────────────────────────

@@ -1,7 +1,8 @@
 // Data-driven crafting. Two recipe forms:
 //  - shaped:    pattern rows + key map (letters → item key or [alternatives])
 //  - shapeless: flat ingredient list (multiset match)
-// station: null (pocket 2×2) | 'worktable' (3×3) | 'kiln' (processing)
+// station: null (inventory 2×2) | 'worktable' (crafting table 3×3) |
+// 'kiln' (furnace processing) — internal station ids, not display names.
 
 export const RECIPES = [];
 
@@ -12,87 +13,165 @@ function shapeless(out, count, ingredients, station = null) {
   RECIPES.push({ type: 'shapeless', out, count, ingredients, station });
 }
 
-const ANY_LOG = ['alder_log', 'fern_log'];
-const ANY_PLANK = ['planks'];
+const ANY_LOG = ['oak_log', 'spruce_log'];
+const ANY_PLANK = ['oak_planks'];
 
 // ── Basics ────────────────────────────────────────────────────────
-shapeless('planks', 4, [ANY_LOG]);
-shaped('rod', 4, ['P', 'P'], { P: 'planks' });
-shaped('worktable', 1, ['PP', 'PP'], { P: 'planks' });
-shaped('kiln', 1, ['RRR', 'R R', 'RRR'], { R: 'rubble' }, 'worktable');
+shapeless('oak_planks', 4, [ANY_LOG]);
+shaped('stick', 4, ['P', 'P'], { P: 'oak_planks' });
+shaped('crafting_table', 1, ['PP', 'PP'], { P: 'oak_planks' });
+shaped('furnace', 1, ['RRR', 'R R', 'RRR'], { R: 'cobblestone' }, 'worktable');
 
-// ── Tools (worktable) ─────────────────────────────────────────────
+// ── Tools (crafting table) ────────────────────────────────────────
 const toolMats = {
-  timber: 'planks', stone: 'rubble', copper: 'copper_ingot',
-  iron: 'iron_ingot', sunsteel: 'sunsteel_ingot',
+  wooden: 'oak_planks', stone: 'cobblestone', copper: 'copper_ingot',
+  iron: 'iron_ingot', netherite: 'netherite_ingot',
 };
 for (const [tier, mat] of Object.entries(toolMats)) {
-  shaped(`pick_${tier}`, 1, ['MMM', ' R ', ' R '], { M: mat, R: 'rod' }, 'worktable');
-  shaped(`axe_${tier}`, 1, ['MM', 'MR', ' R'], { M: mat, R: 'rod' }, 'worktable');
-  shaped(`shovel_${tier}`, 1, ['M', 'R', 'R'], { M: mat, R: 'rod' }, 'worktable');
-  shaped(`hoe_${tier}`, 1, ['MM', ' R', ' R'], { M: mat, R: 'rod' }, 'worktable');
-  shaped(`blade_${tier}`, 1, ['M', 'M', 'R'], { M: mat, R: 'rod' }, 'worktable');
+  shaped(`${tier}_pickaxe`, 1, ['MMM', ' R ', ' R '], { M: mat, R: 'stick' }, 'worktable');
+  shaped(`${tier}_axe`, 1, ['MM', 'MR', ' R'], { M: mat, R: 'stick' }, 'worktable');
+  shaped(`${tier}_shovel`, 1, ['M', 'R', 'R'], { M: mat, R: 'stick' }, 'worktable');
+  shaped(`${tier}_hoe`, 1, ['MM', ' R', ' R'], { M: mat, R: 'stick' }, 'worktable');
+  shaped(`${tier}_sword`, 1, ['M', 'M', 'R'], { M: mat, R: 'stick' }, 'worktable');
 }
 
 // ── Building & light ──────────────────────────────────────────────
-shaped('hewnstone', 4, ['SS', 'SS'], { S: 'stone' }, 'worktable');
+shaped('stone_bricks', 4, ['SS', 'SS'], { S: 'stone' }, 'worktable');
 shaped('copper_block', 1, ['II', 'II'], { I: 'copper_ingot' }, 'worktable');
 shaped('iron_block', 1, ['II', 'II'], { I: 'iron_ingot' }, 'worktable');
-shaped('sunstone_block', 1, ['SS', 'SS'], { S: 'sunstone' }, 'worktable');
+shaped('diamond_block', 1, ['SS', 'SS'], { S: 'diamond' }, 'worktable');
 shapeless('copper_ingot', 4, ['copper_block']);
 shapeless('iron_ingot', 4, ['iron_block']);
-shaped('lantern', 2, ['D', 'G', 'C'], { D: 'glimmer_dust', G: 'glass', C: 'copper_ingot' }, 'worktable');
+shaped('lantern', 2, ['D', 'G', 'C'], { D: 'glowstone_dust', G: 'glass', C: 'copper_ingot' }, 'worktable');
 
-// ── Kiln processing (fuel is part of the recipe) ──────────────────
-shapeless('stone', 4, ['rubble', 'rubble', 'rubble', 'rubble', 'coal'], 'kiln');
-shapeless('glass', 4, ['sand', 'sand', 'sand', 'sand', 'coal'], 'kiln');
-shapeless('brick', 2, ['clay_lump', 'clay_lump', 'coal'], 'kiln');
-shapeless('copper_ingot', 1, ['copper_ore_chunk', 'coal'], 'kiln');
-shapeless('iron_ingot', 1, ['iron_ore_chunk', 'coal'], 'kiln');
-shapeless('tuber_roast', 1, ['tuber', 'coal'], 'kiln');
-shapeless('meat_roast', 1, ['meat_raw', 'coal'], 'kiln');
-shapeless('coal', 2, [ANY_LOG, ANY_LOG], 'kiln');   // charcoal burn
-shapeless('sunsteel_ingot', 1, ['smolder_shard', 'iron_ingot', 'coal'], 'kiln');
-shapeless('clay_vessel', 1, ['clay_lump', 'clay_lump', 'clay_lump', 'coal'], 'kiln');
-shapeless('voidglass', 4, ['voidstone', 'voidstone', 'voidstone', 'voidstone', 'coal'], 'kiln');
+// ── Smelting (real furnace: one input + one fuel → output over time) ──
+// SMELT maps a single input item key → its smelted result. The furnace
+// consumes one input + burns fuel over COOK_SECONDS to yield the output.
+// FUEL maps a fuel item key → how many seconds it burns. One furnace
+// operation (COOK_SECONDS) uses that many seconds of fuel.
+export const COOK_SECONDS = 8;
 
-// ── Wave 2 utility ────────────────────────────────────────────────
-shaped('wisp_torch', 4, ['C', 'R'], { C: 'coal', R: 'rod' });
-shaped('rungs', 3, ['R R', 'RRR', 'R R'], { R: 'rod' }, 'worktable');
-shapeless('bedroll', 1, ['hide', 'hide', 'planks']);
-shaped('stowbox', 1, ['PPP', 'P P', 'PPP'], { P: 'planks' }, 'worktable');
-shapeless('kindle_flint', 1, ['iron_ingot', 'rubble']);
-shaped('scorchbrick', 4, ['SS', 'SS'], { S: 'scorchstone' }, 'worktable');
+export const SMELT = {
+  cobblestone: { out: 'stone', count: 1 },
+  sand: { out: 'glass', count: 1 },
+  clay_ball: { out: 'bricks', count: 1 },
+  raw_copper: { out: 'copper_ingot', count: 1 },
+  raw_iron: { out: 'iron_ingot', count: 1 },
+  potato: { out: 'baked_potato', count: 1 },
+  raw_porkchop: { out: 'cooked_porkchop', count: 1 },
+  raw_beef: { out: 'cooked_beef', count: 1 },
+  raw_chicken: { out: 'cooked_chicken', count: 1 },
+  oak_log: { out: 'coal', count: 1 },      // → charcoal
+  spruce_log: { out: 'coal', count: 1 },   // → charcoal
+  end_stone: { out: 'end_glass', count: 1 },
+};
 
-// ── Shaped blocks: ledges (slabs) & steps (stairs) ────────────────
-// Ledges: 3 of a material in a row → 6 ledges. Steps: a 6-block stair
-// pattern → 4 steps. Outputs are the shared shaped-block item keys.
-for (const [mat, base] of [['planks', 'plank'], ['rubble', 'rubble'], ['scorchbrick', 'scorchbrick']]) {
-  shaped(`${base}_ledge`, 6, ['MMM'], { M: mat }, 'worktable');
-  shaped(`${base}_step`, 4, ['M  ', 'MM ', 'MMM'], { M: mat }, 'worktable');
+export const FUEL = {
+  coal: 80,            // coal or charcoal — 8 items @ COOK_SECONDS
+  oak_log: 15,
+  spruce_log: 15,
+  oak_planks: 15,
+  crafting_table: 15,
+  chest: 15,
+  ladder: 15,
+  oak_fence: 15,
+  oak_sapling: 5,
+  spruce_sapling: 5,
+  stick: 5,
+};
+
+export function smeltRecipe(key) { return (key && SMELT[key]) || null; }
+export function fuelSeconds(key) { return (key && FUEL[key]) || 0; }
+export function isFuel(key) { return !!(key && FUEL[key]); }
+
+// Advance one furnace by dt seconds. Mutates the furnace state object
+// { input, fuel, output, burn, burnMax, cook } in place. Burns lit fuel
+// down, lights fresh fuel only when there's something to smelt, and
+// yields one output per COOK_SECONDS. Smelted outputs cap at 64.
+// Returns true on the frame an item is produced. Pure of any DOM.
+export function tickFurnace(f, dt) {
+  const recipe = smeltRecipe(f.input && f.input.key);
+  const canSmelt = !!(recipe && (!f.output ||
+    (f.output.key === recipe.out && f.output.count + recipe.count <= 64)));
+
+  if (f.burn > 0) f.burn = Math.max(0, f.burn - dt);
+
+  // Light fresh fuel only when a valid smelt is waiting on heat.
+  if (f.burn <= 0 && canSmelt && f.fuel) {
+    const secs = fuelSeconds(f.fuel.key);
+    if (secs > 0) {
+      f.fuel.count -= 1;
+      if (f.fuel.count <= 0) f.fuel = null;
+      f.burn = secs;
+      f.burnMax = secs;
+    }
+  }
+
+  let produced = false;
+  if (f.burn > 0 && canSmelt) {
+    f.cook = (f.cook || 0) + dt;
+    if (f.cook >= COOK_SECONDS) {
+      f.cook -= COOK_SECONDS;
+      if (!f.output) f.output = { key: recipe.out, count: recipe.count };
+      else f.output.count += recipe.count;
+      f.input.count -= 1;
+      if (f.input.count <= 0) f.input = null;
+      produced = true;
+    }
+  } else {
+    f.cook = Math.max(0, (f.cook || 0) - dt * 2);   // progress relaxes
+  }
+  return produced;
 }
 
-// ── Auto-connecting shapes: palings, gate & ramparts ──────────────
-// Palings & ramparts: two rows of the base material split by a rod core
-// yield a run of connecting sections. The gate frames its opening with
-// rods around a plank leaf.
-shaped('timber_paling', 3, ['PRP', 'PRP'], { P: 'planks', R: 'rod' }, 'worktable');
-shaped('timber_gate', 1, ['RPR', 'RPR'], { R: 'rod', P: 'planks' }, 'worktable');
-shaped('rubble_rampart', 6, ['RRR', 'RRR'], { R: 'rubble' }, 'worktable');
-shaped('hewnstone_rampart', 6, ['HHH', 'HHH'], { H: 'hewnstone' }, 'worktable');
+// Moved off the old kiln grid onto the crafting table (they were never
+// really "smelts"): fired clay vessel + netherite forging.
+shapeless('bucket', 1, ['clay_ball', 'clay_ball', 'clay_ball'], 'worktable');
+shapeless('netherite_ingot', 1, ['netherite_scrap', 'netherite_scrap', 'netherite_scrap', 'iron_ingot'], 'worktable');
 
-// ── Rotational & thin openables: doors, flaps & panes ─────────────
-// Doorleaves: two columns of the base material yield a leaf. Flapgates:
+// ── Wave 2 utility ────────────────────────────────────────────────
+shaped('torch', 4, ['C', 'R'], { C: 'coal', R: 'stick' });
+shaped('ladder', 3, ['R R', 'RRR', 'R R'], { R: 'stick' }, 'worktable');
+shapeless('bed', 1, ['leather', 'leather', 'oak_planks']);
+shaped('bed', 1, ['WWW', 'PPP'], { W: 'wool', P: 'oak_planks' }, 'worktable');   // wool bed
+shapeless('bone_meal', 3, ['bone']);                                             // grind bone
+shaped('chest', 1, ['PPP', 'P P', 'PPP'], { P: 'oak_planks' }, 'worktable');
+shapeless('flint_and_steel', 1, ['iron_ingot', 'cobblestone']);
+shaped('nether_bricks', 4, ['SS', 'SS'], { S: 'netherrack' }, 'worktable');
+
+// ── Shaped blocks: slabs & stairs ─────────────────────────────────
+// Slabs: 3 of a material in a row → 6 slabs. Stairs: a 6-block stair
+// pattern → 4 stairs. Outputs are the shared shaped-block item keys.
+for (const [mat, slab, stairs] of [
+  ['oak_planks', 'oak_slab', 'oak_stairs'],
+  ['cobblestone', 'cobblestone_slab', 'cobblestone_stairs'],
+  ['nether_bricks', 'nether_brick_slab', 'nether_brick_stairs'],
+]) {
+  shaped(slab, 6, ['MMM'], { M: mat }, 'worktable');
+  shaped(stairs, 4, ['M  ', 'MM ', 'MMM'], { M: mat }, 'worktable');
+}
+
+// ── Auto-connecting shapes: fences, gate & walls ──────────────────
+// Fences & walls: two rows of the base material split by a stick core
+// yield a run of connecting sections. The gate frames its opening with
+// sticks around a plank leaf.
+shaped('oak_fence', 3, ['PRP', 'PRP'], { P: 'oak_planks', R: 'stick' }, 'worktable');
+shaped('oak_fence_gate', 1, ['RPR', 'RPR'], { R: 'stick', P: 'oak_planks' }, 'worktable');
+shaped('cobblestone_wall', 6, ['RRR', 'RRR'], { R: 'cobblestone' }, 'worktable');
+shaped('stone_brick_wall', 6, ['HHH', 'HHH'], { H: 'stone_bricks' }, 'worktable');
+
+// ── Rotational & thin openables: doors, trapdoors & panes ─────────
+// Doors: two columns of the base material yield a leaf. Trapdoors:
 // a low slab of material. Panes: a wide+tall block of glass cut into a
 // grid of thin panes (fence-style yield).
-shaped('timber_door', 1, ['PP', 'PP', 'PP'], { P: 'planks' }, 'worktable');
-shaped('ironbound_door', 1, ['II', 'II', 'II'], { I: 'iron_ingot' }, 'worktable');
-shaped('timber_flap', 2, ['PPP', 'PPP'], { P: 'planks' }, 'worktable');
-shaped('ironbound_flap', 2, ['III', 'III'], { I: 'iron_ingot' }, 'worktable');
+shaped('oak_door', 1, ['PP', 'PP', 'PP'], { P: 'oak_planks' }, 'worktable');
+shaped('iron_door', 1, ['II', 'II', 'II'], { I: 'iron_ingot' }, 'worktable');
+shaped('oak_trapdoor', 2, ['PPP', 'PPP'], { P: 'oak_planks' }, 'worktable');
+shaped('iron_trapdoor', 2, ['III', 'III'], { I: 'iron_ingot' }, 'worktable');
 shaped('glass_pane', 16, ['GGG', 'GGG'], { G: 'glass' }, 'worktable');
-shaped('voidglass_pane', 16, ['GGG', 'GGG'], { G: 'voidglass' }, 'worktable');
+shaped('end_glass_pane', 16, ['GGG', 'GGG'], { G: 'end_glass' }, 'worktable');
 
-shaped('dawn_beacon', 1, [' S ', 'SCS', ' S '], { S: 'sunstone_block', C: 'sovereign_core' }, 'worktable');
+shaped('beacon', 1, [' S ', 'SCS', ' S '], { S: 'diamond_block', C: 'dragon_core' }, 'worktable');
 
 // ── Mod registration ─────────────────────────────────────────────
 export function registerShaped(out, count, pattern, keyMap, station = null) {

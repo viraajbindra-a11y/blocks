@@ -569,7 +569,7 @@ export class Renderer {
     if (held.kind === 'block') {
       const b = blockById(held.blockId);
       const s = 0.2;
-      // Rotated mini cube: draw top(+y), front(-z→viewer), right(+x) faces
+      // Rotated mini cube. All SIX faces: swing/bob can expose any of them.
       const rot = (x, y, z) => {   // yaw ~35°, slight tilt
         const a = 0.62, c = Math.cos(a), s2 = Math.sin(a);
         const rx = x * c + z * s2, rz = -x * s2 + z * c;
@@ -577,9 +577,12 @@ export class Renderer {
         return [rx, y * cb - rz * sb, y * sb + rz * cb];
       };
       const faceDefs = [
-        { dir: 2, c: [[0, 1, 0], [0, 1, 1], [1, 1, 1], [1, 1, 0]] },
-        { dir: 5, c: [[1, 0, 0], [0, 0, 0], [0, 1, 0], [1, 1, 0]] },
-        { dir: 0, c: [[1, 0, 1], [1, 0, 0], [1, 1, 0], [1, 1, 1]] },
+        { dir: 2, c: [[0, 1, 0], [0, 1, 1], [1, 1, 1], [1, 1, 0]] },   // +y
+        { dir: 3, c: [[0, 0, 1], [0, 0, 0], [1, 0, 0], [1, 0, 1]] },   // -y
+        { dir: 5, c: [[1, 0, 0], [0, 0, 0], [0, 1, 0], [1, 1, 0]] },   // -z
+        { dir: 4, c: [[0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]] },   // +z
+        { dir: 0, c: [[1, 0, 1], [1, 0, 0], [1, 1, 0], [1, 1, 1]] },   // +x
+        { dir: 1, c: [[0, 0, 0], [0, 0, 1], [0, 1, 1], [0, 1, 0]] },   // -x
       ];
       const uv = [[0, 1], [1, 1], [1, 0], [0, 0]];
       for (const f of faceDefs) {
@@ -588,12 +591,28 @@ export class Renderer {
         pushQuad(corners, uv, layer, (f.dir << 2));
       }
     } else {
+      // Sprite items (tools etc.): a stack of layered quads gives the flat
+      // art real thickness, so it never vanishes edge-on. Gripped diagonal:
+      // slight roll keeps the sprite's own diagonal upright in the fist,
+      // and a yaw turn angles the head toward the viewer.
       const layer = this.layerOf(held.texKey);
-      const s = 0.3, a = -0.7;
-      const c = Math.cos(a), s2 = Math.sin(a);
-      const rot = (x, y) => [x * c - y * s2, x * s2 + y * c, 0];
-      const corners = [rot(-s / 2, -s / 2), rot(s / 2, -s / 2), rot(s / 2, s / 2), rot(-s / 2, s / 2)];
-      pushQuad(corners, [[0, 1], [1, 1], [1, 0], [0, 0]], layer, 8);
+      const s = 0.42, roll = 0.28, yawA = -0.55;
+      const cr = Math.cos(roll), sr = Math.sin(roll);
+      const cy = Math.cos(yawA), sy = Math.sin(yawA);
+      const rot = (x, y, z) => {
+        const rx1 = x * cr - y * sr, ry = x * sr + y * cr;   // roll in-plane
+        return [rx1 * cy + z * sy, ry, -rx1 * sy + z * cy];  // then yaw
+      };
+      const uv = [[0, 1], [1, 1], [1, 0], [0, 0]];
+      const LAYERS = 7, T = 0.016;                            // total depth
+      for (let i = 0; i < LAYERS; i++) {
+        const z = (i / (LAYERS - 1) - 0.5) * T;
+        const corners = [
+          rot(-s / 2, -s / 2, z), rot(s / 2, -s / 2, z),
+          rot(s / 2, s / 2, z), rot(-s / 2, s / 2, z),
+        ];
+        pushQuad(corners, uv, layer, 8);
+      }
     }
     geo = createMeshVAO(this.gl, CHUNK_ATTRS, new Float32Array(verts), new Uint32Array(idx));
     this.heldCache.set(key, geo);

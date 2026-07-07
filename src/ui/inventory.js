@@ -5,9 +5,9 @@
 
 import { MODE_BUILDER } from '../core/constants.js';
 import { itemByKey, catalogItems } from '../items.js';
-import { matchRecipe } from '../crafting.js';
+import { matchRecipe, smeltRecipe, isFuel, COOK_SECONDS } from '../crafting.js';
 
-const TITLES = { pocket: 'Pockets', worktable: 'Worktable', kiln: 'Stone Kiln' };
+const TITLES = { pocket: 'Pockets', worktable: 'Crafting Table', kiln: 'Furnace' };
 const TABS = [['blocks', 'Blocks'], ['tools', 'Tools'], ['mats', 'Materials'], ['food', 'Food']];
 
 function el(tag, cls, parent) {
@@ -32,6 +32,10 @@ export class InventoryUI {
     this.station = null;
     this.container = null;       // live 18-slot array (save-system owned)
     this.containerTitle = '';
+    this.furnace = null;         // live furnace state (save-system owned)
+    this.furnaceTitle = '';
+    this._furnaceTimer = null;
+    this._furnaceBinds = [];
     this.gridSize = 2;
     this.craft = [];
     this._recipe = null;
@@ -64,6 +68,28 @@ export class InventoryUI {
     this.containerTitle = title;
     this.craft = [];
     this._attach();
+  }
+
+  /** Furnace view: input + fuel + output slots with live smelt gauges.
+   *  @param {string} title
+   *  @param {{input,fuel,output,burn,burnMax,cook}} state  LIVE reference the
+   *  game loop ticks every frame; the UI only reflects + edits its slots. */
+  openFurnace(title, state) {
+    if (this.isOpen) return;
+    this.isOpen = true;
+    this.station = 'kiln';
+    this.container = null;
+    this.furnace = state;
+    this.furnaceTitle = title;
+    this.gridSize = 0;
+    this.craft = [];
+    this._attach();
+    // Poll the live furnace state so background smelting shows up.
+    this._furnaceTimer = setInterval(() => {
+      if (!this.furnace) return;
+      for (const b of this._furnaceBinds) this._renderSlot(b.el, b.get());
+      this._renderFurnaceGauges();
+    }, 120);
   }
 
   // Build the DOM and register the (single) key/mouse handlers.
@@ -100,12 +126,16 @@ export class InventoryUI {
     if (lost) this.hooks.toast?.('Inventory full — items lost');
     window.removeEventListener('keydown', this._onKey);
     window.removeEventListener('mousemove', this._onMove);
+    if (this._furnaceTimer) { clearInterval(this._furnaceTimer); this._furnaceTimer = null; }
     if (this.overlay) this.overlay.remove();
     this.overlay = null;
     this._binds = [];
+    this._furnaceBinds = [];
     this._recipe = null;
     this.container = null;       // slots persist in the save system
     this.containerTitle = '';
+    this.furnace = null;         // slots persist in the save system
+    this.furnaceTitle = '';
     this.resultEl = null;
     this.hooks.audio?.play?.('ui_close');
     if (this.onClose) this.onClose();
@@ -120,9 +150,13 @@ export class InventoryUI {
 
     const panel = el('div', 'inv-panel', ov);
     el('div', 'inv-title', panel).textContent =
-      this.container ? this.containerTitle : TITLES[this.station || 'pocket'];
+      this.furnace ? this.furnaceTitle
+      : this.container ? this.containerTitle
+      : TITLES[this.station || 'pocket'];
 
-    if (this.container) {
+    if (this.furnace) {
+      this._buildFurnace(panel);
+    } else if (this.container) {
       // Container 2×9 (no crafting area); slots mutate the live array in place.
       const cgrid = el('div', 'inv-grid inv-container', panel);
       const box = this.container;
@@ -186,6 +220,105 @@ export class InventoryUI {
     slotEl.addEventListener('mouseleave', () => this._hideTip());
     this._binds.push(bind);
     return bind;
+  }
+
+  // ── Furnace ──────────────────────────────────────────────────────
+  // Input (top) + fuel (bottom) split by a flame gauge, an animated
+  // smelt arrow, and a take-only output slot. State is ticked by the
+  // game loop; this view reflects it and edits the input/fuel slots.
+  _buildFurnace(panel) {
+    this.resultEl = null;
+    const f = this.furnace;
+    const wrap = el('div', 'inv-furnace', panel);
+
+    const col = el('div', 'inv-furnace-col', wrap);
+    const inBind = this._mkSlot(col, 'furnace', () => f.input, (v) => { f.input = v; });
+    const flame = el('div', 'inv-flame', col);
+    this._flameFill = el('i', '', flame);
+    const fuelBind = this._mkSlot(col, 'furnace', () => f.fuel, (v) => { f.fuel = v; });
+
+    const arrow = el('div', 'inv-smelt-arrow', wrap);
+    this._arrowFill = el('i', '', arrow);
+
+    const outBind = this._mkFurnaceOutput(wrap);
+    this._furnaceBinds = [inBind, fuelBind, outBind];
+    this._renderFurnaceGauges();
+  }
+
+  _mkFurnaceOutput(parent) {
+    const slotEl = el('div', 'slot inv-result inv-furnace-out', parent);
+    const bind = { el: slotEl, zone: 'furnace-out', get: () => this.furnace.output, set: () => {} };
+    slotEl.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      this._takeFurnaceOutput(e.shiftKey);
+      this._hideTip();
+      this._renderAll();
+      this.hooks.audio?.play?.('ui_click');
+    });
+    slotEl.addEventListener('mouseenter', () => this._showTip(bind));
+    slotEl.addEventListener('mouseleave', () => this._hideTip());
+    this._binds.push(bind);
+    return bind;
+  }
+
+  // Take from the output: shift → straight to inventory, else onto cursor.
+  _takeFurnaceOutput(toInv) {
+    const f = this.furnace;
+    const s = f.output;
+    if (!s) return;
+    if (toInv) {
+      const leftover = this._giveRange(s, 0, 36);
+      f.output = leftover > 0 ? s : null;
+      return;
+    }
+    const def = itemByKey(s.key);
+    const max = def ? def.maxStack : 64;
+    if (this.cursor) {
+      if (this.cursor.key !== s.key || this.cursor.dur !== undefined) return;
+      const take = Math.min(max - this.cursor.count, s.count);
+      if (take <= 0) return;
+      this.cursor.count += take;
+      s.count -= take;
+    } else {
+      this.cursor = { key: s.key, count: s.count };
+      s.count = 0;
+    }
+    if (s.count <= 0) f.output = null;
+  }
+
+  // Shift-click routing into the furnace: smeltables → input, fuels → fuel.
+  _giveIntoFurnace(stack) {
+    const f = this.furnace;
+    const targets = [];
+    if (smeltRecipe(stack.key)) targets.push('input');
+    if (isFuel(stack.key)) targets.push('fuel');
+    if (!targets.length) return stack.count;
+    const def = itemByKey(stack.key);
+    const max = def ? def.maxStack : 64;
+    for (const which of targets) {
+      if (stack.count <= 0) break;
+      const cur = f[which];
+      if (!cur) { f[which] = { key: stack.key, count: stack.count }; stack.count = 0; }
+      else if (cur.key === stack.key && cur.dur === undefined && cur.count < max) {
+        const take = Math.min(max - cur.count, stack.count);
+        cur.count += take; stack.count -= take;
+      }
+    }
+    return stack.count;
+  }
+
+  _renderFurnaceGauges() {
+    const f = this.furnace;
+    if (!f) return;
+    if (this._flameFill) {
+      const lit = f.burnMax > 0 ? Math.max(0, Math.min(1, f.burn / f.burnMax)) : 0;
+      this._flameFill.style.height = `${Math.round(lit * 100)}%`;
+    }
+    if (this._arrowFill) {
+      const prog = Math.max(0, Math.min(1, (f.cook || 0) / COOK_SECONDS));
+      this._arrowFill.style.width = `${Math.round(prog * 100)}%`;
+    }
   }
 
   _buildCatalog(ov) {
@@ -292,6 +425,14 @@ export class InventoryUI {
     let leftover;
     if (bind.zone === 'container') {
       leftover = this._giveRange(s, 0, 36);         // container → player inv
+    } else if (bind.zone === 'furnace') {
+      leftover = this._giveRange(s, 0, 36);         // furnace slot → player inv
+    } else if (this.furnace && (bind.zone === 'pack' || bind.zone === 'hotbar')) {
+      const before = s.count;
+      leftover = this._giveIntoFurnace(s);          // route smeltables/fuel in
+      if (leftover === before) {                    // furnace took nothing
+        leftover = bind.zone === 'hotbar' ? this._giveRange(s, 9, 36) : this._giveRange(s, 0, 9);
+      }
     } else if (this.container) {                    // pack/hotbar → container
       leftover = this._giveInto(this.container, s, 0, this.container.length);
     } else if (bind.zone === 'hotbar') leftover = this._giveRange(s, 9, 36);

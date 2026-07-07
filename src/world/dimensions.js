@@ -26,7 +26,7 @@ export const DIMENSIONS = {
     skyMode: 1,             // ember haze, no celestial bodies
     travelScale: 8,         // 1 block here = 8 overworld blocks
     portalMaterial: B.BASALT,
-    riftBlock: B.RIFT_SMOLDER,
+    riftBlock: B.NETHER_PORTAL,
     arrivalY: LAVA_LEVEL + 10,
     env: {
       sunLevel: 0.34, night: 0,
@@ -44,7 +44,7 @@ export const DIMENSIONS = {
     skyMode: 2,             // eternal starfield, no sun
     travelScale: 0,         // fixed arrival at the arena
     portalMaterial: B.SUNSTONE_BLOCK,
-    riftBlock: B.RIFT_HOLLOW,
+    riftBlock: B.END_PORTAL,
     arrivalY: ARENA_Y + 2,
     env: {
       sunLevel: 0.5, night: 0.9,
@@ -59,7 +59,7 @@ export const dimension = (key) => DIMENSIONS[key] ?? DIMENSIONS.overworld;
 
 // Which dimension a rift block leads to (from where).
 export function riftTarget(riftId, currentDim) {
-  if (riftId === B.RIFT_SMOLDER) return currentDim === 'smolder' ? 'overworld' : 'smolder';
-  if (riftId === B.RIFT_HOLLOW) return currentDim === 'hollow' ? 'overworld' : 'hollow';
+  if (riftId === B.NETHER_PORTAL) return currentDim === 'smolder' ? 'overworld' : 'smolder';
+  if (riftId === B.END_PORTAL) return currentDim === 'hollow' ? 'overworld' : 'hollow';
   return null;
 }

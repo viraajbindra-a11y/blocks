@@ -270,44 +270,73 @@ function cropPainter(stage) {
 }
 
 // ── Tool sprites ──────────────────────────────────────────────────
-function drawHandle(d, x0, y0, x1, y1) {
+// Chunky, outlined, Minecraft-proportioned: a 2px wooden haft running
+// lower-left → centre with a dark contour, and a bold metal head with a
+// lit top-left edge, a shaded lower-right edge, and a near-black outline.
+const WOOD_E = shade(WOOD_D, 0.55);   // handle contour
+
+// 2px diagonal haft with a dark contour down each side.
+function drawHaft(d, x0, y0, x1, y1) {
+  line(d, x0 - 1, y0, x1 - 1, y1, WOOD_E);
   line(d, x0, y0, x1, y1, WOOD_D);
   line(d, x0 + 1, y0, x1 + 1, y1, WOOD_L);
+  line(d, x0 + 2, y0, x1 + 2, y1, WOOD_E);
 }
 
 function toolPainter(type, head) {
-  const light = shade(head, 1.22), dark = shade(head, 0.68);
+  const light = shade(head, 1.3), dark = shade(head, 0.62), edge = shade(head, 0.4);
   return (d) => {
     if (type === 'blade') {
-      px(d, 2, 15, shade(WOOD_D, 0.8));               // pommel
-      line(d, 3, 14, 4, 13, WOOD_D); line(d, 4, 14, 5, 13, WOOD_L);
-      line(d, 3, 10, 6, 13, [70, 54, 40]);            // guard
-      line(d, 5, 12, 12, 5, head);                    // blade
-      line(d, 6, 12, 13, 5, light);
-      px(d, 13, 4, light); px(d, 5, 13, dark);
+      // grip + pommel lower-left
+      px(d, 2, 15, WOOD_E);
+      line(d, 3, 15, 5, 12, WOOD_E); line(d, 4, 15, 6, 12, WOOD_D); line(d, 5, 15, 7, 12, WOOD_L);
+      // crossguard across the diagonal
+      line(d, 4, 10, 7, 13, dark); line(d, 5, 9, 8, 12, head); px(d, 4, 9, light);
+      // 3px blade from guard up to the top-right point
+      for (let i = 0; i < 8; i++) {
+        const x = 6 + i, y = 11 - i;
+        px(d, x - 1, y + 1, edge);      // shaded back edge
+        px(d, x, y, head);
+        px(d, x + 1, y - 1, light);     // lit fore edge
+      }
+      px(d, 14, 3, light); px(d, 15, 2, edge); px(d, 13, 4, head);   // point
       return;
     }
-    drawHandle(d, 3, 14, 10, 7);
+    drawHaft(d, 4, 14, 9, 8);
     if (type === 'pick') {
-      const arc = [[3, 9], [3, 8], [4, 7], [4, 6], [5, 5], [6, 4], [7, 3], [8, 3],
-                   [9, 3], [10, 4], [11, 5], [12, 6], [12, 7], [13, 8], [13, 9]];
-      for (const [x, y] of arc) { px(d, x, y, head); px(d, x, y + 1, dark); }
-      px(d, 7, 2, light); px(d, 8, 2, light);         // crown highlight
+      // broad curved head spanning the top, tapering to two down-tips
+      const arc = [[2, 8], [3, 7], [3, 6], [4, 5], [5, 4], [6, 4], [7, 3], [8, 3],
+                   [9, 3], [10, 4], [11, 4], [12, 5], [13, 6], [13, 7], [14, 8]];
+      for (const [x, y] of arc) {
+        px(d, x, y - 1, light);         // lit crown
+        px(d, x, y, head);
+        px(d, x, y + 1, edge);          // outline underside
+      }
+      px(d, 2, 9, edge); px(d, 14, 9, edge);            // pointed tips
+      px(d, 7, 2, light); px(d, 8, 2, light);
     } else if (type === 'axe') {
-      const rows = [[8, 10, 2], [7, 11, 3], [6, 11, 4], [6, 10, 5], [7, 9, 6]];
-      for (const [xa, xb, y] of rows) {
-        for (let x = xa; x <= xb; x++) px(d, x, y, x === xa ? light : x === xb ? dark : head);
+      // chunky wedge blade hugging the top of the haft
+      for (let y = 2; y <= 9; y++) {
+        const w = y <= 5 ? 1 + (y - 2) * 2 : Math.max(0, 1 + (9 - y) * 2);
+        const xa = 7, xb = 7 + w;
+        px(d, xa - 1, y, edge);
+        for (let x = xa; x <= xb; x++) px(d, x, y, x === xa ? light : x >= xb - 1 ? dark : head);
+        px(d, xb + 1, y, edge);
       }
+      px(d, 12, 4, light); px(d, 12, 5, light);         // sheen
     } else if (type === 'shovel') {
-      const rows = [[10, 12, 1], [9, 13, 2], [9, 13, 3], [9, 13, 4], [10, 12, 5]];
-      for (const [xa, xb, y] of rows) {
-        for (let x = xa; x <= xb; x++) px(d, x, y, y <= 2 ? light : y >= 5 ? dark : head);
+      // rounded spade blade on top
+      for (let y = 1; y <= 7; y++) for (let x = 7; x <= 13; x++) {
+        const r = Math.hypot((x - 10) / 3.2, (y - 4) / 3.6);
+        if (r > 1.02) continue;
+        px(d, x, y, r > 0.82 ? edge : (x - 10) + (y - 4) < -1.5 ? light : head);
       }
-      px(d, 11, 0, light);                            // tip
+      px(d, 9, 2, light); px(d, 10, 2, light);          // top sheen
     } else if (type === 'hoe') {
-      hline(d, 5, 11, 3, head); hline(d, 6, 11, 4, dark);
-      vline(d, 5, 4, 6, head); px(d, 5, 7, dark);     // down flange
-      px(d, 5, 3, light); px(d, 6, 3, light);
+      // horizontal top bar with a short downward flange (L-shape)
+      for (let x = 8; x <= 13; x++) { px(d, x, 2, light); px(d, x, 3, head); px(d, x, 4, edge); }
+      px(d, 8, 5, head); px(d, 8, 6, dark); px(d, 7, 6, edge);   // flange
+      px(d, 7, 2, edge); px(d, 14, 2, edge); px(d, 14, 3, edge); // contour
     }
   };
 }
@@ -755,6 +784,55 @@ const P = {
   },
   meat_raw: haunchPainter([198, 86, 74], [226, 130, 110], 1),
   meat_roast: haunchPainter([150, 88, 44], [190, 130, 70], 0.9),
+  raw_beef: haunchPainter([176, 66, 62], [214, 108, 98], 1),
+  cooked_beef: haunchPainter([120, 74, 44], [168, 112, 66], 0.9),
+  raw_chicken: haunchPainter([228, 190, 166], [246, 220, 200], 1),
+  cooked_chicken: haunchPainter([206, 150, 92], [232, 186, 122], 0.9),
+  feather: (d, rnd) => {
+    const shaft = [206, 210, 220], vane = [244, 247, 252], vane2 = [216, 222, 232];
+    for (let i = 0; i <= 10; i++) {                    // central quill, top-right → bottom-left
+      const x = 12 - Math.round(i * 0.7), y = 3 + i;
+      px(d, x, y, shaft);
+      if (i > 0 && i < 9) {                            // barbs to either side
+        px(d, x - 1, y, vane); px(d, x - 2, y + 1, vane2, 210);
+        px(d, x + 1, y - 1, i < 8 ? vane : vane2);
+      }
+    }
+    px(d, 12, 2, [188, 194, 204]);                     // quill tip
+  },
+  wool: (d, rnd) => {
+    for (let y = 2; y <= 13; y++) for (let x = 2; x <= 13; x++) {
+      if ((x <= 3 || x >= 12) && (y <= 3 || y >= 12)) continue;   // round the corners
+      px(d, x, y, jitter([236, 238, 240], rnd, 0.05));
+    }
+    speckle(d, rnd, [[212, 214, 218]], 0.16);
+    speckle(d, rnd, [[251, 251, 253]], 0.14);
+  },
+  gunpowder: (d, rnd) => {
+    blob(d, rnd, 8, 10.5, 5, 2.6, [42, 42, 46], { light: [72, 72, 76], dark: [26, 26, 28] });
+    for (let i = 0; i < 22; i++) {                     // scattered grains
+      px(d, 3 + ((rnd() * 10) | 0), 5 + ((rnd() * 8) | 0), jitter([54, 54, 58], rnd, 0.2));
+    }
+    px(d, 6, 9, [96, 96, 100]); px(d, 10, 11, [80, 80, 84]);
+  },
+  bone: (d, rnd) => {
+    const c = [238, 236, 226], c2 = [206, 202, 190], hi = [252, 250, 244];
+    line(d, 5, 11, 11, 5, c); line(d, 6, 11, 12, 5, hi); line(d, 5, 12, 11, 6, c2);
+    for (const [kx, ky] of [[4, 12], [12, 4]]) {       // knobbed ends
+      px(d, kx, ky, c); px(d, kx + 1, ky, c); px(d, kx, ky + 1, c);
+      px(d, kx - 1, ky - 1, c2); px(d, kx + 1, ky + 1, c2);
+    }
+  },
+  bone_meal: (d, rnd) => {
+    blob(d, rnd, 8, 10, 5, 2.8, [232, 232, 224], { light: [251, 251, 246], dark: [200, 200, 190] });
+    speckle(d, rnd, [[248, 248, 242]], 0.2);
+    for (let i = 0; i < 8; i++) px(d, 2 + rnd() * 12, 4 + rnd() * 6, [244, 244, 238], 150);
+  },
+  egg: (d, rnd) => {
+    blob(d, rnd, 8, 8.5, 3.4, 4.2, [238, 232, 214], { light: [252, 248, 236], dark: [204, 194, 170] });
+    px(d, 6, 6, [252, 249, 240]); px(d, 7, 6, [250, 246, 236]);   // highlight
+    speckle(d, rnd, [[220, 210, 186]], 0.06);
+  },
 };
 
 // Cracks + tools are generated families.
@@ -1249,11 +1327,58 @@ export function registerTexture(key, painterOrSpec) {
 }
 
 // ── Atlas assembly ────────────────────────────────────────────────
+// The block/item set was renamed to familiar names, but the procedural
+// painters in `P` are still keyed by their original names. This maps the
+// new texture keys back to the painter that draws them; paints seed with
+// the resolved (original) key so textures stay pixel-identical.
+const TEX_ALIAS = {
+  bedrock: 'corestone', dirt: 'soil', grass_block_top: 'grass_top',
+  grass_block_side: 'grass_side', oak_log_end: 'alder_log_end', oak_log: 'alder_log',
+  oak_leaves: 'alder_leaves', spruce_log_end: 'fern_log_end', spruce_log: 'fern_log',
+  spruce_leaves: 'fern_leaves', oak_planks: 'planks', bricks: 'brick',
+  glow_lichen: 'glowmoss', diamond_ore: 'sunstone_ore', crafting_table_top: 'worktable_top',
+  crafting_table_side: 'worktable_side', furnace_top: 'kiln_top', furnace_side: 'kiln_side',
+  furnace_front: 'kiln_front', short_grass: 'tallgrass', poppy: 'emberbloom',
+  cornflower: 'azurebell', dead_bush: 'deadbush', cactus_top: 'spineplant_top',
+  cactus: 'spineplant', sweet_berry_bush: 'berrybush', sweet_berry_bush_ripe: 'berrybush_ripe',
+  sandstone_top: 'duststone_top', sandstone: 'duststone', diamond_block: 'sunstone_block',
+  stone_bricks: 'hewnstone', mossy_cobblestone: 'mossrock', obsidian: 'basalt',
+  vines: 'vine', cobblestone: 'rubble', oak_sapling: 'alder_sprout',
+  spruce_sapling: 'fern_sprout', torch: 'wisp_torch', ladder: 'rungs',
+  bed_top: 'bedroll_top', bed_side: 'bedroll_side', chest_top: 'stowbox_top',
+  chest_side: 'stowbox_side', chest_front: 'stowbox_front', netherrack: 'scorchstone',
+  soul_sand: 'emberash', glowstone: 'glowvein_ore', nether_wart_block: 'charfungus',
+  nether_bricks: 'scorchbrick', nether_portal: 'rift_smolder', end_stone: 'voidstone',
+  end_moss_top: 'hollowmoss_top', end_moss_side: 'hollowmoss_side', end_glass: 'voidglass',
+  end_portal: 'rift_hollow', beacon: 'dawn_beacon', oak_door: 'timber_door',
+  iron_door: 'ironbound_door', oak_trapdoor: 'timber_flap', iron_trapdoor: 'ironbound_flap',
+  wooden_pickaxe: 'pick_timber', wooden_axe: 'axe_timber', wooden_shovel: 'shovel_timber',
+  wooden_hoe: 'hoe_timber', wooden_sword: 'blade_timber', stone_pickaxe: 'pick_stone',
+  stone_axe: 'axe_stone', stone_shovel: 'shovel_stone', stone_hoe: 'hoe_stone',
+  stone_sword: 'blade_stone', copper_pickaxe: 'pick_copper', copper_axe: 'axe_copper',
+  copper_shovel: 'shovel_copper', copper_hoe: 'hoe_copper', copper_sword: 'blade_copper',
+  iron_pickaxe: 'pick_iron', iron_axe: 'axe_iron', iron_shovel: 'shovel_iron',
+  iron_hoe: 'hoe_iron', iron_sword: 'blade_iron', netherite_pickaxe: 'pick_sunsteel',
+  netherite_axe: 'axe_sunsteel', netherite_shovel: 'shovel_sunsteel', netherite_hoe: 'hoe_sunsteel',
+  netherite_sword: 'blade_sunsteel', stick: 'rod', clay_ball: 'clay_lump',
+  raw_copper: 'copper_ore_chunk', raw_iron: 'iron_ore_chunk', diamond: 'sunstone',
+  leather: 'hide', glowstone_dust: 'glimmer_dust', seeds: 'tuber_seed',
+  netherite_scrap: 'smolder_shard', netherite_ingot: 'sunsteel_ingot', dragon_core: 'sovereign_core',
+  flint_and_steel: 'kindle_flint', bucket: 'clay_vessel', water_bucket: 'vessel_water',
+  lava_bucket: 'vessel_lava', sweet_berries: 'berries', potato: 'tuber',
+  baked_potato: 'tuber_roast', raw_porkchop: 'meat_raw', cooked_porkchop: 'meat_roast',
+};
+
 function paintKey(key) {
-  const painter = P[key] ?? MOD_PAINTERS.get(key);
+  let painter = P[key] ?? MOD_PAINTERS.get(key);
+  let seedKey = key;
+  if (!painter) {
+    const a = TEX_ALIAS[key];
+    if (a) { painter = P[a] ?? MOD_PAINTERS.get(a); seedKey = a; }
+  }
   if (!painter) throw new Error(`atlas: no painter for texture key "${key}"`);
   const d = new Uint8ClampedArray(W * W * 4);
-  painter(d, mulberry32(normalizeSeed(key)));
+  painter(d, mulberry32(normalizeSeed(seedKey)));
   return d;
 }
 

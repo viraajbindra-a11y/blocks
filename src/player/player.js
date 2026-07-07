@@ -193,6 +193,11 @@ export class Player {
     } else if (this.inWater) {
       this.vel[1] += GRAVITY * 0.18 * dt;
       if (move.jump) this.vel[1] = approach(this.vel[1], SWIM_SPEED, 34 * dt);
+      // Climb-out boost: swimming into a bank while moving lifts the player
+      // so they can crest the lip instead of being pinned in the water.
+      if (this._hitWall && (move.fwd !== 0 || move.strafe !== 0)) {
+        this.vel[1] = Math.max(this.vel[1], 3.6);
+      }
       this.vel[1] *= (1 - 1.8 * dt);                     // drag
       this.vel[1] = clamp(this.vel[1], -3.4, 4);
     } else if (this.onClimbable) {
@@ -223,6 +228,7 @@ export class Player {
 
     // Integrate with collision, axis by axis
     const wasOnGround = this.onGround;
+    this._hitWall = false;   // set by _moveAxis on horizontal block; read next frame
     this._moveAxis(0, this.vel[0] * dt, height, wasOnGround && this.crouching);
     this._moveAxis(2, this.vel[2] * dt, height, wasOnGround && this.crouching);
     this._moveAxis(1, this.vel[1] * dt, height, false);
@@ -341,9 +347,10 @@ export class Player {
         if (delta < 0) this.onGround = true;
       } else {
         // Auto step-up: a grounded walk into a rise of ≤0.5 (ledges, steps)
-        // climbs it instead of stopping dead.
+        // climbs it instead of stopping dead. Also allowed while swimming,
+        // so cresting a bank flows straight into a step out of the water.
         let stepped = false;
-        if (this.onGround) {
+        if (this.onGround || this.inWater) {
           const savedY = pos[1];
           pos[1] = savedY + 0.501;
           if (!this._overlaps(pos, height)) {
@@ -358,6 +365,7 @@ export class Player {
         if (!stepped) {
           pos[axis] = orig;
           this.vel[axis] = 0;
+          this._hitWall = true;   // read by the swim climb-out boost
         }
       }
     } else if (axis === 1) {

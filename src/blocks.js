@@ -2,66 +2,94 @@
 // gameplay properties. Data-driven: other systems read from here.
 //
 // Texture keys reference layers in the procedural atlas (render/atlas.js).
-// Tool tiers: 0 hand · 1 timber · 2 stone · 3 copper · 4 iron.
+// Tool tiers: 0 hand · 1 wooden · 2 stone · 3 copper · 4 iron.
 
 export const B = {
-  AIR: 0,          CORESTONE: 1,    STONE: 2,        SOIL: 3,
-  GRASS: 4,        SAND: 5,         GRAVEL: 6,       CLAY: 7,
-  SNOW: 8,         ICE: 9,          ALDER_LOG: 10,   ALDER_LEAVES: 11,
-  FERN_LOG: 12,    FERN_LEAVES: 13, PLANKS: 14,      WATER: 15,
+  AIR: 0,          BEDROCK: 1,      STONE: 2,        DIRT: 3,
+  GRASS_BLOCK: 4,  SAND: 5,         GRAVEL: 6,       CLAY: 7,
+  SNOW: 8,         ICE: 9,          OAK_LOG: 10,     OAK_LEAVES: 11,
+  SPRUCE_LOG: 12,  SPRUCE_LEAVES: 13, OAK_PLANKS: 14, WATER: 15,
   // 16..21 = flowing water, levels 6..1
   LAVA: 22,
   // 23..25 = flowing lava, levels 5/3/1
-  GLASS: 26,       BRICK: 27,       COPPER_BLOCK: 28, IRON_BLOCK: 29,
-  GLOWMOSS: 30,    LANTERN: 31,     COAL_ORE: 32,    COPPER_ORE: 33,
-  IRON_ORE: 34,    SUNSTONE_ORE: 35, WORKTABLE: 36,  KILN: 37,
-  TALLGRASS: 38,   EMBERBLOOM: 39,  AZUREBELL: 40,   DEADBUSH: 41,
-  SPINEPLANT: 42,  BERRYBUSH: 43,   BERRYBUSH_RIPE: 44, FARMLAND: 45,
+  GLASS: 26,       BRICKS: 27,      COPPER_BLOCK: 28, IRON_BLOCK: 29,
+  GLOW_LICHEN: 30, LANTERN: 31,     COAL_ORE: 32,    COPPER_ORE: 33,
+  IRON_ORE: 34,    DIAMOND_ORE: 35, CRAFTING_TABLE: 36, FURNACE: 37,
+  SHORT_GRASS: 38, POPPY: 39,       CORNFLOWER: 40,  DEAD_BUSH: 41,
+  CACTUS: 42,      SWEET_BERRY_BUSH: 43, SWEET_BERRY_BUSH_RIPE: 44, FARMLAND: 45,
   CROP_0: 46,      CROP_1: 47,      CROP_2: 48,      CROP_3: 49,
-  DUSTSTONE: 50,   SUNSTONE_BLOCK: 51, HEWNSTONE: 52, MOSSROCK: 53,
-  BASALT: 54,      VINE: 55,        MUD: 56,         RUBBLE: 57,
-  ALDER_SPROUT: 58, FERN_SPROUT: 59,
+  SANDSTONE: 50,   DIAMOND_BLOCK: 51, STONE_BRICKS: 52, MOSSY_COBBLESTONE: 53,
+  OBSIDIAN: 54,    VINES: 55,       MUD: 56,         COBBLESTONE: 57,
+  OAK_SAPLING: 58, SPRUCE_SAPLING: 59,
   // ── Wave 2: utility + dimensions ──
-  WISP_TORCH: 60,  RUNGS: 61,       BEDROLL: 62,     STOWBOX: 63,
-  SCORCHSTONE: 64, EMBERASH: 65,    GLOWVEIN_ORE: 66, CHARFUNGUS: 67,
-  SCORCHBRICK: 68, RIFT_SMOLDER: 69, VOIDSTONE: 70,  HOLLOWMOSS: 71,
-  VOIDGLASS: 72,   RIFT_HOLLOW: 73, DAWN_BEACON: 74,
+  TORCH: 60,       LADDER: 61,      BED: 62,         CHEST: 63,
+  NETHERRACK: 64,  SOUL_SAND: 65,   GLOWSTONE: 66,   NETHER_WART_BLOCK: 67,
+  NETHER_BRICKS: 68, NETHER_PORTAL: 69, END_STONE: 70, END_MOSS: 71,
+  END_GLASS: 72,   END_PORTAL: 73,  BEACON: 74,
   // ── Shaped blocks ─────────────────────────────────────────────────
-  // Each ledge (slab) uses 2 ids: bottom, top. Each step (stair) uses
-  // 8 ids: 2 halves × 4 facings. State is baked into the id so chunk
-  // storage stays a flat Uint8Array. Laid out contiguously per material
-  // so the shape helpers can address states by offset.
-  PLANK_LEDGE: 75,          // 75 bottom, 76 top
-  RUBBLE_LEDGE: 77,         // 77 bottom, 78 top
-  SCORCHBRICK_LEDGE: 79,    // 79 bottom, 80 top
-  PLANK_STEP: 81,           // 81..88  (half<<2 | facing)
-  RUBBLE_STEP: 89,          // 89..96
-  SCORCHBRICK_STEP: 97,     // 97..104
+  // Each slab uses 2 ids: bottom, top. Each stair uses 8 ids: 2 halves
+  // × 4 facings. State is baked into the id so chunk storage stays a
+  // flat Uint8Array. Laid out contiguously per material so the shape
+  // helpers can address states by offset.
+  OAK_SLAB: 75,             // 75 bottom, 76 top
+  COBBLESTONE_SLAB: 77,     // 77 bottom, 78 top
+  NETHER_BRICK_SLAB: 79,    // 79 bottom, 80 top
+  OAK_STAIRS: 81,           // 81..88  (half<<2 | facing)
+  COBBLESTONE_STAIRS: 89,   // 89..96
+  NETHER_BRICK_STAIRS: 97,  // 97..104
   // ── Auto-connecting shapes ────────────────────────────────────────
-  // Palings (fences) & ramparts (walls) are a single id each: their arm
-  // geometry is computed at mesh/collision time from the 4 horizontal
-  // neighbors, not baked into the id. The gate bakes 2 bits of state:
-  // axis (which line it sits in) and open/closed.
-  TIMBER_PALING: 105,       // 105
-  TIMBER_GATE: 106,         // 106..109  (axis<<1 | open)
-  RUBBLE_RAMPART: 110,      // 110
-  HEWNSTONE_RAMPART: 111,   // 111
+  // Fences & walls are a single id each: their arm geometry is computed
+  // at mesh/collision time from the 4 horizontal neighbors, not baked
+  // into the id. The gate bakes 2 bits of state: axis (which line it
+  // sits in) and open/closed.
+  OAK_FENCE: 105,           // 105
+  OAK_FENCE_GATE: 106,      // 106..109  (axis<<1 | open)
+  COBBLESTONE_WALL: 110,    // 110
+  STONE_BRICK_WALL: 111,    // 111
   // ── Rotational & thin openables ───────────────────────────────────
-  // Doorleaves are two cells tall; each material bakes 32 states into
+  // Doors are two cells tall; each material bakes 32 states into
   // contiguous ids: (half<<4 | hinge<<3 | open<<2 | facing). facing 0..3
   // = +z,-z,+x,-x is the direction the closed leaf faces; hinge 0/1 =
   // left/right post; open toggles the ^4 bit; half 0/1 = lower/upper.
-  // Flapgates (trapdoors) bake 16 states: (attach<<3 | open<<2 | facing),
+  // Trapdoors bake 16 states: (attach<<3 | open<<2 | facing),
   // attach 0/1 = bottom/top of the cell, facing = the hinged edge.
-  TIMBER_DOOR: 112,         // 112..143
-  IRONBOUND_DOOR: 144,      // 144..175
-  TIMBER_FLAP: 176,         // 176..191
-  IRONBOUND_FLAP: 192,      // 192..207
-  // Panes: one id each, arm geometry from neighbors like palings but thin
+  OAK_DOOR: 112,            // 112..143
+  IRON_DOOR: 144,           // 144..175
+  OAK_TRAPDOOR: 176,        // 176..191
+  IRON_TRAPDOOR: 192,       // 192..207
+  // Panes: one id each, arm geometry from neighbors like fences but thin
   // and non-tall (glass cross-section). Translucent, non-opaque.
   GLASS_PANE: 208,          // 208
-  VOIDGLASS_PANE: 209,      // 209
+  END_GLASS_PANE: 209,      // 209
 };
+
+// ── Legacy internal aliases ───────────────────────────────────────
+// The block set was renamed to familiar names, but a lot of worldgen /
+// entity / interaction / fluid code still refers to blocks by their
+// original internal names. These aliases point the old names at the
+// SAME numeric ids (so saved chunks are unaffected — ids never moved).
+// Not user-visible: display names live in the def() registrations below.
+Object.assign(B, {
+  GRASS: B.GRASS_BLOCK,        SOIL: B.DIRT,
+  STOWBOX: B.CHEST,            PLANKS: B.OAK_PLANKS,
+  RUBBLE: B.COBBLESTONE,       CORESTONE: B.BEDROCK,
+  BERRYBUSH: B.SWEET_BERRY_BUSH, BERRYBUSH_RIPE: B.SWEET_BERRY_BUSH_RIPE,
+  ALDER_LOG: B.OAK_LOG,        ALDER_LEAVES: B.OAK_LEAVES,
+  ALDER_SPROUT: B.OAK_SAPLING, FERN_LOG: B.SPRUCE_LOG,
+  FERN_LEAVES: B.SPRUCE_LEAVES, VINE: B.VINES,
+  SPINEPLANT: B.CACTUS,        TALLGRASS: B.SHORT_GRASS,
+  EMBERBLOOM: B.POPPY,         AZUREBELL: B.CORNFLOWER,
+  DEADBUSH: B.DEAD_BUSH,       DUSTSTONE: B.SANDSTONE,
+  MOSSROCK: B.MOSSY_COBBLESTONE, GLOWMOSS: B.GLOW_LICHEN,
+  // Smolder (Nether-analog) blocks
+  SCORCHSTONE: B.NETHERRACK,   EMBERASH: B.SOUL_SAND,
+  CHARFUNGUS: B.NETHER_WART_BLOCK, GLOWVEIN_ORE: B.GLOWSTONE,
+  SCORCHBRICK: B.NETHER_BRICKS, BASALT: B.OBSIDIAN,
+  // Hollow (End-analog) blocks
+  VOIDSTONE: B.END_STONE,      HOLLOWMOSS: B.END_MOSS,
+  VOIDGLASS: B.END_GLASS,      SUNSTONE_BLOCK: B.DIAMOND_BLOCK,
+  SUNSTONE_ORE: B.DIAMOND_ORE,
+});
 
 // ── Fluid helpers ─────────────────────────────────────────────────
 export const isWater = id => id >= 15 && id <= 21;
@@ -80,7 +108,7 @@ export function fluidLevel(id) {
 
 // Ids 0-209 are reserved for the base game (0-74 terrain/utility, 75-104
 // shaped-block state families, 105-111 auto-connecting shapes, 112-209
-// doorleaf/flapgate/pane families); 210+ are assigned to mods in
+// door/trapdoor/pane families); 210+ are assigned to mods in
 // registration order (block storage is Uint8Array, so 256 ids total).
 export const BLOCKS = new Array(256).fill(null);
 
@@ -100,7 +128,7 @@ const DEFAULTS = {
   climbable: false,
   replaceable: false, // placing a block into this cell replaces it
   placeOn: null,      // array of block ids the block must sit on
-  use: null,          // right-click: 'worktable'|'kiln'|'berries'|'sleep'|'stowbox'
+  use: null,          // right-click: 'worktable'|'kiln'|'berries'|'sleep'|'stowbox' (internal ids)
   randomTick: null,   // 'grass' | 'crop' | 'berry' | 'sprout'
   needsFloor: false,  // must sit on a solid block
   needsWall: false,   // must touch a solid block horizontally
@@ -134,59 +162,60 @@ function def(id, key, name, props = {}) {
 
 // ── Terrain ───────────────────────────────────────────────────────
 def(B.AIR, 'air', 'Air', { solid: false, opaque: false, drops: [], hardness: 0 });
-def(B.CORESTONE, 'corestone', 'Corestone', { hardness: -1, drops: [], sound: 'stone' });
+def(B.BEDROCK, 'bedrock', 'Bedrock', { hardness: -1, drops: [], sound: 'stone' });
 def(B.STONE, 'stone', 'Stone', {
   hardness: 6, tool: 'pick', minTier: 1, sound: 'stone',
-  drops: [{ item: 'rubble', min: 1, max: 1 }],
+  drops: [{ item: 'cobblestone', min: 1, max: 1 }],
 });
-def(B.SOIL, 'soil', 'Soil', { hardness: 0.6, tool: 'shovel', sound: 'soft' });
-def(B.GRASS, 'grass', 'Meadow Soil', {
+def(B.DIRT, 'dirt', 'Dirt', { hardness: 0.6, tool: 'shovel', sound: 'soft' });
+def(B.GRASS_BLOCK, 'grass_block', 'Grass Block', {
   hardness: 0.7, tool: 'shovel', sound: 'soft', randomTick: 'grass',
-  tex: { top: 'grass_top', bottom: 'soil', side: 'grass_side' },
-  drops: [{ item: 'soil', min: 1, max: 1 }],
+  tex: { top: 'grass_block_top', bottom: 'dirt', side: 'grass_block_side' },
+  drops: [{ item: 'dirt', min: 1, max: 1 }],
 });
 def(B.SAND, 'sand', 'Sand', { hardness: 0.6, tool: 'shovel', sound: 'sand' });
 def(B.GRAVEL, 'gravel', 'Gravel', { hardness: 0.7, tool: 'shovel', sound: 'sand' });
-def(B.CLAY, 'clay', 'Clay Bed', {
+def(B.CLAY, 'clay', 'Clay', {
   hardness: 0.7, tool: 'shovel', sound: 'soft',
-  drops: [{ item: 'clay_lump', min: 3, max: 4 }],
+  drops: [{ item: 'clay_ball', min: 3, max: 4 }],
 });
-def(B.SNOW, 'snow', 'Packed Snow', { hardness: 0.5, tool: 'shovel', sound: 'snow' });
-def(B.ICE, 'ice', 'River Ice', {
+def(B.SNOW, 'snow', 'Snow', { hardness: 0.5, tool: 'shovel', sound: 'snow' });
+def(B.ICE, 'ice', 'Ice', {
   hardness: 0.8, tool: 'pick', sound: 'glass', translucent: true, opaque: false, drops: [],
 });
 def(B.MUD, 'mud', 'Mud', { hardness: 0.7, tool: 'shovel', sound: 'soft' });
-def(B.DUSTSTONE, 'duststone', 'Duststone', {
+def(B.SANDSTONE, 'sandstone', 'Sandstone', {
   hardness: 4, tool: 'pick', minTier: 1, sound: 'stone',
-  tex: { top: 'duststone_top', bottom: 'duststone_top', side: 'duststone' },
+  tex: { top: 'sandstone_top', bottom: 'sandstone_top', side: 'sandstone' },
 });
-def(B.BASALT, 'basalt', 'Basalt', { hardness: 8, tool: 'pick', minTier: 2, sound: 'stone' });
-def(B.RUBBLE, 'rubble', 'Rubble', { hardness: 5.5, tool: 'pick', minTier: 1, sound: 'stone' });
-def(B.MOSSROCK, 'mossrock', 'Mossrock', {
+// Quenched lava; also the Nether-portal frame material.
+def(B.OBSIDIAN, 'obsidian', 'Obsidian', { hardness: 8, tool: 'pick', minTier: 2, sound: 'stone' });
+def(B.COBBLESTONE, 'cobblestone', 'Cobblestone', { hardness: 5.5, tool: 'pick', minTier: 1, sound: 'stone' });
+def(B.MOSSY_COBBLESTONE, 'mossy_cobblestone', 'Mossy Cobblestone', {
   hardness: 5.5, tool: 'pick', minTier: 1, sound: 'stone',
-  drops: [{ item: 'rubble', min: 1, max: 1 }],
+  drops: [{ item: 'cobblestone', min: 1, max: 1 }],
 });
 
 // ── Wood & foliage ───────────────────────────────────────────────
-def(B.ALDER_LOG, 'alder_log', 'Alderwood Log', {
+def(B.OAK_LOG, 'oak_log', 'Oak Log', {
   hardness: 2.4, tool: 'axe', sound: 'wood',
-  tex: { top: 'alder_log_end', bottom: 'alder_log_end', side: 'alder_log' },
+  tex: { top: 'oak_log_end', bottom: 'oak_log_end', side: 'oak_log' },
 });
-def(B.ALDER_LEAVES, 'alder_leaves', 'Alder Canopy', {
+def(B.OAK_LEAVES, 'oak_leaves', 'Oak Leaves', {
   hardness: 0.3, sound: 'plant', opaque: false, sway: true,
-  drops: [{ item: 'alder_sprout', min: 1, max: 1, chance: 0.08 },
-          { item: 'rod', min: 1, max: 2, chance: 0.12 }],
+  drops: [{ item: 'oak_sapling', min: 1, max: 1, chance: 0.08 },
+          { item: 'stick', min: 1, max: 2, chance: 0.12 }],
 });
-def(B.FERN_LOG, 'fern_log', 'Fernwood Log', {
+def(B.SPRUCE_LOG, 'spruce_log', 'Spruce Log', {
   hardness: 2.4, tool: 'axe', sound: 'wood',
-  tex: { top: 'fern_log_end', bottom: 'fern_log_end', side: 'fern_log' },
+  tex: { top: 'spruce_log_end', bottom: 'spruce_log_end', side: 'spruce_log' },
 });
-def(B.FERN_LEAVES, 'fern_leaves', 'Fern Boughs', {
+def(B.SPRUCE_LEAVES, 'spruce_leaves', 'Spruce Leaves', {
   hardness: 0.3, sound: 'plant', opaque: false, sway: true,
-  drops: [{ item: 'fern_sprout', min: 1, max: 1, chance: 0.08 },
-          { item: 'rod', min: 1, max: 2, chance: 0.12 }],
+  drops: [{ item: 'spruce_sapling', min: 1, max: 1, chance: 0.08 },
+          { item: 'stick', min: 1, max: 2, chance: 0.12 }],
 });
-def(B.PLANKS, 'planks', 'Timber Planks', { hardness: 2.2, tool: 'axe', sound: 'wood' });
+def(B.OAK_PLANKS, 'oak_planks', 'Oak Planks', { hardness: 2.2, tool: 'axe', sound: 'wood' });
 
 // ── Fluids ────────────────────────────────────────────────────────
 const waterProps = lvl => ({
@@ -212,216 +241,215 @@ def(25, 'lava_f1', 'Lava', lavaProps());
 def(B.GLASS, 'glass', 'Glass', {
   hardness: 0.4, sound: 'glass', opaque: false, translucent: true, drops: [],
 });
-def(B.BRICK, 'brick', 'Fired Brick', { hardness: 5, tool: 'pick', minTier: 1, sound: 'stone' });
-def(B.HEWNSTONE, 'hewnstone', 'Hewn Stone', { hardness: 5.5, tool: 'pick', minTier: 1, sound: 'stone' });
-def(B.COPPER_BLOCK, 'copper_block', 'Copper Block', {
+def(B.BRICKS, 'bricks', 'Bricks', { hardness: 5, tool: 'pick', minTier: 1, sound: 'stone' });
+def(B.STONE_BRICKS, 'stone_bricks', 'Stone Bricks', { hardness: 5.5, tool: 'pick', minTier: 1, sound: 'stone' });
+def(B.COPPER_BLOCK, 'copper_block', 'Block of Copper', {
   hardness: 7, tool: 'pick', minTier: 2, sound: 'metal',
 });
-def(B.IRON_BLOCK, 'iron_block', 'Iron Block', {
+def(B.IRON_BLOCK, 'iron_block', 'Block of Iron', {
   hardness: 9, tool: 'pick', minTier: 3, sound: 'metal',
 });
-def(B.SUNSTONE_BLOCK, 'sunstone_block', 'Sunstone Block', {
+// Still the End-portal frame material — mechanics unchanged.
+def(B.DIAMOND_BLOCK, 'diamond_block', 'Block of Diamond', {
   hardness: 7, tool: 'pick', minTier: 3, sound: 'metal', light: 14,
 });
-def(B.GLOWMOSS, 'glowmoss', 'Glowmoss', {
+def(B.GLOW_LICHEN, 'glow_lichen', 'Glow Lichen', {
   hardness: 0.4, sound: 'plant', light: 13, opaque: true,
 });
-def(B.LANTERN, 'lantern', 'Wisp Lantern', {
+def(B.LANTERN, 'lantern', 'Lantern', {
   hardness: 0.8, sound: 'metal', light: 15, opaque: false, solid: true,
 });
-def(B.WORKTABLE, 'worktable', 'Worktable', {
+def(B.CRAFTING_TABLE, 'crafting_table', 'Crafting Table', {
   hardness: 2.4, tool: 'axe', sound: 'wood', use: 'worktable',
-  tex: { top: 'worktable_top', bottom: 'planks', side: 'worktable_side' },
+  tex: { top: 'crafting_table_top', bottom: 'oak_planks', side: 'crafting_table_side' },
 });
-def(B.KILN, 'kiln', 'Stone Kiln', {
+def(B.FURNACE, 'furnace', 'Furnace', {
   hardness: 5, tool: 'pick', minTier: 1, sound: 'stone', use: 'kiln',
-  tex: { top: 'kiln_top', bottom: 'kiln_top', side: 'kiln_side', pz: 'kiln_front' },
+  tex: { top: 'furnace_top', bottom: 'furnace_top', side: 'furnace_side', pz: 'furnace_front' },
 });
 
 // ── Ores ──────────────────────────────────────────────────────────
-def(B.COAL_ORE, 'coal_ore', 'Coal Seam', {
+def(B.COAL_ORE, 'coal_ore', 'Coal Ore', {
   hardness: 6, tool: 'pick', minTier: 1, sound: 'stone',
   drops: [{ item: 'coal', min: 1, max: 2 }],
 });
-def(B.COPPER_ORE, 'copper_ore', 'Copper Vein', {
+def(B.COPPER_ORE, 'copper_ore', 'Copper Ore', {
   hardness: 6.5, tool: 'pick', minTier: 2, sound: 'stone',
-  drops: [{ item: 'copper_ore_chunk', min: 1, max: 1 }],
+  drops: [{ item: 'raw_copper', min: 1, max: 1 }],
 });
-def(B.IRON_ORE, 'iron_ore', 'Iron Vein', {
+def(B.IRON_ORE, 'iron_ore', 'Iron Ore', {
   hardness: 7, tool: 'pick', minTier: 3, sound: 'stone',
-  drops: [{ item: 'iron_ore_chunk', min: 1, max: 1 }],
+  drops: [{ item: 'raw_iron', min: 1, max: 1 }],
 });
-def(B.SUNSTONE_ORE, 'sunstone_ore', 'Sunstone Seam', {
+def(B.DIAMOND_ORE, 'diamond_ore', 'Diamond Ore', {
   hardness: 8, tool: 'pick', minTier: 4, sound: 'stone', light: 7,
-  drops: [{ item: 'sunstone', min: 1, max: 2 }],
+  drops: [{ item: 'diamond', min: 1, max: 2 }],
 });
 
 // ── Plants & farming ─────────────────────────────────────────────
 const plant = (extra = {}) => Object.assign({
   solid: false, opaque: false, cross: true, hardness: 0.05,
-  sound: 'plant', sway: true, placeOn: [B.GRASS, B.SOIL, B.MUD],
+  sound: 'plant', sway: true, placeOn: [B.GRASS_BLOCK, B.DIRT, B.MUD],
 }, extra);
-def(B.TALLGRASS, 'tallgrass', 'Wild Grass', plant({
+def(B.SHORT_GRASS, 'short_grass', 'Grass', plant({
   replaceable: true,
-  drops: [{ item: 'tuber_seed', min: 1, max: 1, chance: 0.12 }],
+  drops: [{ item: 'seeds', min: 1, max: 1, chance: 0.12 }],
 }));
-def(B.EMBERBLOOM, 'emberbloom', 'Emberbloom', plant());
-def(B.AZUREBELL, 'azurebell', 'Azurebell', plant());
-def(B.DEADBUSH, 'deadbush', 'Dry Scrub', plant({
-  placeOn: [B.SAND, B.SOIL, B.DUSTSTONE],
-  drops: [{ item: 'rod', min: 1, max: 2 }],
+def(B.POPPY, 'poppy', 'Poppy', plant());
+def(B.CORNFLOWER, 'cornflower', 'Cornflower', plant());
+def(B.DEAD_BUSH, 'dead_bush', 'Dead Bush', plant({
+  placeOn: [B.SAND, B.DIRT, B.SANDSTONE],
+  drops: [{ item: 'stick', min: 1, max: 2 }],
 }));
-def(B.SPINEPLANT, 'spineplant', 'Spineplant', {
+def(B.CACTUS, 'cactus', 'Cactus', {
   hardness: 0.5, sound: 'plant', opaque: false, solid: true,
-  placeOn: [B.SAND, B.SPINEPLANT],
-  tex: { top: 'spineplant_top', bottom: 'spineplant_top', side: 'spineplant' },
+  placeOn: [B.SAND, B.CACTUS],
+  tex: { top: 'cactus_top', bottom: 'cactus_top', side: 'cactus' },
 });
-def(B.BERRYBUSH, 'berrybush', 'Bramble Bush', plant({
-  hardness: 0.4, randomTick: 'berry', placeOn: [B.GRASS, B.SOIL],
-  drops: [{ item: 'rod', min: 1, max: 1 }],
+def(B.SWEET_BERRY_BUSH, 'sweet_berry_bush', 'Sweet Berry Bush', plant({
+  hardness: 0.4, randomTick: 'berry', placeOn: [B.GRASS_BLOCK, B.DIRT],
+  drops: [{ item: 'stick', min: 1, max: 1 }],
 }));
-def(B.BERRYBUSH_RIPE, 'berrybush_ripe', 'Bramble Bush (ripe)', plant({
-  hardness: 0.4, use: 'berries', placeOn: [B.GRASS, B.SOIL],
-  drops: [{ item: 'berries', min: 1, max: 2 }, { item: 'rod', min: 1, max: 1 }],
+def(B.SWEET_BERRY_BUSH_RIPE, 'sweet_berry_bush_ripe', 'Sweet Berry Bush (ripe)', plant({
+  hardness: 0.4, use: 'berries', placeOn: [B.GRASS_BLOCK, B.DIRT],
+  drops: [{ item: 'sweet_berries', min: 1, max: 2 }, { item: 'stick', min: 1, max: 1 }],
 }));
-def(B.FARMLAND, 'farmland', 'Tilled Soil', {
+def(B.FARMLAND, 'farmland', 'Farmland', {
   hardness: 0.6, tool: 'shovel', sound: 'soft',
-  drops: [{ item: 'soil', min: 1, max: 1 }],
-  tex: { top: 'farmland', bottom: 'soil', side: 'soil' },
+  drops: [{ item: 'dirt', min: 1, max: 1 }],
+  tex: { top: 'farmland', bottom: 'dirt', side: 'dirt' },
 });
 for (let s = 0; s < 4; s++) {
-  def(B.CROP_0 + s, `crop_${s}`, 'Tuber Crop', plant({
+  def(B.CROP_0 + s, `crop_${s}`, 'Potatoes', plant({
     placeOn: [B.FARMLAND], randomTick: s < 3 ? 'crop' : null, replaceable: false,
     drops: s === 3
-      ? [{ item: 'tuber', min: 1, max: 3 }, { item: 'tuber_seed', min: 1, max: 2 }]
-      : [{ item: 'tuber_seed', min: 1, max: 1 }],
+      ? [{ item: 'potato', min: 1, max: 3 }, { item: 'seeds', min: 1, max: 2 }]
+      : [{ item: 'seeds', min: 1, max: 1 }],
   }));
 }
-def(B.VINE, 'vine', 'Trailing Vine', plant({
+def(B.VINES, 'vines', 'Vines', plant({
   climbable: true, placeOn: null, replaceable: true, drops: [],
 }));
-def(B.ALDER_SPROUT, 'alder_sprout', 'Alder Sprout', plant({
-  randomTick: 'sprout', placeOn: [B.GRASS, B.SOIL],
+def(B.OAK_SAPLING, 'oak_sapling', 'Oak Sapling', plant({
+  randomTick: 'sprout', placeOn: [B.GRASS_BLOCK, B.DIRT],
 }));
-def(B.FERN_SPROUT, 'fern_sprout', 'Fern Sprout', plant({
-  randomTick: 'sprout', placeOn: [B.GRASS, B.SOIL, B.SNOW],
+def(B.SPRUCE_SAPLING, 'spruce_sapling', 'Spruce Sapling', plant({
+  randomTick: 'sprout', placeOn: [B.GRASS_BLOCK, B.DIRT, B.SNOW],
 }));
 
 // ── Utility (wave 2) ─────────────────────────────────────────────
-def(B.WISP_TORCH, 'wisp_torch', 'Wisp Torch', {
+def(B.TORCH, 'torch', 'Torch', {
   solid: false, opaque: false, cross: true, hardness: 0.05,
   sound: 'wood', light: 13, needsFloor: true, drops: 'self',
 });
-def(B.RUNGS, 'rungs', 'Timber Rungs', {
+def(B.LADDER, 'ladder', 'Ladder', {
   solid: false, opaque: false, cross: true, hardness: 0.4,
   sound: 'wood', climbable: true, needsWall: true, sway: false,
 });
-def(B.BEDROLL, 'bedroll', 'Bedroll', {
+def(B.BED, 'bed', 'Bed', {
   hardness: 0.4, sound: 'soft', use: 'sleep', opaque: false, solid: true,
-  tex: { top: 'bedroll_top', bottom: 'planks', side: 'bedroll_side' },
+  tex: { top: 'bed_top', bottom: 'oak_planks', side: 'bed_side' },
 });
-def(B.STOWBOX, 'stowbox', 'Stowbox', {
+def(B.CHEST, 'chest', 'Chest', {
   hardness: 2.4, tool: 'axe', sound: 'wood', use: 'stowbox',
-  tex: { top: 'stowbox_top', bottom: 'stowbox_top', side: 'stowbox_side', pz: 'stowbox_front' },
+  tex: { top: 'chest_top', bottom: 'chest_top', side: 'chest_side', pz: 'chest_front' },
 });
-def(B.DAWN_BEACON, 'dawn_beacon', 'Dawn Beacon', {
+def(B.BEACON, 'beacon', 'Beacon', {
   hardness: 6, tool: 'pick', minTier: 3, sound: 'metal', light: 15,
 });
 
-// ── The Smolder ──────────────────────────────────────────────────
-def(B.SCORCHSTONE, 'scorchstone', 'Scorchstone', {
+// ── The Nether ───────────────────────────────────────────────────
+def(B.NETHERRACK, 'netherrack', 'Netherrack', {
   hardness: 2.2, tool: 'pick', minTier: 1, sound: 'stone',
 });
-def(B.EMBERASH, 'emberash', 'Emberash', {
+def(B.SOUL_SAND, 'soul_sand', 'Soul Sand', {
   hardness: 0.6, tool: 'shovel', sound: 'sand',
 });
-def(B.GLOWVEIN_ORE, 'glowvein_ore', 'Glowvein', {
+def(B.GLOWSTONE, 'glowstone', 'Glowstone', {
   hardness: 4.5, tool: 'pick', minTier: 2, sound: 'stone', light: 9,
-  drops: [{ item: 'smolder_shard', min: 1, max: 2 }],
+  drops: [{ item: 'netherite_scrap', min: 1, max: 2 }],
 });
-def(B.CHARFUNGUS, 'charfungus', 'Charfungus', {
+def(B.NETHER_WART_BLOCK, 'nether_wart_block', 'Nether Wart Block', {
   solid: false, opaque: false, cross: true, hardness: 0.05, sound: 'plant',
-  light: 4, placeOn: [B.SCORCHSTONE, B.EMBERASH], drops: 'self',
+  light: 4, placeOn: [B.NETHERRACK, B.SOUL_SAND], drops: 'self',
 });
-def(B.SCORCHBRICK, 'scorchbrick', 'Scorchbrick', {
+def(B.NETHER_BRICKS, 'nether_bricks', 'Nether Bricks', {
   hardness: 5, tool: 'pick', minTier: 1, sound: 'stone',
 });
-def(B.RIFT_SMOLDER, 'rift_smolder', 'Smolder Rift', {
+def(B.NETHER_PORTAL, 'nether_portal', 'Nether Portal', {
   solid: false, opaque: false, translucent: true, hardness: -1, drops: [],
   light: 11, sound: 'glass',
 });
 
-// ── The Hollow ───────────────────────────────────────────────────
-def(B.VOIDSTONE, 'voidstone', 'Voidstone', {
+// ── The End ──────────────────────────────────────────────────────
+def(B.END_STONE, 'end_stone', 'End Stone', {
   hardness: 5, tool: 'pick', minTier: 1, sound: 'stone',
 });
-def(B.HOLLOWMOSS, 'hollowmoss', 'Hollowmoss', {
+def(B.END_MOSS, 'end_moss', 'End Moss', {
   hardness: 0.7, tool: 'shovel', sound: 'soft', light: 2,
-  tex: { top: 'hollowmoss_top', bottom: 'voidstone', side: 'hollowmoss_side' },
-  drops: [{ item: 'voidstone', min: 1, max: 1 }],
+  tex: { top: 'end_moss_top', bottom: 'end_stone', side: 'end_moss_side' },
+  drops: [{ item: 'end_stone', min: 1, max: 1 }],
 });
-def(B.VOIDGLASS, 'voidglass', 'Voidglass', {
+def(B.END_GLASS, 'end_glass', 'End Glass', {
   hardness: 0.5, sound: 'glass', opaque: false, translucent: true, drops: [],
   light: 11,
 });
-def(B.RIFT_HOLLOW, 'rift_hollow', 'Hollow Rift', {
+def(B.END_PORTAL, 'end_portal', 'End Portal', {
   solid: false, opaque: false, translucent: true, hardness: -1, drops: [],
   light: 9, sound: 'glass',
 });
 
-// ── Shaped blocks: ledges (slabs) & steps (stairs) ────────────────
+// ── Shaped blocks: slabs & stairs ─────────────────────────────────
 // Each material registers a family of ids, one per orientation/half
 // state. All states share one inventory item (the `item` prop) and the
 // base material's textures. Shaped blocks are solid but NOT opaque, so
 // light passes and caves behave; their per-face geometry & collision
 // AABBs come from shapeBoxes() below.
 //
-// STEP id layout, relative to the family base: (half<<2) | facing,
-// facing 0..3 = +z,-z,+x,-x (the step's tall back wall faces `facing`).
-const STEP_STATES = 8;
+// STAIR id layout, relative to the family base: (half<<2) | facing,
+// facing 0..3 = +z,-z,+x,-x (the stair's tall back wall faces `facing`).
+const STAIR_STATES = 8;
 
-function ledgeFamily(base, key, name, tex, from) {
-  const item = `${key}_ledge`;
+function slabFamily(base, key, name, tex, from) {
   const p = {
     hardness: from.hardness, tool: from.tool, minTier: from.minTier,
-    sound: from.sound, opaque: false, tex, shape: 'slab', item,
+    sound: from.sound, opaque: false, tex, shape: 'slab', item: key,
     // Every state drops the shared item (their own keys aren't items).
-    drops: [{ item, min: 1, max: 1 }],
+    drops: [{ item: key, min: 1, max: 1 }],
   };
-  def(base + 0, `${key}_ledge`, name, { ...p, half: 'bottom' });
-  def(base + 1, `${key}_ledge_top`, name, { ...p, half: 'top' });
+  def(base + 0, key, name, { ...p, half: 'bottom' });
+  def(base + 1, `${key}_top`, name, { ...p, half: 'top' });
 }
 
-function stepFamily(base, key, name, tex, from) {
-  const item = `${key}_step`;
+function stairFamily(base, key, name, tex, from) {
   const p = {
     hardness: from.hardness, tool: from.tool, minTier: from.minTier,
-    sound: from.sound, opaque: false, tex, shape: 'stair', item,
-    drops: [{ item, min: 1, max: 1 }],
+    sound: from.sound, opaque: false, tex, shape: 'stair', item: key,
+    drops: [{ item: key, min: 1, max: 1 }],
   };
-  for (let s = 0; s < STEP_STATES; s++) {
+  for (let s = 0; s < STAIR_STATES; s++) {
     const half = (s >> 2) === 1 ? 'top' : 'bottom';
     const facing = s & 3;
-    def(base + s, s === 0 ? `${key}_step` : `${key}_step_${s}`, name,
+    def(base + s, s === 0 ? key : `${key}_${s}`, name,
       { ...p, half, facing });
   }
 }
 
-// Ledges keep the base material's uniform texture on every cut face.
-ledgeFamily(B.PLANK_LEDGE, 'plank', 'Timber Ledge',
-  { all: 'planks' }, BLOCKS[B.PLANKS]);
-ledgeFamily(B.RUBBLE_LEDGE, 'rubble', 'Rubble Ledge',
-  { all: 'rubble' }, BLOCKS[B.RUBBLE]);
-ledgeFamily(B.SCORCHBRICK_LEDGE, 'scorchbrick', 'Scorchbrick Ledge',
-  { all: 'scorchbrick' }, BLOCKS[B.SCORCHBRICK]);
-stepFamily(B.PLANK_STEP, 'plank', 'Timber Step',
-  { all: 'planks' }, BLOCKS[B.PLANKS]);
-stepFamily(B.RUBBLE_STEP, 'rubble', 'Rubble Step',
-  { all: 'rubble' }, BLOCKS[B.RUBBLE]);
-stepFamily(B.SCORCHBRICK_STEP, 'scorchbrick', 'Scorchbrick Step',
-  { all: 'scorchbrick' }, BLOCKS[B.SCORCHBRICK]);
+// Slabs keep the base material's uniform texture on every cut face.
+slabFamily(B.OAK_SLAB, 'oak_slab', 'Oak Slab',
+  { all: 'oak_planks' }, BLOCKS[B.OAK_PLANKS]);
+slabFamily(B.COBBLESTONE_SLAB, 'cobblestone_slab', 'Cobblestone Slab',
+  { all: 'cobblestone' }, BLOCKS[B.COBBLESTONE]);
+slabFamily(B.NETHER_BRICK_SLAB, 'nether_brick_slab', 'Nether Brick Slab',
+  { all: 'nether_bricks' }, BLOCKS[B.NETHER_BRICKS]);
+stairFamily(B.OAK_STAIRS, 'oak_stairs', 'Oak Stairs',
+  { all: 'oak_planks' }, BLOCKS[B.OAK_PLANKS]);
+stairFamily(B.COBBLESTONE_STAIRS, 'cobblestone_stairs', 'Cobblestone Stairs',
+  { all: 'cobblestone' }, BLOCKS[B.COBBLESTONE]);
+stairFamily(B.NETHER_BRICK_STAIRS, 'nether_brick_stairs', 'Nether Brick Stairs',
+  { all: 'nether_bricks' }, BLOCKS[B.NETHER_BRICKS]);
 
-// ── Auto-connecting shapes: palings (fences) & ramparts (walls) ───
+// ── Auto-connecting shapes: fences & walls ────────────────────────
 // One id per material; the central post always renders and connecting
 // arms are added at mesh/collision time toward each neighbor that the
 // block joins (see connectsTo()). These are `tall`: their collision
@@ -435,33 +463,33 @@ function connectingBlock(id, key, name, shape, tex, from) {
     drops: [{ item: key, min: 1, max: 1 }],
   });
 }
-connectingBlock(B.TIMBER_PALING, 'timber_paling', 'Timber Palings', 'fence',
-  { all: 'planks' }, BLOCKS[B.PLANKS]);
-connectingBlock(B.RUBBLE_RAMPART, 'rubble_rampart', 'Rubble Rampart', 'wall',
-  { all: 'rubble' }, BLOCKS[B.RUBBLE]);
-connectingBlock(B.HEWNSTONE_RAMPART, 'hewnstone_rampart', 'Hewnstone Rampart', 'wall',
-  { all: 'hewnstone' }, BLOCKS[B.HEWNSTONE]);
+connectingBlock(B.OAK_FENCE, 'oak_fence', 'Oak Fence', 'fence',
+  { all: 'oak_planks' }, BLOCKS[B.OAK_PLANKS]);
+connectingBlock(B.COBBLESTONE_WALL, 'cobblestone_wall', 'Cobblestone Wall', 'wall',
+  { all: 'cobblestone' }, BLOCKS[B.COBBLESTONE]);
+connectingBlock(B.STONE_BRICK_WALL, 'stone_brick_wall', 'Stone Brick Wall', 'wall',
+  { all: 'stone_bricks' }, BLOCKS[B.STONE_BRICKS]);
 
-// Palings Gate: a swinging leaf that plugs into a paling/wall line. Two
+// Fence gate: a swinging leaf that plugs into a fence/wall line. Two
 // axis states (line along x or z) × open/closed are baked into 4 ids;
-// all share the `timber_gate` item and the plank texture. Opening only
-// changes collision + geometry, never the id family layout.
+// all share the `oak_fence_gate` item and the plank texture. Opening
+// only changes collision + geometry, never the id family layout.
 {
-  const from = BLOCKS[B.PLANKS];
+  const from = BLOCKS[B.OAK_PLANKS];
   const p = {
     hardness: from.hardness, tool: from.tool, minTier: from.minTier,
-    sound: from.sound, opaque: false, tex: { all: 'planks' }, shape: 'gate',
-    connects: true, tall: true, item: 'timber_gate', use: 'gate',
-    drops: [{ item: 'timber_gate', min: 1, max: 1 }],
+    sound: from.sound, opaque: false, tex: { all: 'oak_planks' }, shape: 'gate',
+    connects: true, tall: true, item: 'oak_fence_gate', use: 'gate',
+    drops: [{ item: 'oak_fence_gate', min: 1, max: 1 }],
   };
   for (let s = 0; s < 4; s++) {
     const axis = s >> 1, open = (s & 1) === 1;
-    def(B.TIMBER_GATE + s, s === 0 ? 'timber_gate' : `timber_gate_${s}`,
-      'Palings Gate', { ...p, axis, open });
+    def(B.OAK_FENCE_GATE + s, s === 0 ? 'oak_fence_gate' : `oak_fence_gate_${s}`,
+      'Oak Fence Gate', { ...p, axis, open });
   }
 }
 
-// ── Doorleaves (2-tall rotational openables) ──────────────────────
+// ── Doors (2-tall rotational openables) ───────────────────────────
 // A door occupies two stacked cells (lower + upper half); both halves
 // carry the SAME facing/hinge/open so meshing & collision agree, and
 // interacting with either toggles both. State is baked into 32 ids per
@@ -486,15 +514,15 @@ function doorFamily(base, key, name, tex, from, extra = {}) {
     });
   }
 }
-doorFamily(B.TIMBER_DOOR, 'timber_door', 'Timber Door',
-  { all: 'timber_door' }, BLOCKS[B.PLANKS]);
-// Ironbound door: TODO(sparkwire) — should only open when fed a power
+doorFamily(B.OAK_DOOR, 'oak_door', 'Oak Door',
+  { all: 'oak_door' }, BLOCKS[B.OAK_PLANKS]);
+// Iron door: TODO(sparkwire) — should only open when fed a power
 // signal; until the Sparkwire system lands it toggles on interact like the
-// timber door but is flagged so the wiring update can gate it.
-doorFamily(B.IRONBOUND_DOOR, 'ironbound_door', 'Ironbound Door',
-  { all: 'ironbound_door' }, BLOCKS[B.IRON_BLOCK], { signalGated: true });
+// oak door but is flagged so the wiring update can gate it.
+doorFamily(B.IRON_DOOR, 'iron_door', 'Iron Door',
+  { all: 'iron_door' }, BLOCKS[B.IRON_BLOCK], { signalGated: true });
 
-// ── Flapgates (thin horizontal trapdoors) ─────────────────────────
+// ── Trapdoors (thin horizontal openables) ─────────────────────────
 // A thin slab clinging to the top or bottom of its cell; opening flips it
 // up to vertical against the `facing` edge. 16 ids per material:
 // (attach<<3 | open<<2 | facing). Solid-but-thin, not opaque.
@@ -511,13 +539,13 @@ function flapFamily(base, key, name, tex, from, extra = {}) {
       { ...p, facing, open: !!open, attach });
   }
 }
-flapFamily(B.TIMBER_FLAP, 'timber_flap', 'Timber Flap',
-  { all: 'timber_flap' }, BLOCKS[B.PLANKS]);
-flapFamily(B.IRONBOUND_FLAP, 'ironbound_flap', 'Ironbound Flap',
-  { all: 'ironbound_flap' }, BLOCKS[B.IRON_BLOCK], { signalGated: true });
+flapFamily(B.OAK_TRAPDOOR, 'oak_trapdoor', 'Oak Trapdoor',
+  { all: 'oak_trapdoor' }, BLOCKS[B.OAK_PLANKS]);
+flapFamily(B.IRON_TRAPDOOR, 'iron_trapdoor', 'Iron Trapdoor',
+  { all: 'iron_trapdoor' }, BLOCKS[B.IRON_BLOCK], { signalGated: true });
 
 // ── Panes (thin auto-connecting glass) ────────────────────────────
-// Like palings, a central post + arms toward each connecting neighbor,
+// Like fences, a central post + arms toward each connecting neighbor,
 // but thin (glass cross-section) and NOT tall — you can hop them. They
 // join other panes and solid opaque builds. Translucent + non-opaque.
 function paneBlock(id, key, name, tex, from) {
@@ -529,8 +557,8 @@ function paneBlock(id, key, name, tex, from) {
 }
 paneBlock(B.GLASS_PANE, 'glass_pane', 'Glass Pane',
   { all: 'glass' }, BLOCKS[B.GLASS]);
-paneBlock(B.VOIDGLASS_PANE, 'voidglass_pane', 'Voidglass Pane',
-  { all: 'voidglass' }, BLOCKS[B.VOIDGLASS]);
+paneBlock(B.END_GLASS_PANE, 'end_glass_pane', 'End Glass Pane',
+  { all: 'end_glass' }, BLOCKS[B.END_GLASS]);
 
 // Connection bitmask: bit 0 = +x, 1 = -x, 2 = +z, 3 = -z. Matches the
 // horizontal-neighbor order that the mesher / collision walk in. The bit
@@ -656,7 +684,7 @@ function connectingBoxes(block, conn, collision) {
 // fills the gap; open, the leaf is empty (entities pass) but the posts
 // stay. axis 0 = line along x (posts at ±x edges, leaf spans x); axis 1 =
 // line along z. Collision uses the tall height so a closed gate blocks
-// jumps like the palings it joins.
+// jumps like the fences it joins.
 function gateBoxes(block, collision) {
   const alongX = block.axis === 0;
   const top = collision ? POST_TOP : 0.9375;
@@ -675,7 +703,7 @@ function gateBoxes(block, collision) {
   return boxes;
 }
 
-// Doorleaf: a thin leaf spanning the cell. Closed, it lies flat against the
+// Door: a thin leaf spanning the cell. Closed, it lies flat against the
 // `facing` face (a slab on that side of the cell). Opening swings it 90°
 // about the hinge post to lie flat against the perpendicular wall on the
 // hinge side. Both halves return the same footprint so the full 2-tall leaf
@@ -710,7 +738,7 @@ function doorBoxes(block) {
                  : [[0, 0, 0, 1, 1, t]];         // -z face
 }
 
-// Flapgate: a thin horizontal slab clinging to the cell's top or bottom.
+// Trapdoor: a thin horizontal slab clinging to the cell's top or bottom.
 // Opening flips it to vertical against the `facing` edge. attach 0/1 =
 // bottom/top; facing 0..3 = +z,-z,+x,-x is the hinged edge it rests on.
 const FLAP_T = 0.1875;   // slab thickness

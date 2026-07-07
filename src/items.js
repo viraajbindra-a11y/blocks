@@ -1,7 +1,7 @@
 // Item registry. Every placeable block is auto-registered as an item;
 // tools, materials, and food are defined explicitly.
 //
-// Tool tiers: 1 timber · 2 stone · 3 copper · 4 iron.
+// Tool tiers: 1 wooden · 2 stone · 3 copper · 4 iron · 5 netherite.
 
 import { B, BLOCKS } from './blocks.js';
 
@@ -23,9 +23,9 @@ function item(key, name, props = {}) {
 }
 
 // ── Block items (everything placeable) ────────────────────────────
-const NO_ITEM = new Set([B.AIR, B.CORESTONE, B.WATER, B.LAVA,
-  B.FARMLAND, B.CROP_0, B.CROP_1, B.CROP_2, B.CROP_3, B.BERRYBUSH_RIPE,
-  B.RIFT_SMOLDER, B.RIFT_HOLLOW]);
+const NO_ITEM = new Set([B.AIR, B.BEDROCK, B.WATER, B.LAVA,
+  B.FARMLAND, B.CROP_0, B.CROP_1, B.CROP_2, B.CROP_3, B.SWEET_BERRY_BUSH_RIPE,
+  B.NETHER_PORTAL, B.END_PORTAL]);
 for (const b of BLOCKS) {
   if (!b || NO_ITEM.has(b.id)) continue;
   if (b.key.startsWith('water_f') || b.key.startsWith('lava_f')) continue;
@@ -43,23 +43,25 @@ for (const b of BLOCKS) {
 // ── Tools ─────────────────────────────────────────────────────────
 const TIERS = [
   null,
-  { id: 'timber',   label: 'Timber',   speed: 2.6,  durability: 64,   damage: 1 },
-  { id: 'stone',    label: 'Stone',    speed: 4.6,  durability: 140,  damage: 2 },
-  { id: 'copper',   label: 'Copper',   speed: 6.6,  durability: 260,  damage: 3 },
-  { id: 'iron',     label: 'Iron',     speed: 9.2,  durability: 520,  damage: 4 },
-  { id: 'sunsteel', label: 'Sunsteel', speed: 12.5, durability: 1140, damage: 5 },
+  { id: 'wooden',    label: 'Wooden',    speed: 2.6,  durability: 64,   damage: 1 },
+  { id: 'stone',     label: 'Stone',     speed: 4.6,  durability: 140,  damage: 2 },
+  { id: 'copper',    label: 'Copper',    speed: 6.6,  durability: 260,  damage: 3 },
+  { id: 'iron',      label: 'Iron',      speed: 9.2,  durability: 520,  damage: 4 },
+  { id: 'netherite', label: 'Netherite', speed: 12.5, durability: 1140, damage: 5 },
 ];
+// `type` is the internal tool-category string block defs check against;
+// `item` is the Minecraft-style item-key suffix (wooden_pickaxe, iron_sword).
 const TOOL_TYPES = [
-  { type: 'pick',   label: 'Pick' },
-  { type: 'axe',    label: 'Hewer' },
-  { type: 'shovel', label: 'Spade' },
-  { type: 'hoe',    label: 'Tiller' },
-  { type: 'blade',  label: 'Blade' },
+  { type: 'pick',   item: 'pickaxe', label: 'Pickaxe' },
+  { type: 'axe',    item: 'axe',     label: 'Axe' },
+  { type: 'shovel', item: 'shovel',  label: 'Shovel' },
+  { type: 'hoe',    item: 'hoe',     label: 'Hoe' },
+  { type: 'blade',  item: 'sword',   label: 'Sword' },
 ];
 for (let tier = 1; tier <= 5; tier++) {
   const t = TIERS[tier];
   for (const tt of TOOL_TYPES) {
-    item(`${tt.type}_${t.id}`, `${t.label} ${tt.label}`, {
+    item(`${t.id}_${tt.item}`, `${t.label} ${tt.label}`, {
       kind: 'tool', maxStack: 1,
       tool: {
         type: tt.type, tier,
@@ -72,37 +74,162 @@ for (let tier = 1; tier <= 5; tier++) {
 }
 
 // ── Materials ─────────────────────────────────────────────────────
-item('rod', 'Timber Rod');
+item('stick', 'Stick');
 item('coal', 'Coal');
-item('clay_lump', 'Clay Lump');
-item('copper_ore_chunk', 'Raw Copper');
-item('iron_ore_chunk', 'Raw Iron');
+item('clay_ball', 'Clay Ball');
+item('raw_copper', 'Raw Copper');
+item('raw_iron', 'Raw Iron');
 item('copper_ingot', 'Copper Ingot');
 item('iron_ingot', 'Iron Ingot');
-item('sunstone', 'Sunstone Shard');
-item('hide', 'Tanned Hide');
-item('glimmer_dust', 'Glimmer Dust');
-item('tuber_seed', 'Tuber Seed', { desc: 'Plant on tilled soil.' });
-item('smolder_shard', 'Smolder Shard', { desc: 'Pulses with heat from the Smolder.' });
-item('sunsteel_ingot', 'Sunsteel Ingot');
-item('sovereign_core', 'Sovereign Core', { desc: 'The still-beating heart of the Hollow.' });
-item('kindle_flint', 'Kindle Flint', {
-  maxStack: 1, desc: 'Strike a basalt or sunstone frame to open a rift.',
+item('diamond', 'Diamond');
+item('leather', 'Leather');
+item('glowstone_dust', 'Glowstone Dust');
+item('seeds', 'Seeds', { desc: 'Plant on farmland.' });
+item('netherite_scrap', 'Netherite Scrap', { desc: 'Pulses with heat from the Nether.' });
+item('netherite_ingot', 'Netherite Ingot');
+item('dragon_core', 'Dragon Core', { desc: 'The still-beating heart of the End.' });
+item('flint_and_steel', 'Flint and Steel', {
+  maxStack: 1, desc: 'Strike an obsidian or diamond frame to open a portal.',
 });
-item('clay_vessel', 'Clay Vessel', {
+item('bucket', 'Bucket', {
   maxStack: 16, desc: 'Scoops up water or lava.',
 });
-item('vessel_water', 'Vessel of Water', { maxStack: 1 });
-item('vessel_lava', 'Vessel of Lava', { maxStack: 1 });
+item('water_bucket', 'Water Bucket', { maxStack: 1 });
+item('lava_bucket', 'Lava Bucket', { maxStack: 1 });
+item('feather', 'Feather', { desc: 'A light, downy quill.' });
+item('wool', 'Wool', { desc: 'Soft sheared fleece.' });
+item('gunpowder', 'Gunpowder', { desc: 'Volatile black dust.' });
+item('bone', 'Bone', { desc: 'Grind into bone meal.' });
+item('bone_meal', 'Bone Meal', { desc: 'Fertilizes crops and saplings.' });
 
 // ── Food ──────────────────────────────────────────────────────────
-item('berries', 'Bramble Berries', { kind: 'food', food: { restore: 2 } });
-item('tuber', 'Tuber', { kind: 'food', food: { restore: 3 } });
-item('tuber_roast', 'Roast Tuber', { kind: 'food', food: { restore: 6 } });
-item('meat_raw', 'Raw Haunch', { kind: 'food', food: { restore: 2 } });
-item('meat_roast', 'Roast Haunch', { kind: 'food', food: { restore: 7 } });
+item('sweet_berries', 'Sweet Berries', { kind: 'food', food: { restore: 2 } });
+item('potato', 'Potato', { kind: 'food', food: { restore: 3 } });
+item('baked_potato', 'Baked Potato', { kind: 'food', food: { restore: 6 } });
+item('raw_porkchop', 'Raw Porkchop', { kind: 'food', food: { restore: 2 } });
+item('cooked_porkchop', 'Cooked Porkchop', { kind: 'food', food: { restore: 7 } });
+item('raw_beef', 'Raw Beef', { kind: 'food', food: { restore: 2 } });
+item('cooked_beef', 'Steak', { kind: 'food', food: { restore: 7 } });
+item('raw_chicken', 'Raw Chicken', { kind: 'food', food: { restore: 1 } });
+item('cooked_chicken', 'Cooked Chicken', { kind: 'food', food: { restore: 5 } });
+item('egg', 'Egg', { maxStack: 16, desc: 'Throw it, or cook with it.' });
 
 export const itemByKey = (key) => ITEMS.get(key) || null;
+
+// ── Save migration ────────────────────────────────────────────────
+// Older saves stored item keys from before the great renaming (block ids
+// and dimension keys never changed, so item keys are the only legacy
+// surface). Map every renamed key old → new; apply migrateItemKey()
+// wherever saved item keys are read (player inventory + containers).
+export const LEGACY_ITEM_KEYS = {
+  // blocks
+  soil: 'dirt',
+  grass: 'grass_block',
+  alder_log: 'oak_log',
+  alder_leaves: 'oak_leaves',
+  alder_sprout: 'oak_sapling',
+  fern_log: 'spruce_log',
+  fern_leaves: 'spruce_leaves',
+  fern_sprout: 'spruce_sapling',
+  planks: 'oak_planks',
+  brick: 'bricks',
+  glowmoss: 'glow_lichen',
+  sunstone_ore: 'diamond_ore',
+  sunstone_block: 'diamond_block',
+  worktable: 'crafting_table',
+  kiln: 'furnace',
+  tallgrass: 'short_grass',
+  emberbloom: 'poppy',
+  azurebell: 'cornflower',
+  deadbush: 'dead_bush',
+  spineplant: 'cactus',
+  berrybush: 'sweet_berry_bush',
+  duststone: 'sandstone',
+  hewnstone: 'stone_bricks',
+  mossrock: 'mossy_cobblestone',
+  basalt: 'obsidian',
+  vine: 'vines',
+  rubble: 'cobblestone',
+  wisp_torch: 'torch',
+  rungs: 'ladder',
+  bedroll: 'bed',
+  stowbox: 'chest',
+  scorchstone: 'netherrack',
+  emberash: 'soul_sand',
+  glowvein_ore: 'glowstone',
+  charfungus: 'nether_wart_block',
+  scorchbrick: 'nether_bricks',
+  voidstone: 'end_stone',
+  hollowmoss: 'end_moss',
+  voidglass: 'end_glass',
+  dawn_beacon: 'beacon',
+  plank_ledge: 'oak_slab',
+  rubble_ledge: 'cobblestone_slab',
+  scorchbrick_ledge: 'nether_brick_slab',
+  plank_step: 'oak_stairs',
+  rubble_step: 'cobblestone_stairs',
+  scorchbrick_step: 'nether_brick_stairs',
+  timber_paling: 'oak_fence',
+  timber_gate: 'oak_fence_gate',
+  rubble_rampart: 'cobblestone_wall',
+  hewnstone_rampart: 'stone_brick_wall',
+  timber_door: 'oak_door',
+  ironbound_door: 'iron_door',
+  timber_flap: 'oak_trapdoor',
+  ironbound_flap: 'iron_trapdoor',
+  voidglass_pane: 'end_glass_pane',
+  // tools
+  pick_timber: 'wooden_pickaxe',
+  axe_timber: 'wooden_axe',
+  shovel_timber: 'wooden_shovel',
+  hoe_timber: 'wooden_hoe',
+  blade_timber: 'wooden_sword',
+  pick_stone: 'stone_pickaxe',
+  axe_stone: 'stone_axe',
+  shovel_stone: 'stone_shovel',
+  hoe_stone: 'stone_hoe',
+  blade_stone: 'stone_sword',
+  pick_copper: 'copper_pickaxe',
+  axe_copper: 'copper_axe',
+  shovel_copper: 'copper_shovel',
+  hoe_copper: 'copper_hoe',
+  blade_copper: 'copper_sword',
+  pick_iron: 'iron_pickaxe',
+  axe_iron: 'iron_axe',
+  shovel_iron: 'iron_shovel',
+  hoe_iron: 'iron_hoe',
+  blade_iron: 'iron_sword',
+  pick_sunsteel: 'netherite_pickaxe',
+  axe_sunsteel: 'netherite_axe',
+  shovel_sunsteel: 'netherite_shovel',
+  hoe_sunsteel: 'netherite_hoe',
+  blade_sunsteel: 'netherite_sword',
+  // materials
+  rod: 'stick',
+  clay_lump: 'clay_ball',
+  copper_ore_chunk: 'raw_copper',
+  iron_ore_chunk: 'raw_iron',
+  sunstone: 'diamond',
+  hide: 'leather',
+  glimmer_dust: 'glowstone_dust',
+  tuber_seed: 'seeds',
+  smolder_shard: 'netherite_scrap',
+  sunsteel_ingot: 'netherite_ingot',
+  sovereign_core: 'dragon_core',
+  kindle_flint: 'flint_and_steel',
+  clay_vessel: 'bucket',
+  vessel_water: 'water_bucket',
+  vessel_lava: 'lava_bucket',
+  // food
+  berries: 'sweet_berries',
+  tuber: 'potato',
+  tuber_roast: 'baked_potato',
+  meat_raw: 'raw_porkchop',
+  meat_roast: 'cooked_porkchop',
+};
+
+// Map a (possibly legacy) saved item key to its current key.
+export const migrateItemKey = (key) => LEGACY_ITEM_KEYS[key] ?? key;
 
 // Mod registration: same shape as internal definitions.
 export function registerItem(key, name, props = {}) {

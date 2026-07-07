@@ -196,9 +196,16 @@ export class Interaction {
     // 1. Interactive blocks (unless sneaking)
     if (t && !p.crouching) {
       const block = blockById(t.id);
-      if (block.use === 'worktable' || block.use === 'kiln') {
+      if (block.use === 'worktable') {
         if (input.buttonPressed[2]) {
           this.hooks.openStation(block.use);
+          this.placeCooldown = 0.3;
+        }
+        return;
+      }
+      if (block.use === 'kiln') {
+        if (input.buttonPressed[2] && this.hooks.openFurnace) {
+          this.hooks.openFurnace(t.x, t.y, t.z);
           this.placeCooldown = 0.3;
         }
         return;
@@ -252,7 +259,7 @@ export class Interaction {
       if (block.use === 'berries') {
         this.world.setBlock(t.x, t.y, t.z, B.BERRYBUSH);
         const n = 1 + (Math.random() * 2 | 0);
-        this.hooks.dropItems(t.x + 0.5, t.y + 0.4, t.z + 0.5, [{ key: 'berries', count: n }]);
+        this.hooks.dropItems(t.x + 0.5, t.y + 0.4, t.z + 0.5, [{ key: 'sweet_berries', count: n }]);
         this.hooks.audio.blockSound('break', 'plant');
         this.placeCooldown = 0.3;
         this.swing = 0.7;
@@ -263,13 +270,13 @@ export class Interaction {
     if (!held) return;
 
     // 1b. Vessels: scoop / pour fluids
-    if (held.key === 'clay_vessel' || held.key === 'vessel_water' || held.key === 'vessel_lava') {
+    if (held.key === 'bucket' || held.key === 'water_bucket' || held.key === 'lava_bucket') {
       if (input.buttonPressed[2]) this._useVessel(held);
       return;
     }
 
     // 1c. Kindle flint: ignite a rift frame
-    if (held.key === 'kindle_flint') {
+    if (held.key === 'flint_and_steel') {
       if (input.buttonPressed[2] && t && this.hooks.ignite) {
         const dim = this.hooks.ignite(t.x + t.nx, t.y + t.ny, t.z + t.nz);
         if (dim) {
@@ -310,7 +317,7 @@ export class Interaction {
     }
 
     // 4. Seeds
-    if (held.key === 'tuber_seed') {
+    if (held.key === 'seeds') {
       if (t.id === B.FARMLAND && this.world.getBlock(t.x, t.y + 1, t.z) === B.AIR) {
         this.world.setBlock(t.x, t.y + 1, t.z, B.CROP_0);
         p.consumeHeld(1);
@@ -499,9 +506,9 @@ export class Interaction {
   // The full cube a stacked ledge collapses into, keyed by shared item.
   _fullBlockFor(item) {
     switch (item) {
-      case 'plank_ledge': return B.PLANKS;
-      case 'rubble_ledge': return B.RUBBLE;
-      case 'scorchbrick_ledge': return B.SCORCHBRICK;
+      case 'oak_slab': return B.PLANKS;
+      case 'cobblestone_slab': return B.RUBBLE;
+      case 'nether_brick_slab': return B.SCORCHBRICK;
       default: return null;
     }
   }
@@ -514,10 +521,10 @@ export class Interaction {
     const cy = Math.cos(p.yaw), sy = Math.sin(p.yaw);
     const dir = [-sy * cp, sp, -cy * cp];
 
-    if (held.key === 'clay_vessel') {
+    if (held.key === 'bucket') {
       const hit = w.raycastFluid(eye[0], eye[1], eye[2], dir[0], dir[1], dir[2], REACH);
       if (!hit) return;
-      const filled = hit.id === B.WATER ? 'vessel_water' : 'vessel_lava';
+      const filled = hit.id === B.WATER ? 'water_bucket' : 'lava_bucket';
       w.setBlock(hit.x, hit.y, hit.z, B.AIR);
       p.consumeHeld(1);
       if (p.addItem(filled, 1) > 0) this.hooks.dropItems(eye[0], eye[1], eye[2], [{ key: filled, count: 1 }]);
@@ -530,9 +537,9 @@ export class Interaction {
       const px = t.x + t.nx, py = t.y + t.ny, pz = t.z + t.nz;
       const dest = blockById(this.world.getBlock(px, py, pz));
       if (this.world.getBlock(px, py, pz) !== B.AIR && !dest.replaceable) return;
-      w.setBlock(px, py, pz, held.key === 'vessel_water' ? B.WATER : B.LAVA);
+      w.setBlock(px, py, pz, held.key === 'water_bucket' ? B.WATER : B.LAVA);
       p.consumeHeld(1);
-      if (p.addItem('clay_vessel', 1) > 0) this.hooks.dropItems(eye[0], eye[1], eye[2], [{ key: 'clay_vessel', count: 1 }]);
+      if (p.addItem('bucket', 1) > 0) this.hooks.dropItems(eye[0], eye[1], eye[2], [{ key: 'bucket', count: 1 }]);
       this.hooks.audio.play('splash', { vol: 0.8 });
       this.placeCooldown = 0.35;
       this.swing = 0.8;
