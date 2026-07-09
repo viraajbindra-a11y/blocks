@@ -61,6 +61,7 @@ export const SMELT = {
   raw_porkchop: { out: 'cooked_porkchop', count: 1 },
   raw_beef: { out: 'cooked_beef', count: 1 },
   raw_chicken: { out: 'cooked_chicken', count: 1 },
+  raw_mutton: { out: 'cooked_mutton', count: 1 },
   oak_log: { out: 'coal', count: 1 },      // → charcoal
   spruce_log: { out: 'coal', count: 1 },   // → charcoal
   end_stone: { out: 'end_glass', count: 1 },

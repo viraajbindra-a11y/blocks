@@ -788,6 +788,29 @@ const P = {
   cooked_beef: haunchPainter([120, 74, 44], [168, 112, 66], 0.9),
   raw_chicken: haunchPainter([228, 190, 166], [246, 220, 200], 1),
   cooked_chicken: haunchPainter([206, 150, 92], [232, 186, 122], 0.9),
+  raw_mutton: haunchPainter([196, 92, 96], [224, 132, 132], 1),
+  cooked_mutton: haunchPainter([148, 92, 64], [190, 130, 88], 0.9),
+  slimeball: (d, rnd) => {
+    blob(d, rnd, 8, 8.5, 4.2, 3.8, [116, 190, 96], { light: [168, 224, 150], dark: [78, 146, 66], a: 235 });
+    px(d, 6, 6, [206, 240, 196], 220); px(d, 7, 6, [190, 230, 180], 200);   // sheen
+    speckle(d, rnd, [[92, 168, 80]], 0.06, 210);
+  },
+  spider_eye: (d, rnd) => {
+    blob(d, rnd, 8, 8.5, 3.8, 3.6, [150, 44, 42], { light: [196, 78, 74], dark: [96, 26, 26] });
+    px(d, 7, 7, [246, 210, 120]); px(d, 8, 7, [255, 236, 150]);   // amber pupil
+    px(d, 7, 8, [220, 60, 56]);
+  },
+  milk_bucket: (d, rnd) => {
+    // pail body
+    for (let y = 6; y <= 13; y++) for (let x = 4; x <= 11; x++) {
+      const taper = y >= 12 ? (y - 11) : 0;
+      if (x < 4 + taper || x > 11 - taper) continue;
+      px(d, x, y, jitter(x <= 4 || x >= 11 ? [120, 124, 132] : [160, 164, 172], rnd, 0.05));
+    }
+    hline(d, 4, 11, 6, [210, 214, 220]);                    // rim
+    for (let y = 7; y <= 9; y++) hline(d, 5, 10, y, jitter([244, 244, 240], rnd, 0.03));  // milk
+    line(d, 4, 6, 8, 3, [150, 154, 162]); line(d, 11, 6, 8, 3, [150, 154, 162]);          // handle
+  },
   feather: (d, rnd) => {
     const shaft = [206, 210, 220], vane = [244, 247, 252], vane2 = [216, 222, 232];
     for (let i = 0; i <= 10; i++) {                    // central quill, top-right → bottom-left

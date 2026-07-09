@@ -104,6 +104,8 @@ item('bone_meal', 'Bone Meal', { desc: 'Fertilizes crops and saplings.' });
 item('flint', 'Flint', { desc: 'A sharp shard knapped from gravel.' });
 item('string', 'String', { desc: 'Unraveled fibre for bows.' });
 item('arrow', 'Arrow', { desc: 'Ammunition for a bow.' });
+item('slimeball', 'Slimeball', { desc: 'Bouncy translucent goo.' });
+item('milk_bucket', 'Milk Bucket', { kind: 'food', maxStack: 1, food: { restore: 1 }, desc: 'Refreshing. Empties to a bucket.' });
 
 // ── Ranged + shears ───────────────────────────────────────────────
 item('bow', 'Bow', {
@@ -155,6 +157,9 @@ item('raw_beef', 'Raw Beef', { kind: 'food', food: { restore: 2 } });
 item('cooked_beef', 'Steak', { kind: 'food', food: { restore: 7 } });
 item('raw_chicken', 'Raw Chicken', { kind: 'food', food: { restore: 1 } });
 item('cooked_chicken', 'Cooked Chicken', { kind: 'food', food: { restore: 5 } });
+item('raw_mutton', 'Raw Mutton', { kind: 'food', food: { restore: 2 } });
+item('cooked_mutton', 'Cooked Mutton', { kind: 'food', food: { restore: 6 } });
+item('spider_eye', 'Spider Eye', { kind: 'food', food: { restore: 1 }, desc: 'Edible, but unpleasant.' });
 item('egg', 'Egg', { maxStack: 16, desc: 'Throw it, or cook with it.' });
 
 export const itemByKey = (key) => ITEMS.get(key) || null;

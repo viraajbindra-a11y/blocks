@@ -87,7 +87,9 @@ const SPECIES = {
   sheep: {
     hw: 0.45, h: 1.1, health: 8, walkSpeed: 1.3, grazes: true, hopper: false,
     biomes: new Set([BIOME.PLAINS, BIOME.FOREST, BIOME.TUNDRA]),
-    drops(rng) { return [{ key: 'wool', count: 1 + (rng() * 2 | 0) }]; },
+    drops(rng) {
+      return [{ key: 'raw_mutton', count: 1 + (rng() * 2 | 0) }, { key: 'wool', count: 1 }];
+    },
   },
   chicken: {
     hw: 0.3, h: 0.6, health: 4, walkSpeed: 1.5, grazes: false, hopper: false,
@@ -124,6 +126,22 @@ const SPECIES = {
     biomes: new Set([BIOME.PLAINS, BIOME.FOREST, BIOME.SWAMP,
                      BIOME.TUNDRA, BIOME.MOUNTAIN, BIOME.DESERT]),
     drops(rng) { return rng() < 0.85 ? [{ key: 'gunpowder', count: 1 + (rng() * 2 | 0) }] : []; },
+  },
+  spider: {
+    hw: 0.5, h: 0.6, health: 16, walkSpeed: 2.3, grazes: false, hopper: false,
+    hostile: true, nightOnly: true, dmg: 2,
+    biomes: new Set([BIOME.PLAINS, BIOME.FOREST, BIOME.SWAMP, BIOME.MOUNTAIN, BIOME.DESERT]),
+    drops(rng) {
+      const o = [{ key: 'string', count: 1 + (rng() * 2 | 0) }];
+      if (rng() < 0.4) o.push({ key: 'spider_eye', count: 1 });
+      return o;
+    },
+  },
+  slime: {
+    hw: 0.5, h: 0.9, health: 12, walkSpeed: 1.5, grazes: false, hopper: false,
+    hostile: true, dmg: 2, splits: true,
+    biomes: new Set([BIOME.SWAMP]),
+    drops(rng) { return [{ key: 'slimeball', count: 1 + (rng() * 2 | 0) }]; },
   },
 };
 
@@ -174,6 +192,8 @@ const C = {
   crpBody: [0.361, 0.659, 0.337], crpDark: [0.259, 0.518, 0.251], crpFace: [0.114, 0.153, 0.114],
   crpLeg: [0.306, 0.573, 0.290],
   skBone: [0.878, 0.871, 0.831], skBone2: [0.745, 0.737, 0.694], skEye: [0.118, 0.118, 0.133],
+  spBody: [0.16, 0.13, 0.13], spLeg: [0.11, 0.09, 0.09], spEye: [0.78, 0.22, 0.22],
+  slBody: [0.44, 0.74, 0.38], slCore: [0.31, 0.57, 0.27], slEye: [0.14, 0.24, 0.13],
 };
 
 // ── Matrix helpers ────────────────────────────────────────────────
@@ -480,6 +500,35 @@ function tntParts(e, parts) {
   addPart(parts, b, band, 0, 0.45, 0, 0, 0, 0, 0, 0.92, 0.3, 0.92);
 }
 
+// Spider: two dark body segments low to the ground with eight splayed legs.
+function spiderParts(e, parts) {
+  const b = baseMat(e);
+  const moving = Math.hypot(e.vel[0], e.vel[2]) > 0.2;
+  const sw = moving ? Math.sin(e.walkPhase) * 0.28 : 0;
+  for (let i = 0; i < 4; i++) {
+    const lz = -0.2 + i * 0.16;
+    const ph = sw * (i % 2 ? 1 : -1);
+    addPart(parts, b, C.spLeg, -0.24, 0.26, lz, ph, -0.2, -0.02, 0, 0.34, 0.05, 0.05);
+    addPart(parts, b, C.spLeg, 0.24, 0.26, lz, -ph, 0.2, -0.02, 0, 0.34, 0.05, 0.05);
+  }
+  addPart(parts, b, C.spBody, 0, 0.26, 0.2, 0, 0, 0, 0, 0.38, 0.28, 0.4);   // head
+  addPart(parts, b, C.spBody, 0, 0.3, -0.22, 0, 0, 0, 0, 0.56, 0.44, 0.56); // abdomen
+  addPart(parts, b, C.spEye, -0.1, 0.32, 0.4, 0, 0, 0, 0, 0.06, 0.05, 0.03);
+  addPart(parts, b, C.spEye, 0.1, 0.32, 0.4, 0, 0, 0, 0, 0.06, 0.05, 0.03);
+}
+
+// Slime: a translucent green cube that squashes on landing, with a face.
+function slimeParts(e, parts, nowS) {
+  const b = baseMat(e);
+  const sq = Math.max(0.2, e.h * 0.86);
+  addPart(parts, b, C.slBody, 0, sq * 0.5, 0, 0, 0, 0, 0, sq, sq, sq);
+  addPart(parts, b, C.slCore, 0, sq * 0.5, 0, 0, 0, 0, 0, sq * 0.5, sq * 0.5, sq * 0.5);
+  const ex = sq * 0.22, ey = sq * 0.55, ez = sq * 0.5;
+  addPart(parts, b, C.slEye, -ex, ey, ez, 0, 0, 0, 0, 0.08, 0.08, 0.03);
+  addPart(parts, b, C.slEye, ex, ey, ez, 0, 0, 0, 0, 0.08, 0.08, 0.03);
+  addPart(parts, b, C.slEye, 0, sq * 0.38, ez, 0, 0, 0, 0, 0.06, 0.05, 0.03);
+}
+
 const PART_BUILDERS = {
   bristleback: bristlebackParts,
   mosshopper: mosshopperParts,
@@ -495,6 +544,8 @@ const PART_BUILDERS = {
   zombie: zombieParts,
   skeleton: skeletonParts,
   creeper: creeperParts,
+  spider: spiderParts,
+  slime: slimeParts,
   arrow: arrowParts,
   tnt: tntParts,
 };
@@ -705,6 +756,7 @@ export class EntitySystem {
       fuse: 0,                                // creeper detonation timer
       love: 0, baby: false, growT: 0,         // breeding
       sheared: false, woolT: 0,               // sheep fleece regrow
+      size: species === 'slime' ? 2 : 0,      // slime split tier
       variant: species === 'mosshopper' && biome === BIOME.TUNDRA ? 'snow' : null,
       aabb: makeAabb(),
     };
@@ -938,6 +990,11 @@ export class EntitySystem {
       } else {
         const f = Math.max(0, 1 - dt * 8);
         e.vel[0] *= f; e.vel[2] *= f;
+      }
+      // slimes bounce toward their target
+      if (s.splits && e.onGround) {
+        e.hopWait -= dt;
+        if (moving && e.hopWait <= 0) { e.vel[1] = 4.6 + (e.size || 2) * 0.6; e.hopWait = 0.6 + this.rng() * 0.4; }
       }
       this._stepPhysics(e, dt);
     }
@@ -1242,6 +1299,10 @@ export class EntitySystem {
   // Returns {handled, consumeItem, damageTool} for the interaction layer.
   useItemOn(e, heldKey) {
     if (!e || e.dead || e.kind !== 'creature' || e.def.hostile) return { handled: false };
+    if (heldKey === 'bucket' && e.species === 'cow' && !e.baby) {
+      this.hooks.audio?.creature?.(e.species, 'idle');
+      return { handled: true, consumeItem: true, giveItem: 'milk_bucket' };
+    }
     if (heldKey === 'shears' && e.species === 'sheep' && !e.sheared && !e.baby) {
       this.spawnDrops(e.pos[0], e.pos[1] + e.h * 0.5, e.pos[2],
         [{ key: 'wool', count: 1 + (this.rng() * 2 | 0) }]);
@@ -1276,6 +1337,20 @@ export class EntitySystem {
     return false;
   }
 
+  // A dying slime splits into two smaller ones.
+  _splitSlime(e) {
+    const ns = e.size - 1, sc = ns / 2;
+    for (let i = 0; i < 2; i++) {
+      const off = (i - 0.5) * 0.7;
+      const c = this._makeCreature('slime', e.pos[0] + off, e.pos[1] + 0.1, e.pos[2] + off, 0);
+      c.size = ns;
+      c.hw = e.def.hw * sc; c.h = e.def.h * sc;
+      c.health = Math.max(1, Math.round(e.def.health * sc));
+      c.vel = [off * 4, 3, off * 4];
+      this.entities.push(c);
+    }
+  }
+
   hitEntity(e, dmg, dir) {
     if (!e || e.dead || e.kind !== 'creature') return;
     e.health -= dmg;
@@ -1290,6 +1365,7 @@ export class EntitySystem {
     if (e.health <= 0) {
       e.dead = true;
       if (e.def.boss) this._bossDown = true;   // don't respawn the boss this session
+      if (e.species === 'slime' && (e.size || 0) > 1) this._splitSlime(e);
       this.hooks.audio?.creature?.(e.species, 'death');
       this.spawnDrops(e.pos[0], e.pos[1] + e.h * 0.5, e.pos[2], e.def.drops(this.rng));
       this.hooks.particles?.burstBlock?.(

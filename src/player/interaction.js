@@ -213,6 +213,9 @@ export class Interaction {
         if (r && r.handled) {
           if (r.consumeItem) p.consumeHeld(1);
           if (r.damageTool) p.damageHeldTool(1);
+          if (r.giveItem && p.addItem(r.giveItem, 1) > 0) {
+            this.hooks.dropItems(p.pos[0], p.pos[1] + 1, p.pos[2], [{ key: r.giveItem, count: 1 }]);
+          }
           this.placeCooldown = 0.35;
           this.swing = 0.6;
           return;
@@ -321,6 +324,18 @@ export class Interaction {
           this.hooks.audio.blockSound('hit', 'stone');
         }
         this.placeCooldown = 0.4;
+      }
+      return;
+    }
+
+    // 2a. Milk: always drinkable, hands back an empty bucket
+    if (held.key === 'milk_bucket') {
+      if (this.eatCooldown <= 0) {
+        p.consumeHeld(1);
+        if (p.addItem('bucket', 1) > 0) this.hooks.dropItems(p.pos[0], p.pos[1] + 1, p.pos[2], [{ key: 'bucket', count: 1 }]);
+        this.hooks.audio.play('eat');
+        this.eatCooldown = 0.9;
+        this.swing = 0.8;
       }
       return;
     }
