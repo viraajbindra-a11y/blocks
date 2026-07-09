@@ -108,6 +108,9 @@ export class Player {
     if (this.mode === MODE_BUILDER) return;
     const s = this.heldStack();
     if (!s || s.dur === undefined) return;
+    // Unbreaking: each level gives a chance to skip the wear.
+    const unb = s.ench?.unbreaking || 0;
+    if (unb > 0 && Math.random() < unb / (unb + 1)) return;
     s.dur -= n;
     if (s.dur <= 0) {
       this.slots[this.selected] = null;
@@ -136,7 +139,7 @@ export class Player {
     for (const s of this.armor) {
       if (!s) continue;
       const def = itemByKey(s.key);
-      if (def && def.armor) n += def.armor.points;
+      if (def && def.armor) n += def.armor.points + (s.ench?.protection || 0);   // Protection
     }
     return n;
   }

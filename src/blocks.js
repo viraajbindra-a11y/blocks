@@ -63,6 +63,7 @@ export const B = {
   END_GLASS_PANE: 209,      // 209
   // ── Base content past the shaped families (mods start after this) ──
   TNT: 210,                 // 210
+  ENCHANTING_TABLE: 211,    // 211
 };
 
 // ── Legacy internal aliases ───────────────────────────────────────
@@ -365,6 +366,10 @@ def(B.BEACON, 'beacon', 'Beacon', {
 def(B.TNT, 'tnt', 'TNT', {
   hardness: 0, sound: 'grass',
   tex: { top: 'tnt_top', bottom: 'tnt_bottom', side: 'tnt_side' },
+});
+def(B.ENCHANTING_TABLE, 'enchanting_table', 'Enchanting Table', {
+  hardness: 5, tool: 'pick', minTier: 1, sound: 'stone', use: 'enchant', light: 7,
+  tex: { top: 'enchanting_table_top', bottom: 'obsidian', side: 'enchanting_table_side' },
 });
 
 // ── The Nether ───────────────────────────────────────────────────
@@ -783,7 +788,7 @@ export const blockIdByKey = key => keyToId.get(key) ?? 0;
 // Assigns the next free id ≥ 210. Ids are stable for a given mod list +
 // order (worlds save raw ids, so changing the mod list can orphan blocks —
 // they degrade gracefully to air).
-let nextModId = 211;   // 210 = TNT (base); mods start after reserved base content
+let nextModId = 212;   // 210-211 = TNT + enchanting table (base); mods start after
 export function registerBlock(key, name, props = {}) {
   if (keyToId.has(key)) throw new Error(`block key "${key}" already registered`);
   while (nextModId < 256 && BLOCKS[nextModId]) nextModId++;

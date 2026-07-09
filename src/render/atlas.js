@@ -983,6 +983,25 @@ P.tnt_bottom = (d, rnd) => {
   border(d, [110, 34, 28]);
 };
 
+// Enchanting table: dark obsidian with a glowing violet rune + a red book.
+P.enchanting_table_top = (d, rnd) => {
+  noisyFill(d, rnd, [38, 30, 46], 0.05);
+  const glow = [156, 96, 216];
+  for (let i = 0; i < 12; i++) {
+    const a = i / 12 * Math.PI * 2;
+    px(d, 8 + Math.round(Math.cos(a) * 4), 8 + Math.round(Math.sin(a) * 4), glow);
+  }
+  px(d, 8, 8, [214, 168, 255]); px(d, 7, 8, [190, 140, 240]);
+  speckle(d, rnd, [[64, 48, 80]], 0.06);
+};
+P.enchanting_table_side = (d, rnd) => {
+  noisyFill(d, rnd, [40, 32, 48], 0.05);
+  for (let y = 2; y <= 5; y++) for (let x = 3; x <= 12; x++) px(d, x, y, jitter([150, 40, 50], rnd, 0.06));
+  hline(d, 3, 12, 2, [202, 82, 92]); hline(d, 3, 12, 5, [100, 26, 34]);
+  vline(d, 7, 2, 5, [70, 18, 24]); vline(d, 8, 2, 5, [214, 194, 152]);   // spine + pages
+  speckle(d, rnd, [[58, 46, 66]], 0.05);
+};
+
 // ── Extra block faces & item sprites ──────────────────────────────
 // Furniture, the Smolder/Hollow dimensions, the Dawn beacon, plus the
 // sunsteel tier's raw materials and a few utility items. Appended here

@@ -164,6 +164,24 @@ item('egg', 'Egg', { maxStack: 16, desc: 'Throw it, or cook with it.' });
 
 export const itemByKey = (key) => ITEMS.get(key) || null;
 
+// ── Enchanting ────────────────────────────────────────────────────
+export const ENCHANT_NAMES = {
+  efficiency: 'Efficiency', sharpness: 'Sharpness', power: 'Power',
+  protection: 'Protection', unbreaking: 'Unbreaking',
+};
+// Which enchants may land on a given item.
+export function enchantsFor(def) {
+  if (!def) return [];
+  if (def.kind === 'armor') return ['protection', 'unbreaking'];
+  if (def.tool) {
+    const t = def.tool.type;
+    if (t === 'blade') return ['sharpness', 'unbreaking'];
+    if (t === 'bow') return ['power', 'unbreaking'];
+    if (t === 'pick' || t === 'axe' || t === 'shovel' || t === 'hoe') return ['efficiency', 'unbreaking'];
+  }
+  return [];
+}
+
 // ── Save migration ────────────────────────────────────────────────
 // Older saves stored item keys from before the great renaming (block ids
 // and dimension keys never changed, so item keys are the only legacy

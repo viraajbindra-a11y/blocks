@@ -481,6 +481,7 @@
 .inv-tooltip .tt-name { font-size: 13px; font-weight: 700; }
 .inv-tooltip .tt-desc { font-size: 12px; color: var(--hud-ink-dim); margin-top: 2px; }
 .inv-tooltip .tt-dur { font-size: 12px; color: var(--hud-amber); margin-top: 2px; }
+.inv-tooltip .tt-ench { font-size: 12px; color: #b689ee; }
 
 /* ── Small screens ────────────────────────────────────────────────── */
 @media (max-width: 720px) {

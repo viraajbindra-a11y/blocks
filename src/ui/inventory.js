@@ -4,7 +4,7 @@
 // Builder catalog. Vanilla DOM; slots rerender on change only.
 
 import { MODE_BUILDER } from '../core/constants.js';
-import { itemByKey, catalogItems } from '../items.js';
+import { itemByKey, catalogItems, ENCHANT_NAMES } from '../items.js';
 import { matchRecipe, smeltRecipe, isFuel, COOK_SECONDS } from '../crafting.js';
 
 const TITLES = { pocket: 'Pockets', worktable: 'Crafting Table', kiln: 'Furnace' };
@@ -627,6 +627,11 @@ export class InventoryUI {
     const tip = this.tipEl;
     tip.textContent = '';
     el('div', 'tt-name', tip).textContent = def.name;
+    if (stack && stack.ench) {
+      for (const [k, lv] of Object.entries(stack.ench)) {
+        if (lv > 0) el('div', 'tt-ench', tip).textContent = `${ENCHANT_NAMES[k] || k} ${lv}`;
+      }
+    }
     if (def.desc) el('div', 'tt-desc', tip).textContent = def.desc;
     if (def.tool && stack && stack.dur !== undefined) {
       el('div', 'tt-dur', tip).textContent = `Durability ${stack.dur}/${def.tool.durability}`;

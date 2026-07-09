@@ -182,6 +182,7 @@ shaped('shears', 1, [' I', 'I '], { I: 'iron_ingot' }, 'worktable');
 shaped('shield', 1, ['PIP', 'PPP', ' P '], { P: 'oak_planks', I: 'iron_ingot' }, 'worktable');
 shapeless('flint_and_steel', 1, ['iron_ingot', 'flint']);           // MC-accurate alt
 shaped('tnt', 1, ['GSG', 'SGS', 'GSG'], { G: 'gunpowder', S: 'sand' }, 'worktable');
+shaped('enchanting_table', 1, [' D ', 'DOD', 'OOO'], { D: 'diamond', O: 'obsidian' }, 'worktable');
 for (const [tier, mat] of [['leather', 'leather'], ['iron', 'iron_ingot'], ['diamond', 'diamond']]) {
   shaped(`${tier}_helmet`, 1, ['MMM', 'M M'], { M: mat }, 'worktable');
   shaped(`${tier}_chestplate`, 1, ['M M', 'MMM', 'MMM'], { M: mat }, 'worktable');

@@ -3,7 +3,7 @@
 
 import { REACH, MODE_BUILDER } from '../core/constants.js';
 import { B, BLOCKS, blockById, blockIdByKey, isFluid, isShaped, shapeBoxes, connMask } from '../blocks.js';
-import { itemByKey } from '../items.js';
+import { itemByKey, enchantsFor, ENCHANT_NAMES } from '../items.js';
 import { PLAYER_W, PLAYER_H } from '../core/constants.js';
 
 export class Interaction {
@@ -46,7 +46,7 @@ export class Interaction {
       const hit = this._entityUnderRay(eye, dir);
       if (hit && (!this.target || hit.dist < this.target.dist)) {
         const tool = p.heldItem()?.tool;
-        const dmg = tool ? tool.damage : 1;
+        const dmg = (tool ? tool.damage : 1) + (p.heldStack()?.ench?.sharpness || 0);
         this.hooks.onEntityHit(hit.entity, dmg, [dir[0], 0.4, dir[2]]);
         if (tool) p.damageHeldTool(1);
         this.swing = 1;
@@ -106,7 +106,10 @@ export class Interaction {
       this._hitTick = 0;
     }
     const tool = p.heldItem()?.tool ?? null;
-    const { time, canHarvest } = breakTime(block, tool);
+    const bt = breakTime(block, tool);
+    let time = bt.time; const canHarvest = bt.canHarvest;
+    const eff = p.heldStack()?.ench?.efficiency || 0;
+    if (eff > 0) time /= (1 + eff * 0.35);              // Efficiency: faster mining
     const slow = p.headInWater ? 2.2 : 1;
     this.breakProgress += dt / (time * slow);
     this.swing = Math.max(this.swing, 0.55);
@@ -241,6 +244,10 @@ export class Interaction {
           this.hooks.openFurnace(t.x, t.y, t.z);
           this.placeCooldown = 0.3;
         }
+        return;
+      }
+      if (block.use === 'enchant') {
+        if (input.buttonPressed[2]) this._enchant();
         return;
       }
       if (block.use === 'sleep') {
@@ -403,6 +410,28 @@ export class Interaction {
     return true;
   }
 
+  // Enchanting table: spend XP levels to roll a random enchant onto the
+  // held tool / weapon / bow / armor (up to level 3 each).
+  _enchant() {
+    const p = this.player;
+    const s = p.heldStack();
+    const def = s && itemByKey(s.key);
+    const opts = enchantsFor(def);
+    if (!s || !opts.length) { this.hooks.toast?.('Hold a tool, weapon, bow, or armor to enchant'); return; }
+    const COST = 3;
+    if (p.mode !== MODE_BUILDER && p.xpLevel < COST) { this.hooks.toast?.(`Needs ${COST} XP levels`); return; }
+    s.ench = s.ench || {};
+    const choices = opts.filter((e) => (s.ench[e] || 0) < 3);
+    if (!choices.length) { this.hooks.toast?.('Already fully enchanted'); return; }
+    const pick = choices[(Math.random() * choices.length) | 0];
+    s.ench[pick] = (s.ench[pick] || 0) + 1;
+    if (p.mode !== MODE_BUILDER) p.xpLevel -= COST;
+    this.hooks.audio?.blockSound?.('place', 'glass');
+    this.hooks.toast?.(`Enchanted — ${ENCHANT_NAMES[pick]} ${s.ench[pick]}`);
+    this.placeCooldown = 0.5;
+    this.swing = 0.7;
+  }
+
   _fireBow(charge) {
     const p = this.player;
     if (p.mode !== MODE_BUILDER) p.removeItems('arrow', 1);
@@ -411,7 +440,7 @@ export class Interaction {
     const cy = Math.cos(p.yaw), sy = Math.sin(p.yaw);
     const dir = [-sy * cp, sp, -cy * cp];
     const power = 0.45 + charge * 0.55;                 // 0.45 → 1.0
-    const dmg = Math.max(1, Math.round(1 + charge * 5)); // 1 → 6
+    const dmg = Math.max(1, Math.round(1 + charge * 5)) + (p.heldStack()?.ench?.power || 0);
     if (this.hooks.fireArrow) this.hooks.fireArrow(eye, dir, power, dmg);
     p.damageHeldTool(1);
     this.swing = 1;
