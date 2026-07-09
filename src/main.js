@@ -221,6 +221,7 @@ class Game {
       },
       getPlayer: () => this.player,
       dimension: () => this.dimKey,
+      awardXp: (n) => this.player.addXp(n),
     });
 
     this.interaction = new Interaction(this.world, this.player, {
@@ -245,6 +246,7 @@ class Game {
       fireArrow: (origin, dir, power, dmg) => this.entities.spawnPlayerArrow(origin, dir, power, dmg),
       useOnEntity: (e, heldKey) => this.entities.useItemOn(e, heldKey),
       primeTnt: (x, y, z) => this.entities.primeTnt(x, y, z),
+      awardXp: (n) => this.player.addXp(n),
       ignite: (x, y, z) => {
         const dim = tryIgnite(this.world, x, y, z);
         if (dim) this.hud.toast(`A rift to ${DIMENSIONS[dim].name} tears open…`);
@@ -820,6 +822,7 @@ class Game {
       this.hud.update({
         health: p.health, hunger: p.hunger, air: Math.ceil(p.air), maxAir: MAX_AIR,
         slots: p.slots, selected: p.selected,
+        xpLevel: p.xpLevel, xpProgress: p.xpProgress(),
         fps: this.fps,
         pos: p.pos.map((v) => Math.round(v * 10) / 10),
         biomeName: BIOME_NAMES[this.world.biomeAt(Math.floor(p.pos[0]), Math.floor(p.pos[2]))] ?? '',

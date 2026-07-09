@@ -53,6 +53,8 @@ export class Player {
     // Worn armor: [helmet, chestplate, leggings, boots]
     this.armor = new Array(4).fill(null);
     this.shieldRaised = false;   // set by interaction while a raised shield is held
+    this.xp = 0;                 // points toward the next level
+    this.xpLevel = 0;
 
     // Event hooks set by main: onDamage(amount, cause), onDeath(cause),
     // onStep(blockId), onStateSound(kind)
@@ -118,6 +120,15 @@ export class Player {
     for (const s of this.slots) if (s && s.key === key) n += s.count;
     return n;
   }
+
+  // ── Experience ───────────────────────────────────────────────────
+  xpNeeded() { return 5 + this.xpLevel * 2; }
+  addXp(n) {
+    if (this.mode === MODE_BUILDER || n <= 0) return;
+    this.xp += n;
+    while (this.xp >= this.xpNeeded()) { this.xp -= this.xpNeeded(); this.xpLevel++; }
+  }
+  xpProgress() { return this.xpNeeded() > 0 ? this.xp / this.xpNeeded() : 0; }
 
   // Total armor points across worn pieces (each ≈ 4% damage reduction).
   armorPoints() {
@@ -538,6 +549,7 @@ export class Player {
     this.air = MAX_AIR;
     this.dead = false;
     this.fallStart = null;
+    this.xp = 0; this.xpLevel = 0;   // experience is lost on death
   }
 
   serialize() {
@@ -545,7 +557,7 @@ export class Player {
       pos: this.pos, yaw: this.yaw, pitch: this.pitch,
       health: this.health, hunger: this.hunger, air: this.air,
       slots: this.slots, selected: this.selected, flying: this.flying,
-      armor: this.armor,
+      armor: this.armor, xp: this.xp, xpLevel: this.xpLevel,
     };
   }
   deserialize(d) {
@@ -560,6 +572,8 @@ export class Player {
     this.selected = d.selected ?? 0;
     this.flying = d.flying ?? false;
     if (Array.isArray(d.armor)) for (let i = 0; i < 4; i++) this.armor[i] = d.armor[i] ?? null;
+    this.xp = d.xp ?? 0;
+    this.xpLevel = d.xpLevel ?? 0;
   }
 }
 

@@ -31,6 +31,9 @@ export class HUD {
     this.healthRow = el('div', 'hud-health', stats);
     this.hungerRow = el('div', 'hud-hunger', stats);
     this.airRow = el('div', 'hud-air', this.bottom);
+    this.xpRow = el('div', 'hud-xp', this.bottom);
+    this.xpFill = el('i', '', this.xpRow);
+    this.xpLevelEl = el('span', 'hud-xp-level', this.xpRow);
     this.hotbarEl = el('div', 'hud-hotbar', this.bottom);
 
     this.embers = [];
@@ -44,7 +47,7 @@ export class HUD {
 
     this._hotbarSig = null;
     this._last = { health: -1, hunger: -1, air: -1, selected: -1,
-      mode: null, underwater: null, debug: '' };
+      mode: null, underwater: null, debug: '', xpLevel: -1, xpProgress: -1 };
   }
 
   /** s: {health, hunger, air, maxAir, slots, selected, fps, pos, biomeName,
@@ -74,6 +77,11 @@ export class HUD {
       if (air !== L.air) {
         L.air = air;
         for (let i = 0; i < 10; i++) this.bubbles[i].classList.toggle('off', air < i + 1);
+      }
+      if (s.xpLevel !== L.xpLevel || s.xpProgress !== L.xpProgress) {
+        L.xpLevel = s.xpLevel; L.xpProgress = s.xpProgress;
+        this.xpFill.style.width = `${Math.round((s.xpProgress || 0) * 100)}%`;
+        this.xpLevelEl.textContent = s.xpLevel > 0 ? String(s.xpLevel) : '';
       }
     }
 

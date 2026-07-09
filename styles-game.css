@@ -106,7 +106,37 @@
 }
 .hud-air.on { display: flex; }
 .hud-bottom.builder .hud-stats,
-.hud-bottom.builder .hud-air { display: none; }
+.hud-bottom.builder .hud-air,
+.hud-bottom.builder .hud-xp { display: none; }
+
+/* Experience bar */
+.hud-xp {
+  position: relative;
+  width: 340px;
+  height: 6px;
+  margin: 5px auto 6px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  border-radius: 3px;
+}
+.hud-xp i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(#84e24f, #52ad2c);
+  border-radius: 3px;
+  transition: width 0.15s linear;
+}
+.hud-xp-level {
+  position: absolute;
+  left: 50%;
+  top: -15px;
+  transform: translateX(-50%);
+  font-weight: 700;
+  font-size: 13px;
+  color: #86ee42;
+  text-shadow: 0 1px 0 #143a06, 0 0 3px #000, 1px 0 0 #000, -1px 0 0 #000;
+}
 
 /* Health embers: rotated squares, amber → dim when lost */
 .ember {

@@ -181,6 +181,9 @@ export class Interaction {
     if (this.player.mode !== MODE_BUILDER && canHarvest) {
       const drops = rollDrops(block);
       if (drops.length) this.hooks.dropItems(t.x + 0.5, t.y + 0.35, t.z + 0.5, drops);
+      // Ores yield experience, as in Minecraft.
+      const oreXp = { [B.COAL_ORE]: 1, [B.DIAMOND_ORE]: 4, [B.GLOWSTONE]: 2 }[block.id];
+      if (oreXp && this.hooks.awardXp) this.hooks.awardXp(1 + (Math.random() * oreXp | 0));
     }
     if (this.hooks.onBroken) this.hooks.onBroken(t.x, t.y, t.z, block.id);
   }

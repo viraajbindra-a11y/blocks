@@ -1367,6 +1367,8 @@ export class EntitySystem {
       if (e.def.boss) this._bossDown = true;   // don't respawn the boss this session
       if (e.species === 'slime' && (e.size || 0) > 1) this._splitSlime(e);
       this.hooks.audio?.creature?.(e.species, 'death');
+      const xp = e.def.boss ? 50 : e.def.hostile ? 5 : 1 + (this.rng() * 3 | 0);
+      this.hooks.awardXp?.(xp);
       this.spawnDrops(e.pos[0], e.pos[1] + e.h * 0.5, e.pos[2], e.def.drops(this.rng));
       this.hooks.particles?.burstBlock?.(
         Math.floor(e.pos[0]), Math.floor(e.pos[1]), Math.floor(e.pos[2]), 0, 12, 0.7, this.rng);
