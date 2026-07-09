@@ -61,6 +61,8 @@ export const B = {
   // and non-tall (glass cross-section). Translucent, non-opaque.
   GLASS_PANE: 208,          // 208
   END_GLASS_PANE: 209,      // 209
+  // ── Base content past the shaped families (mods start after this) ──
+  TNT: 210,                 // 210
 };
 
 // ── Legacy internal aliases ───────────────────────────────────────
@@ -359,6 +361,10 @@ def(B.CHEST, 'chest', 'Chest', {
 });
 def(B.BEACON, 'beacon', 'Beacon', {
   hardness: 6, tool: 'pick', minTier: 3, sound: 'metal', light: 15,
+});
+def(B.TNT, 'tnt', 'TNT', {
+  hardness: 0, sound: 'grass',
+  tex: { top: 'tnt_top', bottom: 'tnt_bottom', side: 'tnt_side' },
 });
 
 // ── The Nether ───────────────────────────────────────────────────
@@ -777,7 +783,7 @@ export const blockIdByKey = key => keyToId.get(key) ?? 0;
 // Assigns the next free id ≥ 210. Ids are stable for a given mod list +
 // order (worlds save raw ids, so changing the mod list can orphan blocks —
 // they degrade gracefully to air).
-let nextModId = 210;
+let nextModId = 211;   // 210 = TNT (base); mods start after reserved base content
 export function registerBlock(key, name, props = {}) {
   if (keyToId.has(key)) throw new Error(`block key "${key}" already registered`);
   while (nextModId < 256 && BLOCKS[nextModId]) nextModId++;

@@ -872,6 +872,17 @@ const P = {
     px(d, 8, 7, [78, 80, 86]); px(d, 8, 8, [78, 80, 86]);          // pivot rivet
     px(d, 3, 14, mD); px(d, 13, 14, mD);                           // handle rings
   },
+  shield: (d, rnd) => {
+    const wood = [128, 88, 52], woodD = [96, 66, 40], iron = [176, 180, 188], ironL = [214, 218, 224];
+    for (let y = 2; y <= 14; y++) for (let x = 3; x <= 12; x++) {
+      const taper = y > 10 ? (y - 10) : 0;              // rounded/pointed base
+      if (x < 3 + taper || x > 12 - taper) continue;
+      px(d, x, y, jitter(x <= 3 ? woodD : wood, rnd, 0.05));
+    }
+    for (let y = 2; y <= 14; y++) { px(d, 7, y, iron); px(d, 8, y, ironL); }   // metal spine
+    hline(d, 3, 12, 2, ironL); hline(d, 4, 11, 8, iron);                       // trim + boss line
+    border(d, woodD, 120);
+  },
 };
 
 // Cracks + tools are generated families.
@@ -926,6 +937,28 @@ for (const [tier, col] of Object.entries(ARMOR_COL)) {
     P[`${tier}_${pc}`] = armorPainter(pc, col);
   }
 }
+
+// TNT: red dynamite body with a cream label band + fuse cap on top.
+P.tnt_side = (d, rnd) => {
+  noisyFill(d, rnd, [172, 52, 42], 0.05);
+  for (let y = 6; y <= 9; y++) for (let x = 0; x < 16; x++) px(d, x, y, jitter([228, 224, 210], rnd, 0.03));
+  hline(d, 0, 15, 6, [182, 178, 166]); hline(d, 0, 15, 9, [150, 100, 60]);
+  const dk = [64, 48, 42];
+  hline(d, 1, 3, 7, dk); vline(d, 2, 7, 8, dk);                    // T
+  vline(d, 6, 7, 8, dk); vline(d, 8, 7, 8, dk); px(d, 7, 7, dk);   // N
+  hline(d, 11, 13, 7, dk); vline(d, 12, 7, 8, dk);                 // T
+  speckle(d, rnd, [[150, 44, 36]], 0.05);
+};
+P.tnt_top = (d, rnd) => {
+  noisyFill(d, rnd, [176, 54, 44], 0.05);
+  blob(d, rnd, 8, 8, 3.6, 3.6, [188, 60, 48], { light: [214, 92, 78], dark: [120, 36, 30] });
+  blob(d, rnd, 8, 8, 1.7, 1.7, [72, 54, 42], { light: [124, 96, 62] });
+  px(d, 8, 8, [40, 32, 26]);
+};
+P.tnt_bottom = (d, rnd) => {
+  noisyFill(d, rnd, [150, 46, 38], 0.05);
+  border(d, [110, 34, 28]);
+};
 
 // ── Extra block faces & item sprites ──────────────────────────────
 // Furniture, the Smolder/Hollow dimensions, the Dawn beacon, plus the

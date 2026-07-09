@@ -116,6 +116,11 @@ item('shears', 'Shears', {
   tool: { type: 'shears', tier: 2, speed: 5, durability: 238, damage: 1 },
   desc: 'Shear sheep for wool; snips leaves and plants.',
 });
+item('shield', 'Shield', {
+  kind: 'tool', maxStack: 1,
+  tool: { type: 'shield', tier: 0, speed: 0, durability: 336, damage: 1 },
+  desc: 'Hold right-click to raise and block incoming blows.',
+});
 
 // ── Armor ─────────────────────────────────────────────────────────
 // slot 0 helmet · 1 chestplate · 2 leggings · 3 boots. points reduce

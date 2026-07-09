@@ -52,6 +52,7 @@ export class Player {
     this.selected = 0;
     // Worn armor: [helmet, chestplate, leggings, boots]
     this.armor = new Array(4).fill(null);
+    this.shieldRaised = false;   // set by interaction while a raised shield is held
 
     // Event hooks set by main: onDamage(amount, cause), onDeath(cause),
     // onStep(blockId), onStateSound(kind)
@@ -506,8 +507,11 @@ export class Player {
     if (this.dead || this.mode === MODE_BUILDER) return;
     if (!bypassCooldown && this.hurtTimer > 0) return;
     this.hurtTimer = 0.5;
+    const blockable = cause !== 'drown' && cause !== 'hunger' && cause !== 'fall';
+    // A raised shield soaks most of a blockable blow.
+    if (blockable && this.shieldRaised) amount *= 0.25;
     // Armor blunts contact/attack damage but not drown/hunger/fall.
-    if (cause !== 'drown' && cause !== 'hunger' && cause !== 'fall') {
+    if (blockable) {
       const reduce = Math.min(0.8, this.armorPoints() * 0.04);
       amount = amount * (1 - reduce);
     }

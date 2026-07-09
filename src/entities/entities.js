@@ -470,6 +470,16 @@ function arrowParts(e, parts) {
   addPart(parts, b, [0.82, 0.82, 0.86], 0, 0, 0, e.pitch || 0, 0, 0, 0.28, 0.07, 0.07, 0.1);
 }
 
+// Primed TNT: a red cube with a cream band, flashing white before it blows.
+function tntParts(e, parts) {
+  const b = baseMat(e);
+  const lit = e.flash > 0.5;
+  const body = lit ? [1, 1, 1] : [0.67, 0.20, 0.16];
+  const band = lit ? [1, 1, 1] : [0.89, 0.87, 0.82];
+  addPart(parts, b, body, 0, 0.45, 0, 0, 0, 0, 0, 0.9, 0.9, 0.9);
+  addPart(parts, b, band, 0, 0.45, 0, 0, 0, 0, 0, 0.92, 0.3, 0.92);
+}
+
 const PART_BUILDERS = {
   bristleback: bristlebackParts,
   mosshopper: mosshopperParts,
@@ -486,6 +496,7 @@ const PART_BUILDERS = {
   skeleton: skeletonParts,
   creeper: creeperParts,
   arrow: arrowParts,
+  tnt: tntParts,
 };
 
 // Stable mid-tone tint per item key.
@@ -565,6 +576,7 @@ export class EntitySystem {
       if (!e.dead) {
         if (e.kind === 'item') this._updateItem(e, dt, playerPos);
         else if (e.kind === 'arrow') this._updateArrow(e, dt, playerPos);
+        else if (e.kind === 'tnt') this._updateTnt(e, dt, playerPos);
         else this._updateCreature(e, dt, playerPos, sunLevel, nowS);
         if (e.pos[1] < -10) e.dead = true;
         if (e.kind === 'creature') {
@@ -1028,10 +1040,10 @@ export class EntitySystem {
     return false;
   }
 
-  // ── Creeper explosion + skeleton archery ─────────────────────────
-  _explode(e, pp) {
-    const R = 3;
-    const cx = e.pos[0], cy = e.pos[1] + 0.6, cz = e.pos[2];
+  // ── Explosions (creeper, TNT) + skeleton archery ─────────────────
+  // Destroy a sphere of blocks, damage the player by proximity, spit
+  // debris. Shared by creepers and primed TNT.
+  explodeAt(cx, cy, cz, R, pp) {
     const w = this.world;
     for (let dx = -R; dx <= R; dx++) {
       for (let dy = -R; dy <= R; dy++) {
@@ -1040,19 +1052,47 @@ export class EntitySystem {
           const bx = Math.floor(cx) + dx, by = Math.floor(cy) + dy, bz = Math.floor(cz) + dz;
           const id = w.getBlock(bx, by, bz);
           if (id === B.AIR || id === B.BEDROCK || isWater(id) || isLava(id)) continue;
+          if (id === B.TNT) { this.primeTnt(bx, by, bz, 0.1 + this.rng() * 0.2); continue; } // chain
           w.setBlock(bx, by, bz, B.AIR);
         }
       }
     }
-    const d = Math.hypot(pp[0] - cx, (pp[1] + 0.9) - cy, pp[2] - cz);
-    if (d < R + 1.5) {
-      const dmg = Math.max(2, Math.round((1 - d / (R + 1.5)) * 18));
-      const kx = pp[0] - cx, kz = pp[2] - cz, kl = Math.hypot(kx, kz) || 1;
-      this.hooks.attackPlayer?.(dmg, [kx / kl, 0, kz / kl]);
+    if (pp) {
+      const d = Math.hypot(pp[0] - cx, (pp[1] + 0.9) - cy, pp[2] - cz);
+      if (d < R + 1.5) {
+        const dmg = Math.max(2, Math.round((1 - d / (R + 1.5)) * (R * 6)));
+        const kx = pp[0] - cx, kz = pp[2] - cz, kl = Math.hypot(kx, kz) || 1;
+        this.hooks.attackPlayer?.(dmg, [kx / kl, 0, kz / kl]);
+      }
     }
-    this.hooks.audio?.creature?.(e.species, 'death');
     this.hooks.particles?.burstBlock?.(
-      Math.floor(cx), Math.floor(cy), Math.floor(cz), 0, 44, 1.3, this.rng);
+      Math.floor(cx), Math.floor(cy), Math.floor(cz), 0, 12 * R, 0.4 * R, this.rng);
+  }
+
+  _explode(e, pp) {
+    this.explodeAt(e.pos[0], e.pos[1] + 0.6, e.pos[2], 3, pp);
+    this.hooks.audio?.creature?.(e.species, 'death');
+  }
+
+  // Turn a placed TNT block into a primed, ticking entity.
+  primeTnt(x, y, z, fuse = 2.4) {
+    this.world.setBlock(x, y, z, B.AIR);
+    this.entities.push({
+      kind: 'tnt', species: 'tnt',
+      pos: [x + 0.5, y, z + 0.5], vel: [0, 0.2, 0],
+      yaw: 0, hw: 0.45, h: 0.9, fuse, flash: 0, onGround: false, dead: false,
+    });
+  }
+
+  _updateTnt(e, dt, pp) {
+    e.fuse -= dt;
+    e.flash = e.fuse < 0.6 ? (Math.sin(e.fuse * 40) > 0 ? 1 : 0) : 0.2;  // blink faster near the end
+    e.vel[1] += GRAVITY * dt;
+    this._moveAxis(e, 0, e.vel[0] * dt);
+    this._moveAxis(e, 2, e.vel[2] * dt);
+    const hitY = this._moveAxis(e, 1, e.vel[1] * dt);
+    if (hitY) { e.onGround = e.vel[1] < 0; e.vel[1] = 0; }
+    if (e.fuse <= 0) { this.explodeAt(e.pos[0], e.pos[1] + 0.4, e.pos[2], 3, pp); e.dead = true; }
   }
 
   _shootArrow(e, pp, dmg) {

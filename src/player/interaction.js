@@ -62,10 +62,14 @@ export class Interaction {
       this._resetMining();
     }
 
-    // ── Use / place (a drawn bow owns right-click while held) ──
+    // ── Use / place (bow or raised shield own right-click while held) ──
     const rightHeld = input.buttons[2];
+    const heldItem = p.heldItem();
+    p.shieldRaised = !!(heldItem && heldItem.key === 'shield' && rightHeld);
     if (this._handleBow(dt, rightHeld)) {
       // bow is drawing or loosing — suppress place/use
+    } else if (p.shieldRaised) {
+      // shield raised — blocking, no place/use
     } else if (input.buttonPressed[2] || (rightHeld && this.placeCooldown <= 0)) {
       this._use(input);
     }
@@ -298,8 +302,16 @@ export class Interaction {
       return;
     }
 
-    // 1c. Kindle flint: ignite a rift frame
+    // 1c. Flint & steel: prime TNT, else ignite a rift frame
     if (held.key === 'flint_and_steel') {
+      if (input.buttonPressed[2] && t && t.id === B.TNT && this.hooks.primeTnt) {
+        this.hooks.primeTnt(t.x, t.y, t.z);
+        this.hooks.audio.blockSound('break', 'grass');
+        p.damageHeldTool(1);
+        this.placeCooldown = 0.4;
+        this.swing = 1;
+        return;
+      }
       if (input.buttonPressed[2] && t && this.hooks.ignite) {
         const dim = this.hooks.ignite(t.x + t.nx, t.y + t.ny, t.z + t.nz);
         if (dim) {

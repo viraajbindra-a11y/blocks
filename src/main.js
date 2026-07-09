@@ -244,6 +244,7 @@ class Game {
       openFurnace: (x, y, z) => this._openFurnace(x, y, z),
       fireArrow: (origin, dir, power, dmg) => this.entities.spawnPlayerArrow(origin, dir, power, dmg),
       useOnEntity: (e, heldKey) => this.entities.useItemOn(e, heldKey),
+      primeTnt: (x, y, z) => this.entities.primeTnt(x, y, z),
       ignite: (x, y, z) => {
         const dim = tryIgnite(this.world, x, y, z);
         if (dim) this.hud.toast(`A rift to ${DIMENSIONS[dim].name} tears open…`);
