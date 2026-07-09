@@ -1002,6 +1002,48 @@ P.enchanting_table_side = (d, rnd) => {
   speckle(d, rnd, [[58, 46, 66]], 0.05);
 };
 
+// ── Brewing sprites ───────────────────────────────────────────────
+function potionPainter(liquid) {
+  const glass = [200, 210, 214], glassD = [150, 162, 170], cork = [120, 100, 70];
+  return (d, rnd) => {
+    for (let y = 6; y <= 14; y++) for (let x = 4; x <= 11; x++) {
+      if (Math.hypot((x - 7.5) / 4, (y - 10.5) / 4.2) > 1) continue;
+      px(d, x, y, y >= 8 ? jitter(liquid, rnd, 0.07) : (y <= 6 ? glassD : glass));
+    }
+    for (let y = 3; y <= 6; y++) { px(d, 7, y, glass); px(d, 8, y, glassD); }   // neck
+    px(d, 7, 2, cork); px(d, 8, 2, cork);                                       // cork
+    px(d, 6, 9, [255, 255, 255], 130);                                          // sheen
+  };
+}
+P.nether_wart = (d, rnd) => {
+  blob(d, rnd, 8, 9.5, 3.6, 3.4, [140, 40, 50], { light: [186, 70, 80], dark: [92, 24, 32] });
+  speckle(d, rnd, [[176, 60, 70]], 0.12);
+  px(d, 8, 5, [120, 30, 40]); px(d, 7, 6, [110, 28, 36]);
+};
+P.magma_cream = (d, rnd) => {
+  blob(d, rnd, 8, 8.5, 4, 3.8, [62, 40, 34], { light: [104, 64, 46], dark: [40, 24, 22] });
+  for (let i = 0; i < 7; i++) px(d, 5 + ((rnd() * 7) | 0), 6 + ((rnd() * 6) | 0), [255, 160, 60]);
+  px(d, 8, 8, [255, 202, 92]);
+};
+P.glass_bottle = (d, rnd) => {
+  const glass = [200, 210, 214], glassD = [150, 162, 170];
+  for (let y = 6; y <= 14; y++) for (let x = 4; x <= 11; x++) {
+    const r = Math.hypot((x - 7.5) / 4, (y - 10.5) / 4.2);
+    if (r > 1) continue;
+    px(d, x, y, r > 0.72 ? glassD : glass, 185);
+  }
+  for (let y = 3; y <= 6; y++) { px(d, 7, y, glass); px(d, 8, y, glassD); }
+  px(d, 7, 2, [120, 100, 70]); px(d, 8, 2, [120, 100, 70]);
+  px(d, 6, 9, [255, 255, 255], 160);
+};
+P.water_bottle = potionPainter([70, 120, 210]);
+P.awkward_potion = potionPainter([120, 90, 170]);
+const POTIONS = {
+  potion_healing: [232, 74, 92], potion_regeneration: [214, 96, 176], potion_strength: [150, 40, 34],
+  potion_swiftness: [116, 196, 224], potion_fire_resistance: [228, 148, 54], potion_poison: [86, 154, 60],
+};
+for (const [k, col] of Object.entries(POTIONS)) P[k] = potionPainter(col);
+
 // ── Extra block faces & item sprites ──────────────────────────────
 // Furniture, the Smolder/Hollow dimensions, the Dawn beacon, plus the
 // sunsteel tier's raw materials and a few utility items. Appended here

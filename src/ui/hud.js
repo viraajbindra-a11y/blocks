@@ -5,6 +5,11 @@
 import { MODE_BUILDER } from '../core/constants.js';
 import { itemByKey } from '../items.js';
 
+const EFFECT_LABEL = {
+  regeneration: 'Regen', strength: 'Strength', swiftness: 'Swiftness',
+  fire_resistance: 'Fire Resist', poison: 'Poison',
+};
+
 function el(tag, cls, parent) {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
@@ -25,6 +30,8 @@ export class HUD {
     el('span', 'dot', cross);
     this.breakEl = el('div', 'hud-break', root);
     this.debugEl = el('div', 'hud-debug', root);
+    this.effectsEl = el('div', 'hud-effects', root);
+    this._effSig = null;
 
     this.bottom = el('div', 'hud-bottom', root);
     const stats = el('div', 'hud-stats', this.bottom);
@@ -82,6 +89,19 @@ export class HUD {
         L.xpLevel = s.xpLevel; L.xpProgress = s.xpProgress;
         this.xpFill.style.width = `${Math.round((s.xpProgress || 0) * 100)}%`;
         this.xpLevelEl.textContent = s.xpLevel > 0 ? String(s.xpLevel) : '';
+      }
+    }
+
+    // Active status effects (shown in any mode)
+    const eff = s.effects || {};
+    const effSig = Object.keys(eff).map((k) => k + Math.ceil(eff[k].time)).join('|');
+    if (effSig !== this._effSig) {
+      this._effSig = effSig;
+      this.effectsEl.textContent = '';
+      for (const k of Object.keys(eff)) {
+        const secs = Math.ceil(eff[k].time);
+        const row = el('div', `eff eff-${k}`, this.effectsEl);
+        row.textContent = `${EFFECT_LABEL[k] || k}${eff[k].level > 1 ? ' ' + eff[k].level : ''}  ${secs}s`;
       }
     }
 

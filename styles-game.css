@@ -109,6 +109,32 @@
 .hud-bottom.builder .hud-air,
 .hud-bottom.builder .hud-xp { display: none; }
 
+/* Active status effects (top-right) */
+.hud-effects {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+  pointer-events: none;
+}
+.hud-effects .eff {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.5);
+  border-left: 3px solid #888;
+  color: #f0f0f0;
+}
+.eff-regeneration { border-left-color: #d660b0; }
+.eff-strength { border-left-color: #b64038; }
+.eff-swiftness { border-left-color: #74c4e0; }
+.eff-fire_resistance { border-left-color: #e49436; }
+.eff-poison { border-left-color: #569a3c; }
+
 /* Experience bar */
 .hud-xp {
   position: relative;

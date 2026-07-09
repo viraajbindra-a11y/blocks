@@ -107,6 +107,22 @@ item('arrow', 'Arrow', { desc: 'Ammunition for a bow.' });
 item('slimeball', 'Slimeball', { desc: 'Bouncy translucent goo.' });
 item('milk_bucket', 'Milk Bucket', { kind: 'food', maxStack: 1, food: { restore: 1 }, desc: 'Refreshing. Empties to a bucket.' });
 
+// ── Brewing ───────────────────────────────────────────────────────
+item('nether_wart', 'Nether Wart', { desc: 'A brewing staple from the Nether.' });
+item('magma_cream', 'Magma Cream', { desc: 'A warm brewing reagent.' });
+item('glass_bottle', 'Glass Bottle', { maxStack: 16, desc: 'Fill at water for a water bottle.' });
+item('water_bottle', 'Water Bottle', { maxStack: 1, desc: 'The base for brewing.' });
+item('awkward_potion', 'Awkward Potion', { maxStack: 1, desc: 'A brewing base — add a reagent.' });
+function potion(key, name, effect) {
+  item(key, name, { kind: 'potion', maxStack: 1, potion: effect });   // own icon key = potion sprite
+}
+potion('potion_healing', 'Potion of Healing', { type: 'healing', instant: true, amount: 6, color: [232, 74, 92] });
+potion('potion_regeneration', 'Potion of Regeneration', { type: 'regeneration', duration: 22, level: 1, color: [214, 96, 176] });
+potion('potion_strength', 'Potion of Strength', { type: 'strength', duration: 45, level: 1, color: [150, 40, 34] });
+potion('potion_swiftness', 'Potion of Swiftness', { type: 'swiftness', duration: 45, level: 1, color: [116, 196, 224] });
+potion('potion_fire_resistance', 'Potion of Fire Resistance', { type: 'fire_resistance', duration: 90, level: 1, color: [228, 148, 54] });
+potion('potion_poison', 'Potion of Poison', { type: 'poison', duration: 12, level: 1, color: [86, 154, 60] });
+
 // ── Ranged + shears ───────────────────────────────────────────────
 item('bow', 'Bow', {
   kind: 'tool', maxStack: 1,

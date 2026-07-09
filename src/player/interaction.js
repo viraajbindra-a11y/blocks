@@ -1,8 +1,8 @@
 // Block interaction: raycast targeting, mining with progress + cracks,
 // placement with rules, station use, farming, eating, entity melee.
 
-import { REACH, MODE_BUILDER } from '../core/constants.js';
-import { B, BLOCKS, blockById, blockIdByKey, isFluid, isShaped, shapeBoxes, connMask } from '../blocks.js';
+import { REACH, MODE_BUILDER, MAX_HEALTH } from '../core/constants.js';
+import { B, BLOCKS, blockById, blockIdByKey, isFluid, isWater, isShaped, shapeBoxes, connMask } from '../blocks.js';
 import { itemByKey, enchantsFor, ENCHANT_NAMES } from '../items.js';
 import { PLAYER_W, PLAYER_H } from '../core/constants.js';
 
@@ -46,7 +46,8 @@ export class Interaction {
       const hit = this._entityUnderRay(eye, dir);
       if (hit && (!this.target || hit.dist < this.target.dist)) {
         const tool = p.heldItem()?.tool;
-        const dmg = (tool ? tool.damage : 1) + (p.heldStack()?.ench?.sharpness || 0);
+        const dmg = (tool ? tool.damage : 1) + (p.heldStack()?.ench?.sharpness || 0)
+          + p.effectLevel('strength') * 2;
         this.hooks.onEntityHit(hit.entity, dmg, [dir[0], 0.4, dir[2]]);
         if (tool) p.damageHeldTool(1);
         this.swing = 1;
@@ -314,6 +315,10 @@ export class Interaction {
       if (input.buttonPressed[2]) this._useVessel(held);
       return;
     }
+    if (held.key === 'glass_bottle') {
+      if (input.buttonPressed[2]) this._fillBottle();
+      return;
+    }
 
     // 1c. Flint & steel: prime TNT, else ignite a rift frame
     if (held.key === 'flint_and_steel') {
@@ -342,11 +347,18 @@ export class Interaction {
     if (held.key === 'milk_bucket') {
       if (this.eatCooldown <= 0) {
         p.consumeHeld(1);
+        p.clearEffects();
         if (p.addItem('bucket', 1) > 0) this.hooks.dropItems(p.pos[0], p.pos[1] + 1, p.pos[2], [{ key: 'bucket', count: 1 }]);
         this.hooks.audio.play('eat');
         this.eatCooldown = 0.9;
         this.swing = 0.8;
       }
+      return;
+    }
+
+    // 2b. Potions: drink to gain the effect, keep the empty bottle
+    if (held.kind === 'potion') {
+      if (this.eatCooldown <= 0) { this._drinkPotion(held); this.eatCooldown = 1.0; this.swing = 0.8; }
       return;
     }
 
@@ -623,6 +635,33 @@ export class Interaction {
       case 'nether_brick_slab': return B.SCORCHBRICK;
       default: return null;
     }
+  }
+
+  // Fill a glass bottle from a water source → water bottle.
+  _fillBottle() {
+    const p = this.player;
+    const eye = p.eyePos();
+    const cp = Math.cos(p.pitch), sp = Math.sin(p.pitch);
+    const cy = Math.cos(p.yaw), sy = Math.sin(p.yaw);
+    const hit = this.world.raycastFluid(eye[0], eye[1], eye[2], -sy * cp, sp, -cy * cp, REACH);
+    if (!hit || !isWater(hit.id)) return;
+    p.consumeHeld(1);
+    if (p.addItem('water_bottle', 1) > 0) this.hooks.dropItems(eye[0], eye[1], eye[2], [{ key: 'water_bottle', count: 1 }]);
+    this.hooks.audio.play('splash', { vol: 0.6, pitch: 1.4 });
+    this.placeCooldown = 0.3;
+    this.swing = 0.7;
+  }
+
+  // Drink a potion: instant heal or a timed effect; keep the empty bottle.
+  _drinkPotion(held) {
+    const p = this.player;
+    const pot = held.potion;
+    if (!pot) return;
+    if (pot.instant && pot.type === 'healing') p.health = Math.min(MAX_HEALTH, p.health + pot.amount);
+    else p.addEffect(pot.type, pot.duration, pot.level);
+    p.consumeHeld(1);
+    if (p.addItem('glass_bottle', 1) > 0) this.hooks.dropItems(p.pos[0], p.pos[1] + 1, p.pos[2], [{ key: 'glass_bottle', count: 1 }]);
+    this.hooks.audio.play('eat');
   }
 
   _useVessel(held) {

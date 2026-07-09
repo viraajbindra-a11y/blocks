@@ -183,6 +183,17 @@ shaped('shield', 1, ['PIP', 'PPP', ' P '], { P: 'oak_planks', I: 'iron_ingot' },
 shapeless('flint_and_steel', 1, ['iron_ingot', 'flint']);           // MC-accurate alt
 shaped('tnt', 1, ['GSG', 'SGS', 'GSG'], { G: 'gunpowder', S: 'sand' }, 'worktable');
 shaped('enchanting_table', 1, [' D ', 'DOD', 'OOO'], { D: 'diamond', O: 'obsidian' }, 'worktable');
+
+// ── Brewing (via the crafting table, simplified) ──────────────────
+shaped('glass_bottle', 3, ['G G', ' G '], { G: 'glass' }, 'worktable');
+shapeless('magma_cream', 1, ['slimeball', 'netherite_scrap']);
+shapeless('awkward_potion', 1, ['water_bottle', 'nether_wart'], 'worktable');
+shapeless('potion_healing', 1, ['awkward_potion', 'sweet_berries'], 'worktable');
+shapeless('potion_regeneration', 1, ['awkward_potion', 'glowstone_dust'], 'worktable');
+shapeless('potion_strength', 1, ['awkward_potion', 'netherite_scrap'], 'worktable');
+shapeless('potion_swiftness', 1, ['awkward_potion', 'feather'], 'worktable');
+shapeless('potion_fire_resistance', 1, ['awkward_potion', 'magma_cream'], 'worktable');
+shapeless('potion_poison', 1, ['awkward_potion', 'spider_eye'], 'worktable');
 for (const [tier, mat] of [['leather', 'leather'], ['iron', 'iron_ingot'], ['diamond', 'diamond']]) {
   shaped(`${tier}_helmet`, 1, ['MMM', 'M M'], { M: mat }, 'worktable');
   shaped(`${tier}_chestplate`, 1, ['M M', 'MMM', 'MMM'], { M: mat }, 'worktable');

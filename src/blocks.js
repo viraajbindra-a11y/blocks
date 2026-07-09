@@ -385,7 +385,7 @@ def(B.GLOWSTONE, 'glowstone', 'Glowstone', {
 });
 def(B.NETHER_WART_BLOCK, 'nether_wart_block', 'Nether Wart Block', {
   solid: false, opaque: false, cross: true, hardness: 0.05, sound: 'plant',
-  light: 4, placeOn: [B.NETHERRACK, B.SOUL_SAND], drops: 'self',
+  light: 4, placeOn: [B.NETHERRACK, B.SOUL_SAND], drops: [{ item: 'nether_wart', min: 1, max: 2 }],
 });
 def(B.NETHER_BRICKS, 'nether_bricks', 'Nether Bricks', {
   hardness: 5, tool: 'pick', minTier: 1, sound: 'stone',

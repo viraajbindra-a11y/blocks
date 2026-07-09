@@ -55,6 +55,8 @@ export class Player {
     this.shieldRaised = false;   // set by interaction while a raised shield is held
     this.xp = 0;                 // points toward the next level
     this.xpLevel = 0;
+    // Active status effects: { type: { time: seconds, level } }
+    this.effects = {};
 
     // Event hooks set by main: onDamage(amount, cause), onDeath(cause),
     // onStep(blockId), onStateSound(kind)
@@ -122,6 +124,38 @@ export class Player {
     let n = 0;
     for (const s of this.slots) if (s && s.key === key) n += s.count;
     return n;
+  }
+
+  // ── Status effects ───────────────────────────────────────────────
+  addEffect(type, duration, level = 1) {
+    const cur = this.effects[type];
+    if (!cur || level > cur.level || duration > cur.time) this.effects[type] = { time: duration, level };
+  }
+  effectLevel(type) { return this.effects[type]?.level || 0; }
+  hasEffect(type) { return !!this.effects[type]; }
+  clearEffects() { this.effects = {}; }   // e.g. drinking milk
+
+  _tickEffects(dt) {
+    const eff = this.effects;
+    for (const type in eff) {
+      eff[type].time -= dt;
+      if (eff[type].time <= 0) delete eff[type];
+    }
+    if (eff.regeneration && this.health < MAX_HEALTH) {
+      this._regEffT = (this._regEffT || 0) + dt;
+      if (this._regEffT >= 2.4 / eff.regeneration.level) {
+        this._regEffT = 0;
+        this.health = Math.min(MAX_HEALTH, this.health + 1);
+      }
+    }
+    if (eff.poison && this.health > 1) {
+      this._poiEffT = (this._poiEffT || 0) + dt;
+      if (this._poiEffT >= 1.4) {
+        this._poiEffT = 0;
+        this.health = Math.max(1, this.health - 1);
+        if (this.hooks.onDamage) this.hooks.onDamage(1, 'poison');
+      }
+    }
   }
 
   // ── Experience ───────────────────────────────────────────────────
@@ -203,11 +237,12 @@ export class Player {
     const wl = Math.hypot(wx, wz);
     if (wl > 1) { wx /= wl; wz /= wl; }
 
-    const speed = this.flying ? SPRINT_SPEED * 2.4
+    let speed = this.flying ? SPRINT_SPEED * 2.4
       : this.inWater ? SWIM_SPEED
       : this.crouching ? CROUCH_SPEED
       : this.sprinting ? SPRINT_SPEED
       : WALK_SPEED;
+    if (this.effects.swiftness && !this.flying) speed *= 1 + 0.2 * this.effects.swiftness.level;
 
     // Horizontal acceleration (full on ground, reduced in air)
     const accel = (this.onGround || this.flying || this.inWater ? 42 : 42 * AIR_CONTROL);
@@ -476,6 +511,7 @@ export class Player {
 
   // ── Survival ─────────────────────────────────────────────────────
   _survivalTick(dt) {
+    this._tickEffects(dt);
     // Exhaustion from sprinting
     if (this.sprinting) this.exhaustion += dt * 0.12;
     if (this.exhaustion >= 4) {
@@ -519,6 +555,7 @@ export class Player {
 
   damage(amount, cause, bypassCooldown = false) {
     if (this.dead || this.mode === MODE_BUILDER) return;
+    if ((cause === 'lava' || cause === 'fire') && this.effects.fire_resistance) return;
     if (!bypassCooldown && this.hurtTimer > 0) return;
     this.hurtTimer = 0.5;
     const blockable = cause !== 'drown' && cause !== 'hunger' && cause !== 'fall';
@@ -560,7 +597,7 @@ export class Player {
       pos: this.pos, yaw: this.yaw, pitch: this.pitch,
       health: this.health, hunger: this.hunger, air: this.air,
       slots: this.slots, selected: this.selected, flying: this.flying,
-      armor: this.armor, xp: this.xp, xpLevel: this.xpLevel,
+      armor: this.armor, xp: this.xp, xpLevel: this.xpLevel, effects: this.effects,
     };
   }
   deserialize(d) {
@@ -577,6 +614,7 @@ export class Player {
     if (Array.isArray(d.armor)) for (let i = 0; i < 4; i++) this.armor[i] = d.armor[i] ?? null;
     this.xp = d.xp ?? 0;
     this.xpLevel = d.xpLevel ?? 0;
+    this.effects = d.effects ?? {};
   }
 }
 
