@@ -833,6 +833,45 @@ const P = {
     px(d, 6, 6, [252, 249, 240]); px(d, 7, 6, [250, 246, 236]);   // highlight
     speckle(d, rnd, [[220, 210, 186]], 0.06);
   },
+  flint: (d, rnd) => {
+    for (let y = 4; y <= 13; y++) for (let x = 4; x <= 12; x++) {
+      if (Math.abs(x - 8) + Math.abs(y - 8.5) > 4.6) continue;       // angular chip
+      px(d, x, y, (x - 8) + (y - 8) < -2 ? [104, 102, 108] : jitter([58, 56, 62], rnd, 0.1));
+    }
+    line(d, 5, 7, 9, 5, [120, 118, 124]);                           // facet edge
+    px(d, 11, 11, [32, 30, 34]); px(d, 6, 12, [36, 34, 38]);        // shadow corners
+  },
+  string: (d, rnd) => {
+    const c = [226, 224, 216], c2 = [190, 188, 180];
+    for (let y = 1; y <= 14; y++) {
+      const x = 8 + Math.round(Math.sin(y * 0.85) * 2.4);
+      px(d, x, y, c); px(d, x + 1, y, c2);
+    }
+    px(d, 10, 1, c); px(d, 11, 2, c2); px(d, 6, 14, c);             // frayed ends
+  },
+  arrow: (d, rnd) => {
+    line(d, 3, 13, 12, 4, [120, 92, 60]); line(d, 4, 13, 13, 4, [92, 68, 44]);  // shaft
+    px(d, 14, 2, [140, 140, 144]); px(d, 13, 3, [112, 112, 116]);   // flint head
+    px(d, 12, 3, [92, 92, 96]); px(d, 13, 4, [92, 92, 96]);
+    px(d, 3, 12, [232, 232, 236]); px(d, 2, 13, [210, 210, 216]);   // feather fletch
+    px(d, 4, 13, [232, 232, 236]); px(d, 3, 14, [200, 200, 206]);
+  },
+  bow: (d, rnd) => {
+    const wood = [128, 90, 52], woodD = [96, 66, 40], woodL = [156, 116, 70];
+    const str = [228, 228, 232], ar = [120, 92, 60];
+    const arc = [[6, 1], [8, 2], [10, 4], [11, 6], [11, 9], [10, 11], [8, 13], [6, 14]];
+    for (const [x, y] of arc) { px(d, x, y, wood); px(d, x - 1, y, woodD); px(d, x + 1, y, woodL); }
+    vline(d, 6, 2, 13, str);                                        // taut string
+    line(d, 3, 7, 12, 7, ar); px(d, 13, 7, [128, 128, 132]);        // nocked arrow
+    px(d, 3, 6, str); px(d, 3, 8, str);                             // fletch
+  },
+  shears: (d, rnd) => {
+    const m = [196, 200, 208], mL = [230, 233, 238], mD = [128, 132, 140];
+    line(d, 3, 13, 9, 6, m); line(d, 4, 13, 10, 6, mL);            // blade 1
+    line(d, 13, 13, 7, 6, m); line(d, 12, 13, 6, 6, mL);           // blade 2
+    px(d, 8, 7, [78, 80, 86]); px(d, 8, 8, [78, 80, 86]);          // pivot rivet
+    px(d, 3, 14, mD); px(d, 13, 14, mD);                           // handle rings
+  },
 };
 
 // Cracks + tools are generated families.
@@ -845,6 +884,46 @@ const TIER_HEAD = {
 for (const tier of Object.keys(TIER_HEAD)) {
   for (const type of ['pick', 'axe', 'shovel', 'hoe', 'blade']) {
     P[`${type}_${tier}`] = toolPainter(type, TIER_HEAD[tier]);
+  }
+}
+
+// Armor: one silhouette per piece, tinted by tier.
+function armorPainter(piece, col) {
+  const L = shade(col, 1.24), D = shade(col, 0.66), E = shade(col, 0.42);
+  return (d, rnd) => {
+    if (piece === 'helmet') {
+      for (let y = 3; y <= 9; y++) for (let x = 4; x <= 11; x++) {
+        if (Math.hypot((x - 7.5) / 4, (y - 6.5) / 4.4) > 1) continue;
+        px(d, x, y, y <= 4 ? L : jitter(col, rnd, 0.05));
+      }
+      hline(d, 4, 11, 10, D);                       // face-opening rim
+      for (let x = 6; x <= 9; x++) px(d, x, 9, E);  // visor slit
+      px(d, 6, 3, L); px(d, 7, 3, L);
+    } else if (piece === 'chestplate') {
+      for (let y = 3; y <= 12; y++) for (let x = 4; x <= 11; x++) {
+        px(d, x, y, x <= 4 || x >= 11 ? E : x === 5 || x === 10 ? D : y <= 4 ? L : jitter(col, rnd, 0.05));
+      }
+      hline(d, 2, 4, 3, L); hline(d, 11, 13, 3, D); // shoulder tabs
+      hline(d, 4, 11, 12, E); vline(d, 7, 4, 11, D);
+    } else if (piece === 'leggings') {
+      for (let y = 2; y <= 13; y++) for (let x = 4; x <= 11; x++) {
+        if (x >= 7 && x <= 8 && y >= 6) continue;   // gap between legs
+        px(d, x, y, x === 4 || x === 11 ? E : y <= 3 ? L : jitter(col, rnd, 0.05));
+      }
+      hline(d, 4, 11, 2, L);
+    } else {                                        // boots
+      for (let y = 7; y <= 13; y++) for (let x = 3; x <= 12; x++) {
+        if (x >= 7 && x <= 8 && y <= 11) continue;
+        px(d, x, y, y === 13 ? E : y <= 8 ? L : jitter(col, rnd, 0.05));
+      }
+      hline(d, 3, 6, 13, E); hline(d, 9, 12, 13, E);
+    }
+  };
+}
+const ARMOR_COL = { leather: [150, 102, 64], iron: [198, 202, 208], diamond: [110, 214, 206] };
+for (const [tier, col] of Object.entries(ARMOR_COL)) {
+  for (const pc of ['helmet', 'chestplate', 'leggings', 'boots']) {
+    P[`${tier}_${pc}`] = armorPainter(pc, col);
   }
 }
 

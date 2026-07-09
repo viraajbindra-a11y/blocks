@@ -101,6 +101,44 @@ item('wool', 'Wool', { desc: 'Soft sheared fleece.' });
 item('gunpowder', 'Gunpowder', { desc: 'Volatile black dust.' });
 item('bone', 'Bone', { desc: 'Grind into bone meal.' });
 item('bone_meal', 'Bone Meal', { desc: 'Fertilizes crops and saplings.' });
+item('flint', 'Flint', { desc: 'A sharp shard knapped from gravel.' });
+item('string', 'String', { desc: 'Unraveled fibre for bows.' });
+item('arrow', 'Arrow', { desc: 'Ammunition for a bow.' });
+
+// ── Ranged + shears ───────────────────────────────────────────────
+item('bow', 'Bow', {
+  kind: 'tool', maxStack: 1,
+  tool: { type: 'bow', tier: 0, speed: 2.4, durability: 240, damage: 1 },
+  desc: 'Hold right-click to draw, release to loose an arrow.',
+});
+item('shears', 'Shears', {
+  kind: 'tool', maxStack: 1,
+  tool: { type: 'shears', tier: 2, speed: 5, durability: 238, damage: 1 },
+  desc: 'Shear sheep for wool; snips leaves and plants.',
+});
+
+// ── Armor ─────────────────────────────────────────────────────────
+// slot 0 helmet · 1 chestplate · 2 leggings · 3 boots. points reduce
+// incoming damage (MC-style: ~4% per point, capped).
+const ARMOR_TIERS = [
+  { id: 'leather', label: 'Leather', mat: 'leather', pts: [1, 3, 2, 1] },
+  { id: 'iron', label: 'Iron', mat: 'iron_ingot', pts: [2, 6, 5, 2] },
+  { id: 'diamond', label: 'Diamond', mat: 'diamond', pts: [3, 8, 6, 3] },
+];
+const ARMOR_PIECES = [
+  { slot: 0, id: 'helmet', label: 'Helmet' },
+  { slot: 1, id: 'chestplate', label: 'Chestplate' },
+  { slot: 2, id: 'leggings', label: 'Leggings' },
+  { slot: 3, id: 'boots', label: 'Boots' },
+];
+for (const t of ARMOR_TIERS) {
+  for (const pc of ARMOR_PIECES) {
+    item(`${t.id}_${pc.id}`, `${t.label} ${pc.label}`, {
+      kind: 'armor', maxStack: 1,
+      armor: { slot: pc.slot, points: t.pts[pc.slot], mat: t.mat },
+    });
+  }
+}
 
 // ── Food ──────────────────────────────────────────────────────────
 item('sweet_berries', 'Sweet Berries', { kind: 'food', food: { restore: 2 } });
@@ -251,7 +289,7 @@ export function catalogItems() {
   const blocks = [], tools = [], mats = [], food = [];
   for (const it of ITEMS.values()) {
     if (it.kind === 'block') blocks.push(it.key);
-    else if (it.kind === 'tool') tools.push(it.key);
+    else if (it.kind === 'tool' || it.kind === 'armor') tools.push(it.key);
     else if (it.kind === 'food') food.push(it.key);
     else mats.push(it.key);
   }

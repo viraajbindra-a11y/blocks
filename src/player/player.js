@@ -50,6 +50,8 @@ export class Player {
     // Inventory: 36 slots; 0-8 = hotbar. Slot: {key, count, dur?} | null
     this.slots = new Array(36).fill(null);
     this.selected = 0;
+    // Worn armor: [helmet, chestplate, leggings, boots]
+    this.armor = new Array(4).fill(null);
 
     // Event hooks set by main: onDamage(amount, cause), onDeath(cause),
     // onStep(blockId), onStateSound(kind)
@@ -113,6 +115,17 @@ export class Player {
   countOf(key) {
     let n = 0;
     for (const s of this.slots) if (s && s.key === key) n += s.count;
+    return n;
+  }
+
+  // Total armor points across worn pieces (each ≈ 4% damage reduction).
+  armorPoints() {
+    let n = 0;
+    for (const s of this.armor) {
+      if (!s) continue;
+      const def = itemByKey(s.key);
+      if (def && def.armor) n += def.armor.points;
+    }
     return n;
   }
   removeItems(key, count) {
@@ -493,6 +506,11 @@ export class Player {
     if (this.dead || this.mode === MODE_BUILDER) return;
     if (!bypassCooldown && this.hurtTimer > 0) return;
     this.hurtTimer = 0.5;
+    // Armor blunts contact/attack damage but not drown/hunger/fall.
+    if (cause !== 'drown' && cause !== 'hunger' && cause !== 'fall') {
+      const reduce = Math.min(0.8, this.armorPoints() * 0.04);
+      amount = amount * (1 - reduce);
+    }
     this.health -= amount;
     if (this.hooks.onDamage) this.hooks.onDamage(amount, cause);
     if (this.health <= 0) {
@@ -523,6 +541,7 @@ export class Player {
       pos: this.pos, yaw: this.yaw, pitch: this.pitch,
       health: this.health, hunger: this.hunger, air: this.air,
       slots: this.slots, selected: this.selected, flying: this.flying,
+      armor: this.armor,
     };
   }
   deserialize(d) {
@@ -536,6 +555,7 @@ export class Player {
     this.slots = d.slots ?? this.slots;
     this.selected = d.selected ?? 0;
     this.flying = d.flying ?? false;
+    if (Array.isArray(d.armor)) for (let i = 0; i < 4; i++) this.armor[i] = d.armor[i] ?? null;
   }
 }
 

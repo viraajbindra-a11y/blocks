@@ -166,6 +166,8 @@ export class InventoryUI {
       }
       this.resultEl = null;
     } else {
+      // Worn-armor strip (survival inventory only, MC-style)
+      if (!this.station) this._buildArmor(panel);
       // Crafting area: grid → arrow → result
       const craft = el('div', 'inv-craft', panel);
       const grid = el('div', 'inv-grid inv-craft-grid', craft);
@@ -208,9 +210,9 @@ export class InventoryUI {
     this._renderAll();
   }
 
-  _mkSlot(parent, zone, get, set) {
+  _mkSlot(parent, zone, get, set, accept) {
     const slotEl = el('div', 'slot', parent);
-    const bind = { el: slotEl, zone, get, set };
+    const bind = { el: slotEl, zone, get, set, accept };
     slotEl.addEventListener('mousedown', (e) => {
       if (e.button !== 0 && e.button !== 2) return;
       e.preventDefault();
@@ -220,6 +222,23 @@ export class InventoryUI {
     slotEl.addEventListener('mouseleave', () => this._hideTip());
     this._binds.push(bind);
     return bind;
+  }
+
+  // ── Armor ────────────────────────────────────────────────────────
+  // Four worn-armor slots (helmet/chest/legs/boots) backed by player.armor;
+  // each only accepts the matching piece.
+  _buildArmor(panel) {
+    const wrap = el('div', 'inv-armor', panel);
+    el('div', 'inv-armor-label', wrap).textContent = 'Armor';
+    const row = el('div', 'inv-grid inv-armor-row', wrap);
+    const P = this.player;
+    const names = ['Helmet', 'Chestplate', 'Leggings', 'Boots'];
+    for (let i = 0; i < 4; i++) {
+      const idx = i;
+      const bind = this._mkSlot(row, 'armor', () => P.armor[idx], (v) => { P.armor[idx] = v; },
+        (stack) => { const dd = itemByKey(stack.key); return !!(dd && dd.armor && dd.armor.slot === idx); });
+      bind.el.title = names[i];
+    }
   }
 
   // ── Furnace ──────────────────────────────────────────────────────
@@ -373,6 +392,7 @@ export class InventoryUI {
   _leftClick(bind) {
     const cur = this.cursor;
     const s = bind.get();
+    if (cur && bind.accept && !bind.accept(cur)) return;   // slot rejects this item
     if (!cur) {
       if (s) { bind.set(null); this.cursor = s; }
       return;
@@ -395,6 +415,7 @@ export class InventoryUI {
   _rightClick(bind) {
     const cur = this.cursor;
     const s = bind.get();
+    if (cur && bind.accept && !bind.accept(cur)) return;   // slot rejects this item
     if (!cur) {                       // pick up half
       if (!s) return;
       const half = Math.ceil(s.count / 2);
@@ -425,6 +446,13 @@ export class InventoryUI {
     let leftover;
     if (bind.zone === 'container') {
       leftover = this._giveRange(s, 0, 36);         // container → player inv
+    } else if (bind.zone === 'armor') {
+      leftover = this._giveRange(s, 0, 36);         // unequip → player inv
+    } else if ((bind.zone === 'pack' || bind.zone === 'hotbar') && itemByKey(s.key)?.armor
+               && !this.furnace && !this.container) {
+      const slot = itemByKey(s.key).armor.slot;     // shift-click → equip
+      if (!this.player.armor[slot]) { this.player.armor[slot] = s; leftover = 0; }
+      else leftover = bind.zone === 'hotbar' ? this._giveRange(s, 9, 36) : this._giveRange(s, 0, 9);
     } else if (bind.zone === 'furnace') {
       leftover = this._giveRange(s, 0, 36);         // furnace slot → player inv
     } else if (this.furnace && (bind.zone === 'pack' || bind.zone === 'hotbar')) {

@@ -361,6 +361,22 @@
 .inv-furnace-out { width: 54px; height: 54px; }
 .inv-furnace-out img { opacity: 1; }
 
+/* Worn-armor strip (survival inventory) */
+.inv-armor {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 0 8px;
+}
+.inv-armor-label {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hud-ink-dim);
+}
+.inv-armor-row { grid-template-columns: repeat(4, 46px); }
+.inv-armor-row .slot { box-shadow: inset 0 0 0 1px rgba(226, 162, 61, 0.18); }
+
 /* Builder catalog (right side) */
 .inv-catalog {
   display: flex;

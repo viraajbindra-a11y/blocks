@@ -22,6 +22,8 @@ export class Interaction {
     this.placeCooldown = 0;
     this.eatCooldown = 0;
     this.mineCooldown = 0;
+    this.bowCharge = 0;        // 0..1 draw strength while a bow is held
+    this._wasRightDown = false;
   }
 
   update(dt, input, nowS) {
@@ -60,11 +62,14 @@ export class Interaction {
       this._resetMining();
     }
 
-    // ── Use / place ──
+    // ── Use / place (a drawn bow owns right-click while held) ──
     const rightHeld = input.buttons[2];
-    if ((input.buttonPressed[2] || (rightHeld && this.placeCooldown <= 0))) {
+    if (this._handleBow(dt, rightHeld)) {
+      // bow is drawing or loosing — suppress place/use
+    } else if (input.buttonPressed[2] || (rightHeld && this.placeCooldown <= 0)) {
       this._use(input);
     }
+    this._wasRightDown = rightHeld;
 
     // ── Pick block ──
     if (input.buttonPressed[1] && this.target) {
@@ -192,6 +197,24 @@ export class Interaction {
     const p = this.player;
     const t = this.target;
     const held = p.heldItem();
+
+    // 0. Right-click a creature: shear a sheep or feed to breed
+    if (held && input.buttonPressed[2] && this.hooks.useOnEntity) {
+      const eye = p.eyePos();
+      const cp = Math.cos(p.pitch), sp = Math.sin(p.pitch);
+      const cy = Math.cos(p.yaw), sy = Math.sin(p.yaw);
+      const hit = this._entityUnderRay(eye, [-sy * cp, sp, -cy * cp]);
+      if (hit && (!t || hit.dist < t.dist)) {
+        const r = this.hooks.useOnEntity(hit.entity, held.key);
+        if (r && r.handled) {
+          if (r.consumeItem) p.consumeHeld(1);
+          if (r.damageTool) p.damageHeldTool(1);
+          this.placeCooldown = 0.35;
+          this.swing = 0.6;
+          return;
+        }
+      }
+    }
 
     // 1. Interactive blocks (unless sneaking)
     if (t && !p.crouching) {
@@ -332,6 +355,36 @@ export class Interaction {
     if (held.kind === 'block') {
       this._placeBlock(t, held);
     }
+  }
+
+  // Bow: charge while right-click is held, loose an arrow on release.
+  // Returns true whenever a bow is held (so it owns the right button).
+  _handleBow(dt, rightHeld) {
+    const p = this.player;
+    const held = p.heldItem();
+    if (!held || held.key !== 'bow') { this.bowCharge = 0; return false; }
+    const hasAmmo = p.mode === MODE_BUILDER || p.countOf('arrow') > 0;
+    if (rightHeld && hasAmmo) {
+      this.bowCharge = Math.min(1, this.bowCharge + dt / 0.85);        // ~0.85s to full draw
+    } else {
+      if (this._wasRightDown && this.bowCharge > 0.12 && hasAmmo) this._fireBow(this.bowCharge);
+      this.bowCharge = 0;
+    }
+    return true;
+  }
+
+  _fireBow(charge) {
+    const p = this.player;
+    if (p.mode !== MODE_BUILDER) p.removeItems('arrow', 1);
+    const eye = p.eyePos();
+    const cp = Math.cos(p.pitch), sp = Math.sin(p.pitch);
+    const cy = Math.cos(p.yaw), sy = Math.sin(p.yaw);
+    const dir = [-sy * cp, sp, -cy * cp];
+    const power = 0.45 + charge * 0.55;                 // 0.45 → 1.0
+    const dmg = Math.max(1, Math.round(1 + charge * 5)); // 1 → 6
+    if (this.hooks.fireArrow) this.hooks.fireArrow(eye, dir, power, dmg);
+    p.damageHeldTool(1);
+    this.swing = 1;
   }
 
   _placeBlock(t, held) {

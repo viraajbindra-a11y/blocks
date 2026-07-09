@@ -173,6 +173,19 @@ shaped('end_glass_pane', 16, ['GGG', 'GGG'], { G: 'end_glass' }, 'worktable');
 
 shaped('beacon', 1, [' S ', 'SCS', ' S '], { S: 'diamond_block', C: 'dragon_core' }, 'worktable');
 
+// ── Ranged combat, shears & armor ─────────────────────────────────
+shapeless('string', 4, ['wool']);                                    // unravel fleece
+shaped('arrow', 4, ['F', 'R', 'E'], { F: 'flint', R: 'stick', E: 'feather' }, 'worktable');
+shaped('bow', 1, [' RS', 'R S', ' RS'], { R: 'stick', S: 'string' }, 'worktable');
+shaped('shears', 1, [' I', 'I '], { I: 'iron_ingot' }, 'worktable');
+shapeless('flint_and_steel', 1, ['iron_ingot', 'flint']);           // MC-accurate alt
+for (const [tier, mat] of [['leather', 'leather'], ['iron', 'iron_ingot'], ['diamond', 'diamond']]) {
+  shaped(`${tier}_helmet`, 1, ['MMM', 'M M'], { M: mat }, 'worktable');
+  shaped(`${tier}_chestplate`, 1, ['M M', 'MMM', 'MMM'], { M: mat }, 'worktable');
+  shaped(`${tier}_leggings`, 1, ['MMM', 'M M', 'M M'], { M: mat }, 'worktable');
+  shaped(`${tier}_boots`, 1, ['M M', 'M M'], { M: mat }, 'worktable');
+}
+
 // ── Mod registration ─────────────────────────────────────────────
 export function registerShaped(out, count, pattern, keyMap, station = null) {
   shaped(out, count, pattern, keyMap, station);

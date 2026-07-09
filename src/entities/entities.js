@@ -183,8 +183,12 @@ function baseMat(e, yawOff = 0) {
   const m = identity();
   translate(m, m, e.pos[0], e.pos[1], e.pos[2]);
   rotateY(m, m, e.yaw + yawOff);
+  if (e.baby) scale(m, m, 0.6, 0.6, 0.6);
   return m;
 }
+
+// What each farm animal breeds with.
+const BREED_FOOD = { pig: 'potato', cow: 'potato', sheep: 'potato', chicken: 'seeds' };
 
 // part = base * T(pivot) * Rx(rx) * T(offset) * S(size); unit cube at origin.
 function addPart(parts, base, color, px, py, pz, rx, ox, oy, oz, sx, sy, sz) {
@@ -387,10 +391,12 @@ function sheepParts(e, parts) {
   for (const [lx, lz, sgn] of [[-0.2, 0.28, 1], [0.2, 0.28, -1], [-0.2, -0.28, -1], [0.2, -0.28, 1]]) {
     addPart(parts, b, C.shpLeg, lx, 0.24, lz, sw * sgn, 0, -0.12, 0, 0.12, 0.28, 0.12);
   }
-  addPart(parts, b, C.shpWool, 0, 0.66, -0.02, 0, 0, 0, 0, 0.74, 0.66, 0.96);       // fleece body
+  const skin = [0.855, 0.706, 0.706];                                               // bare hide
+  if (e.sheared) addPart(parts, b, skin, 0, 0.6, -0.02, 0, 0, 0, 0, 0.56, 0.5, 0.8);
+  else addPart(parts, b, C.shpWool, 0, 0.66, -0.02, 0, 0, 0, 0, 0.74, 0.66, 0.96);  // fleece body
   const dip = grazeDip(e) * 0.6;
   addPart(parts, b, C.shpFace, 0, 0.62, 0.52, dip, 0, 0, 0.06, 0.3, 0.34, 0.3);     // face
-  addPart(parts, b, C.shpWool, 0, 0.78, 0.42, dip, 0, 0, 0, 0.36, 0.22, 0.28);      // headwool
+  if (!e.sheared) addPart(parts, b, C.shpWool, 0, 0.78, 0.42, dip, 0, 0, 0, 0.36, 0.22, 0.28); // headwool
 }
 
 function chickenParts(e, parts, nowS) {
@@ -685,6 +691,8 @@ export class EntitySystem {
       alt: 2 + r() * 4,                       // embermoth cruising height
       eggT: 20 + r() * 40,                    // chicken egg-lay countdown
       fuse: 0,                                // creeper detonation timer
+      love: 0, baby: false, growT: 0,         // breeding
+      sheared: false, woolT: 0,               // sheep fleece regrow
       variant: species === 'mosshopper' && biome === BIOME.TUNDRA ? 'snow' : null,
       aabb: makeAabb(),
     };
@@ -698,6 +706,11 @@ export class EntitySystem {
     if (s.flying) { this._updateMoth(e, dt, sun, nowS); return; }
 
     if (this.rng() < dt * 0.05) this.hooks.audio?.creature?.(e.species, 'idle');
+
+    // breeding + growth + fleece regrowth timers
+    if (e.love > 0) e.love -= dt;
+    if (e.baby) { e.growT -= dt; if (e.growT <= 0) { e.baby = false; e.hw = s.hw; e.h = s.h; } }
+    if (e.sheared && e.state === 'graze') { e.woolT -= dt; if (e.woolT <= 0) e.sheared = false; }
 
     // chickens lay an egg on a timer while on the ground
     if (s.laysEggs) {
@@ -1050,9 +1063,22 @@ export class EntitySystem {
     vx /= L; vy = vy / L + 0.09; vz /= L;                    // slight upward arc
     const n = Math.hypot(vx, vy, vz) || 1;
     this.entities.push({
-      kind: 'arrow', species: 'arrow',
+      kind: 'arrow', species: 'arrow', owner: 'mob',
       pos: [ex + vx * 0.6, ey, ez + vz * 0.6], vel: [vx / n * 22, vy / n * 22, vz / n * 22],
       yaw: Math.atan2(vx, vz), pitch: Math.atan2(vy, Math.hypot(vx, vz)),
+      hw: 0.1, h: 0.1, dmg, age: 0, dead: false,
+    });
+  }
+
+  // A player-loosed arrow (from a drawn bow). power scales speed.
+  spawnPlayerArrow(origin, dir, power, dmg) {
+    if (this._arrowCount() > 24) return;
+    const sp = 26 * power;
+    this.entities.push({
+      kind: 'arrow', species: 'arrow', owner: 'player',
+      pos: [origin[0] + dir[0] * 0.6, origin[1] + dir[1] * 0.6, origin[2] + dir[2] * 0.6],
+      vel: [dir[0] * sp, dir[1] * sp, dir[2] * sp],
+      yaw: Math.atan2(dir[0], dir[2]), pitch: Math.atan2(dir[1], Math.hypot(dir[0], dir[2])),
       hw: 0.1, h: 0.1, dmg, age: 0, dead: false,
     });
   }
@@ -1067,11 +1093,27 @@ export class EntitySystem {
     e.age += dt;
     if (e.age > 4) { e.dead = true; return; }
     e.vel[1] += GRAVITY * dt * 0.35;                          // light drop
-    const dx = pp[0] - e.pos[0], dy = (pp[1] + 0.9) - e.pos[1], dz = pp[2] - e.pos[2];
-    if (dx * dx + dy * dy + dz * dz < 0.55 * 0.55) {
-      const d = Math.hypot(dx, dz) || 1;
-      this.hooks.attackPlayer?.(e.dmg, [dx / d, 0, dz / d]);
-      e.dead = true; return;
+    if (e.owner === 'player') {
+      // player arrows strike creatures
+      for (const c of this.entities) {
+        if (c.kind !== 'creature' || c.dead) continue;
+        const b = c.aabb();
+        if (e.pos[0] > b.min[0] - 0.15 && e.pos[0] < b.max[0] + 0.15 &&
+            e.pos[1] > b.min[1] - 0.15 && e.pos[1] < b.max[1] + 0.15 &&
+            e.pos[2] > b.min[2] - 0.15 && e.pos[2] < b.max[2] + 0.15) {
+          const l = Math.hypot(e.vel[0], e.vel[2]) || 1;
+          this.hitEntity(c, e.dmg, [e.vel[0] / l, 0.3, e.vel[2] / l]);
+          e.dead = true; return;
+        }
+      }
+    } else {
+      // mob arrows strike the player
+      const dx = pp[0] - e.pos[0], dy = (pp[1] + 0.9) - e.pos[1], dz = pp[2] - e.pos[2];
+      if (dx * dx + dy * dy + dz * dz < 0.55 * 0.55) {
+        const d = Math.hypot(dx, dz) || 1;
+        this.hooks.attackPlayer?.(e.dmg, [dx / d, 0, dz / d]);
+        e.dead = true; return;
+      }
     }
     const hx = this._moveAxis(e, 0, e.vel[0] * dt);
     const hz = this._moveAxis(e, 2, e.vel[2] * dt);
@@ -1156,6 +1198,44 @@ export class EntitySystem {
   }
 
   // ── Combat ───────────────────────────────────────────────────────
+  // Right-clicking a creature with an item: shear a sheep or feed to breed.
+  // Returns {handled, consumeItem, damageTool} for the interaction layer.
+  useItemOn(e, heldKey) {
+    if (!e || e.dead || e.kind !== 'creature' || e.def.hostile) return { handled: false };
+    if (heldKey === 'shears' && e.species === 'sheep' && !e.sheared && !e.baby) {
+      this.spawnDrops(e.pos[0], e.pos[1] + e.h * 0.5, e.pos[2],
+        [{ key: 'wool', count: 1 + (this.rng() * 2 | 0) }]);
+      e.sheared = true; e.woolT = 24 + this.rng() * 24;
+      this.hooks.audio?.creature?.(e.species, 'idle');
+      return { handled: true, consumeItem: false, damageTool: true };
+    }
+    const food = BREED_FOOD[e.species];
+    if (food && heldKey === food && !e.baby && (!e.love || e.love <= 0)) {
+      e.love = 20;
+      this._tryBreed(e);
+      return { handled: true, consumeItem: true, damageTool: false };
+    }
+    return { handled: false };
+  }
+
+  _tryBreed(e) {
+    for (const o of this.entities) {
+      if (o === e || o.kind !== 'creature' || o.species !== e.species || o.baby || !(o.love > 0)) continue;
+      const dx = o.pos[0] - e.pos[0], dz = o.pos[2] - e.pos[2];
+      if (dx * dx + dz * dz > 64) continue;
+      e.love = 0; o.love = 0;
+      const baby = this._makeCreature(e.species,
+        (e.pos[0] + o.pos[0]) / 2, e.pos[1], (e.pos[2] + o.pos[2]) / 2, 0);
+      baby.baby = true; baby.growT = 50 + this.rng() * 40;
+      baby.hw = e.def.hw * 0.5; baby.h = e.def.h * 0.6;
+      this.entities.push(baby);
+      this.hooks.particles?.burstBlock?.(
+        Math.floor(baby.pos[0]), Math.floor(baby.pos[1] + 0.5), Math.floor(baby.pos[2]), 0, 8, 0.5, this.rng);
+      return true;
+    }
+    return false;
+  }
+
   hitEntity(e, dmg, dir) {
     if (!e || e.dead || e.kind !== 'creature') return;
     e.health -= dmg;

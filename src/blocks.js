@@ -174,7 +174,10 @@ def(B.GRASS_BLOCK, 'grass_block', 'Grass Block', {
   drops: [{ item: 'dirt', min: 1, max: 1 }],
 });
 def(B.SAND, 'sand', 'Sand', { hardness: 0.6, tool: 'shovel', sound: 'sand' });
-def(B.GRAVEL, 'gravel', 'Gravel', { hardness: 0.7, tool: 'shovel', sound: 'sand' });
+def(B.GRAVEL, 'gravel', 'Gravel', {
+  hardness: 0.7, tool: 'shovel', sound: 'sand',
+  drops: [{ item: 'gravel', min: 1, max: 1 }, { item: 'flint', min: 1, max: 1, chance: 0.14 }],
+});
 def(B.CLAY, 'clay', 'Clay', {
   hardness: 0.7, tool: 'shovel', sound: 'soft',
   drops: [{ item: 'clay_ball', min: 3, max: 4 }],
