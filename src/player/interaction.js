@@ -405,10 +405,11 @@ export class Interaction {
       return;
     }
 
-    // 4. Seeds
-    if (held.key === 'seeds') {
+    // 4. Seeds (potato or wheat) → plant on farmland
+    const cropBase = { seeds: B.CROP_0, wheat_seeds: B.WHEAT_0 }[held.key];
+    if (cropBase !== undefined) {
       if (t.id === B.FARMLAND && this.world.getBlock(t.x, t.y + 1, t.z) === B.AIR) {
-        this.world.setBlock(t.x, t.y + 1, t.z, B.CROP_0);
+        this.world.setBlock(t.x, t.y + 1, t.z, cropBase);
         p.consumeHeld(1);
         this.hooks.audio.blockSound('place', 'plant');
         this.placeCooldown = 0.24;

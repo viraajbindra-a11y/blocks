@@ -144,6 +144,7 @@ shapeless('netherite_ingot', 1, ['netherite_scrap', 'netherite_scrap', 'netherit
 shaped('torch', 4, ['C', 'R'], { C: 'coal', R: 'stick' });
 shaped('ladder', 3, ['R R', 'RRR', 'R R'], { R: 'stick' }, 'worktable');
 shapeless('bed', 1, ['leather', 'leather', 'oak_planks']);
+shaped('bread', 1, ['WWW'], { W: 'wheat' }, 'worktable');
 shaped('bed', 1, ['WWW', 'PPP'], { W: 'wool', P: 'oak_planks' }, 'worktable');   // wool bed
 shapeless('bone_meal', 3, ['bone']);                                             // grind bone
 shaped('chest', 1, ['PPP', 'P P', 'PPP'], { P: 'oak_planks' }, 'worktable');

@@ -269,6 +269,23 @@ function cropPainter(stage) {
   };
 }
 
+// Wheat crop: green when young, ripening to gold with grain heads.
+function wheatCropPainter(stage) {
+  return (d, rnd) => {
+    const young = [110, 150, 74], ripe = [214, 184, 88], grain = [234, 208, 112];
+    const golden = stage >= 2;
+    const maxH = [3, 6, 10, 13][stage];
+    for (const x of [3, 6, 9, 12]) {
+      const h = Math.max(2, maxH - ((rnd() * 3) | 0));
+      for (let i = 0; i < h; i++) {
+        const y = 15 - i, top = i >= h - 2;
+        px(d, x, y, golden && top ? jitter(grain, rnd, 0.08) : jitter(golden ? ripe : young, rnd, 0.1));
+        if (stage === 3 && top && rnd() < 0.7) px(d, x + (rnd() < 0.5 ? -1 : 1), y, grain);
+      }
+    }
+  };
+}
+
 // ── Tool sprites ──────────────────────────────────────────────────
 // Chunky, outlined, Minecraft-proportioned: a 2px wooden haft running
 // lower-left → centre with a dark contour, and a bold metal head with a
@@ -718,6 +735,25 @@ const P = {
   },
   crop_0: cropPainter(0), crop_1: cropPainter(1),
   crop_2: cropPainter(2), crop_3: cropPainter(3),
+  wheat_0: wheatCropPainter(0), wheat_1: wheatCropPainter(1),
+  wheat_2: wheatCropPainter(2), wheat_3: wheatCropPainter(3),
+  wheat_seeds: (d, rnd) => {
+    for (const [x, y] of [[5, 7], [9, 6], [7, 10], [6, 12], [10, 10]]) {
+      px(d, x, y, [196, 178, 110]); px(d, x + 1, y + 1, [164, 146, 86]); px(d, x, y + 1, [210, 192, 124]);
+    }
+  },
+  wheat: (d, rnd) => {
+    for (const bx of [4, 8, 12]) {
+      for (let y = 13; y >= 5; y--) px(d, bx, y, jitter([214, 184, 88], rnd, 0.08));
+      for (let y = 3; y <= 7; y++) { px(d, bx - 1, y, [234, 208, 112]); px(d, bx + 1, y, [206, 178, 88]); }
+      px(d, bx, 3, [240, 216, 120]);
+    }
+  },
+  bread: (d, rnd) => {
+    blob(d, rnd, 8, 8.5, 5, 3.2, [176, 120, 60], { light: [212, 158, 92], dark: [132, 86, 44] });
+    for (let i = 0; i < 4; i++) line(d, 4 + i * 2, 6, 5 + i * 2, 11, [140, 92, 50]);
+    speckle(d, rnd, [[198, 150, 88]], 0.06);
+  },
 
   // Weather
   rain: (d) => {
