@@ -57,7 +57,7 @@ const SPECIES = {
   },
   hollowshade: {
     hw: 0.4, h: 1.1, health: 12, walkSpeed: 1.7, grazes: false, hopper: false,
-    hostile: true, flying: true, dmg: 3, dims: new Set(['hollow']),
+    hostile: true, flying: true, teleports: true, dmg: 3, dims: new Set(['hollow']),
     biomes: new Set(),
     drops(rng) {
       const o = [];
@@ -1524,6 +1524,13 @@ export class EntitySystem {
       return;
     }
     this.hooks.audio?.creature?.(e.species, 'hurt');
+    if (e.def.teleports) {
+      // enderman-style blink: flick a few blocks aside when struck
+      e.pos[0] += (this.rng() - 0.5) * 10;
+      e.pos[2] += (this.rng() - 0.5) * 10;
+      this.hooks.particles?.burstBlock?.(
+        Math.floor(e.pos[0]), Math.floor(e.pos[1]), Math.floor(e.pos[2]), 0, 12, 0.5, this.rng);
+    }
     if (e.def.hostile) {
       // hostiles keep coming — just refresh facing toward the attacker
       e.targetYaw = Math.atan2(-kx, -kz);
