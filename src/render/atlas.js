@@ -1101,6 +1101,46 @@ for (const [c, col] of Object.entries(WOOL_COLORS)) {
   P[`${c}_dye`] = dyePainter(col);
 }
 
+// ── Building variants ─────────────────────────────────────────────
+const SBRICK = [124, 122, 118], SAND2 = [216, 205, 160];
+function sBrick(d, rnd, base) {
+  const m = shade(base, 0.66);
+  noisyFill(d, rnd, base, 0.05);
+  speckle(d, rnd, [shade(base, 1.1)], 0.06); speckle(d, rnd, [shade(base, 0.85)], 0.08);
+  hline(d, 0, 15, 7, m); hline(d, 0, 15, 15, m);        // two brick courses
+  vline(d, 7, 0, 7, m); vline(d, 15, 0, 7, m);          // top course seams
+  vline(d, 3, 8, 15, m); vline(d, 11, 8, 15, m);        // offset bottom course
+}
+P.smooth_stone = (d, rnd) => {
+  noisyFill(d, rnd, [132, 132, 134], 0.03);
+  speckle(d, rnd, [[120, 120, 122]], 0.04); hline(d, 0, 15, 15, [112, 112, 114]);
+};
+P.chiseled_stone_bricks = (d, rnd) => {
+  noisyFill(d, rnd, SBRICK, 0.05); border(d, shade(SBRICK, 0.66));
+  for (let y = 3; y <= 12; y++) { px(d, 7, y, shade(SBRICK, 0.75)); px(d, 8, y, shade(SBRICK, 1.12)); }
+  hline(d, 4, 11, 3, shade(SBRICK, 0.7)); hline(d, 4, 11, 12, shade(SBRICK, 0.7));
+};
+P.cracked_stone_bricks = (d, rnd) => {
+  sBrick(d, rnd, SBRICK);
+  for (let i = 0; i < 3; i++) line(d, 2 + ((rnd() * 12) | 0), 2, 2 + ((rnd() * 12) | 0), 13, [42, 42, 44]);
+};
+P.mossy_stone_bricks = (d, rnd) => {
+  sBrick(d, rnd, SBRICK); speckle(d, rnd, [[70, 104, 54], [92, 124, 66]], 0.13);
+};
+P.smooth_sandstone = (d, rnd) => {
+  noisyFill(d, rnd, SAND2, 0.03); hline(d, 0, 15, 15, shade(SAND2, 0.82));
+  speckle(d, rnd, [shade(SAND2, 0.94)], 0.05);
+};
+P.cut_sandstone = (d, rnd) => {
+  noisyFill(d, rnd, SAND2, 0.04); const m = shade(SAND2, 0.78);
+  hline(d, 0, 15, 7, m); vline(d, 7, 0, 15, m);
+};
+P.chiseled_sandstone = (d, rnd) => {
+  noisyFill(d, rnd, SAND2, 0.04); border(d, shade(SAND2, 0.78));
+  const m = shade(SAND2, 0.72);
+  hline(d, 5, 10, 4, m); vline(d, 7, 5, 10, m); px(d, 6, 7, m); px(d, 9, 7, m); hline(d, 5, 10, 11, m);
+};
+
 // ── Extra block faces & item sprites ──────────────────────────────
 // Furniture, the Smolder/Hollow dimensions, the Dawn beacon, plus the
 // sunsteel tier's raw materials and a few utility items. Appended here

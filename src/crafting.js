@@ -37,6 +37,10 @@ for (const [tier, mat] of Object.entries(toolMats)) {
 
 // ── Building & light ──────────────────────────────────────────────
 shaped('stone_bricks', 4, ['SS', 'SS'], { S: 'stone' }, 'worktable');
+shapeless('chiseled_stone_bricks', 1, ['stone_bricks']);
+shapeless('mossy_stone_bricks', 1, ['stone_bricks', 'vines']);
+shaped('chiseled_sandstone', 1, ['S', 'S'], { S: 'sandstone' }, 'worktable');
+shaped('cut_sandstone', 4, ['SS', 'SS'], { S: 'sandstone' }, 'worktable');
 shaped('copper_block', 1, ['II', 'II'], { I: 'copper_ingot' }, 'worktable');
 shaped('iron_block', 1, ['II', 'II'], { I: 'iron_ingot' }, 'worktable');
 shaped('diamond_block', 1, ['SS', 'SS'], { S: 'diamond' }, 'worktable');
@@ -68,6 +72,9 @@ export const SMELT = {
   spruce_log: { out: 'coal', count: 1 },   // → charcoal
   end_stone: { out: 'end_glass', count: 1 },
   cactus: { out: 'green_dye', count: 1 },  // cactus → green dye
+  stone: { out: 'smooth_stone', count: 1 },
+  stone_bricks: { out: 'cracked_stone_bricks', count: 1 },
+  sandstone: { out: 'smooth_sandstone', count: 1 },
 };
 
 export const FUEL = {

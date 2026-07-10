@@ -67,6 +67,10 @@ export const B = {
   // 16 colored wools occupy 212..227 (see WOOL_ORDER below)
   WOOL_WHITE: 212,
   WOOL_BLACK: 227,
+  // Decorative building variants
+  SMOOTH_STONE: 228,        CHISELED_STONE_BRICKS: 229, CRACKED_STONE_BRICKS: 230,
+  MOSSY_STONE_BRICKS: 231,  SMOOTH_SANDSTONE: 232,      CUT_SANDSTONE: 233,
+  CHISELED_SANDSTONE: 234,
 };
 
 // ── Legacy internal aliases ───────────────────────────────────────
@@ -384,6 +388,15 @@ const titleCase = (s) => s.split('_').map((w) => w[0].toUpperCase() + w.slice(1)
 WOOL_ORDER.forEach((c, i) => def(212 + i, `${c}_wool`, `${titleCase(c)} Wool`, {
   hardness: 0.8, sound: 'soft', tex: { all: `${c}_wool` },
 }));
+// Decorative stone/sandstone building variants (228..234)
+const STONE_LIKE = { hardness: 6, tool: 'pick', minTier: 1, sound: 'stone' };
+def(B.SMOOTH_STONE, 'smooth_stone', 'Smooth Stone', { ...STONE_LIKE });
+def(B.CHISELED_STONE_BRICKS, 'chiseled_stone_bricks', 'Chiseled Stone Bricks', { ...STONE_LIKE, hardness: 5.5 });
+def(B.CRACKED_STONE_BRICKS, 'cracked_stone_bricks', 'Cracked Stone Bricks', { ...STONE_LIKE, hardness: 5.5 });
+def(B.MOSSY_STONE_BRICKS, 'mossy_stone_bricks', 'Mossy Stone Bricks', { ...STONE_LIKE, hardness: 5.5 });
+def(B.SMOOTH_SANDSTONE, 'smooth_sandstone', 'Smooth Sandstone', { ...STONE_LIKE, hardness: 4 });
+def(B.CUT_SANDSTONE, 'cut_sandstone', 'Cut Sandstone', { ...STONE_LIKE, hardness: 4 });
+def(B.CHISELED_SANDSTONE, 'chiseled_sandstone', 'Chiseled Sandstone', { ...STONE_LIKE, hardness: 4 });
 
 // ── The Nether ───────────────────────────────────────────────────
 def(B.NETHERRACK, 'netherrack', 'Netherrack', {
@@ -801,7 +814,7 @@ export const blockIdByKey = key => keyToId.get(key) ?? 0;
 // Assigns the next free id ≥ 210. Ids are stable for a given mod list +
 // order (worlds save raw ids, so changing the mod list can orphan blocks —
 // they degrade gracefully to air).
-let nextModId = 228;   // 210-227 = TNT, enchanting table, 16 wools (base); mods after
+let nextModId = 235;   // 210-234 = TNT, enchanting table, 16 wools, 7 build variants; mods after
 export function registerBlock(key, name, props = {}) {
   if (keyToId.has(key)) throw new Error(`block key "${key}" already registered`);
   while (nextModId < 256 && BLOCKS[nextModId]) nextModId++;
