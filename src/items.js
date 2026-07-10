@@ -26,6 +26,7 @@ function item(key, name, props = {}) {
 const NO_ITEM = new Set([B.AIR, B.BEDROCK, B.WATER, B.LAVA,
   B.FARMLAND, B.CROP_0, B.CROP_1, B.CROP_2, B.CROP_3, B.SWEET_BERRY_BUSH_RIPE,
   B.WHEAT_0, B.WHEAT_1, B.WHEAT_2, B.WHEAT_3,
+  B.CARROT_0, B.CARROT_1, B.CARROT_2, B.CARROT_3,
   B.NETHER_PORTAL, B.END_PORTAL]);
 for (const b of BLOCKS) {
   if (!b || NO_ITEM.has(b.id)) continue;
@@ -185,6 +186,7 @@ item('sweet_berries', 'Sweet Berries', { kind: 'food', food: { restore: 2 } });
 item('potato', 'Potato', { kind: 'food', food: { restore: 3 } });
 item('baked_potato', 'Baked Potato', { kind: 'food', food: { restore: 6 } });
 item('bread', 'Bread', { kind: 'food', food: { restore: 5 } });
+item('carrot', 'Carrot', { kind: 'food', food: { restore: 3 }, desc: 'Eat it, or plant it on farmland.' });
 item('raw_porkchop', 'Raw Porkchop', { kind: 'food', food: { restore: 2 } });
 item('cooked_porkchop', 'Cooked Porkchop', { kind: 'food', food: { restore: 7 } });
 item('raw_beef', 'Raw Beef', { kind: 'food', food: { restore: 2 } });

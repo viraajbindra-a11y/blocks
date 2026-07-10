@@ -72,6 +72,7 @@ export const B = {
   MOSSY_STONE_BRICKS: 231,  SMOOTH_SANDSTONE: 232,      CUT_SANDSTONE: 233,
   CHISELED_SANDSTONE: 234,
   WHEAT_0: 235, WHEAT_1: 236, WHEAT_2: 237, WHEAT_3: 238,
+  CARROT_0: 239, CARROT_1: 240, CARROT_2: 241, CARROT_3: 242,
 };
 
 // ── Legacy internal aliases ───────────────────────────────────────
@@ -351,6 +352,10 @@ for (let s = 0; s < 4; s++) {
     drops: s === 3
       ? [{ item: 'wheat', min: 1, max: 1 }, { item: 'wheat_seeds', min: 1, max: 2 }]
       : [{ item: 'wheat_seeds', min: 1, max: 1 }],
+  }));
+  def(B.CARROT_0 + s, `carrot_${s}`, 'Carrots', plant({
+    placeOn: [B.FARMLAND], randomTick: s < 3 ? 'crop' : null, replaceable: false,
+    drops: s === 3 ? [{ item: 'carrot', min: 2, max: 4 }] : [{ item: 'carrot', min: 1, max: 1 }],
   }));
 }
 def(B.VINES, 'vines', 'Vines', plant({
@@ -822,7 +827,7 @@ export const blockIdByKey = key => keyToId.get(key) ?? 0;
 // Assigns the next free id ≥ 210. Ids are stable for a given mod list +
 // order (worlds save raw ids, so changing the mod list can orphan blocks —
 // they degrade gracefully to air).
-let nextModId = 239;   // 210-238 = base content incl. wheat crop; mods after
+let nextModId = 243;   // 210-242 = base content incl. wheat + carrot crops; mods after
 export function registerBlock(key, name, props = {}) {
   if (keyToId.has(key)) throw new Error(`block key "${key}" already registered`);
   while (nextModId < 256 && BLOCKS[nextModId]) nextModId++;

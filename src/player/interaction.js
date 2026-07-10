@@ -406,7 +406,7 @@ export class Interaction {
     }
 
     // 4. Seeds (potato or wheat) → plant on farmland
-    const cropBase = { seeds: B.CROP_0, wheat_seeds: B.WHEAT_0 }[held.key];
+    const cropBase = { seeds: B.CROP_0, wheat_seeds: B.WHEAT_0, carrot: B.CARROT_0 }[held.key];
     if (cropBase !== undefined) {
       if (t.id === B.FARMLAND && this.world.getBlock(t.x, t.y + 1, t.z) === B.AIR) {
         this.world.setBlock(t.x, t.y + 1, t.z, cropBase);

@@ -286,6 +286,23 @@ function wheatCropPainter(stage) {
   };
 }
 
+// Carrot crop: leafy green stalks with orange crowns peeking out when ripe.
+function carrotCropPainter(stage) {
+  return (d, rnd) => {
+    const green = [78, 140, 58], lite = [110, 172, 78], carrot = [232, 130, 40];
+    const maxH = [3, 6, 9, 11][stage];
+    for (const x of [3, 6, 9, 12]) {
+      const h = Math.max(2, maxH - ((rnd() * 3) | 0));
+      for (let i = 0; i < h; i++) {
+        const y = 15 - i;
+        px(d, x, y, i === h - 1 ? lite : jitter(green, rnd, 0.12));
+        if (i > 1 && rnd() < 0.3) px(d, x + (rnd() < 0.5 ? -1 : 1), y, green);
+      }
+      if (stage === 3) { px(d, x, 15, carrot); px(d, x, 14, [248, 150, 54]); }
+    }
+  };
+}
+
 // ── Tool sprites ──────────────────────────────────────────────────
 // Chunky, outlined, Minecraft-proportioned: a 2px wooden haft running
 // lower-left → centre with a dark contour, and a bold metal head with a
@@ -737,6 +754,14 @@ const P = {
   crop_2: cropPainter(2), crop_3: cropPainter(3),
   wheat_0: wheatCropPainter(0), wheat_1: wheatCropPainter(1),
   wheat_2: wheatCropPainter(2), wheat_3: wheatCropPainter(3),
+  carrot_0: carrotCropPainter(0), carrot_1: carrotCropPainter(1),
+  carrot_2: carrotCropPainter(2), carrot_3: carrotCropPainter(3),
+  carrot: (d, rnd) => {
+    for (let i = 0; i < 9; i++) { const x = 11 - i, y = 4 + i; px(d, x, y, jitter([232, 130, 40], rnd, 0.08)); px(d, x - 1, y, [200, 104, 30]); }
+    px(d, 3, 13, [180, 92, 26]);
+    for (const [lx, ly] of [[11, 3], [12, 2], [10, 2], [13, 3]]) px(d, lx, ly, [86, 150, 60]);
+    px(d, 11, 4, [110, 170, 78]);
+  },
   wheat_seeds: (d, rnd) => {
     for (const [x, y] of [[5, 7], [9, 6], [7, 10], [6, 12], [10, 10]]) {
       px(d, x, y, [196, 178, 110]); px(d, x + 1, y + 1, [164, 146, 86]); px(d, x, y + 1, [210, 192, 124]);

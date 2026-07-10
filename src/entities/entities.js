@@ -113,7 +113,11 @@ const SPECIES = {
     hostile: true, nightOnly: true, dmg: 3,
     biomes: new Set([BIOME.PLAINS, BIOME.FOREST, BIOME.SWAMP,
                      BIOME.TUNDRA, BIOME.MOUNTAIN, BIOME.DESERT]),
-    drops(rng) { return rng() < 0.05 ? [{ key: 'iron_ingot', count: 1 }] : []; },
+    drops(rng) {
+      if (rng() < 0.05) return [{ key: 'iron_ingot', count: 1 }];
+      if (rng() < 0.15) return [{ key: 'carrot', count: 1 }];
+      return [];
+    },
   },
   skeleton: {
     hw: 0.4, h: 1.8, health: 16, walkSpeed: 1.5, grazes: false, hopper: false,
