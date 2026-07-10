@@ -105,6 +105,7 @@ item('flint', 'Flint', { desc: 'A sharp shard knapped from gravel.' });
 item('string', 'String', { desc: 'Unraveled fibre for bows.' });
 item('arrow', 'Arrow', { desc: 'Ammunition for a bow.' });
 item('slimeball', 'Slimeball', { desc: 'Bouncy translucent goo.' });
+item('ender_pearl', 'Ender Pearl', { maxStack: 16, desc: 'Throw it to blink to where it lands.' });
 item('milk_bucket', 'Milk Bucket', { kind: 'food', maxStack: 1, food: { restore: 1 }, desc: 'Refreshing. Empties to a bucket.' });
 
 // ── Brewing ───────────────────────────────────────────────────────

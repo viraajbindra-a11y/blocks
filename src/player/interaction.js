@@ -323,6 +323,19 @@ export class Interaction {
       if (input.buttonPressed[2]) this._useFishingRod();
       return;
     }
+    if (held.key === 'ender_pearl') {
+      if (input.buttonPressed[2] && this.hooks.throwPearl) {
+        const eye = p.eyePos();
+        const cp = Math.cos(p.pitch), sp = Math.sin(p.pitch);
+        const cy = Math.cos(p.yaw), sy = Math.sin(p.yaw);
+        this.hooks.throwPearl(eye, [-sy * cp, sp, -cy * cp]);
+        p.consumeHeld(1);
+        this.hooks.audio.play('splash', { vol: 0.35, pitch: 1.8 });
+        this.eatCooldown = 0.5;
+        this.swing = 0.9;
+      }
+      return;
+    }
 
     // 1c. Flint & steel: prime TNT, else ignite a rift frame
     if (held.key === 'flint_and_steel') {

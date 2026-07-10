@@ -58,7 +58,12 @@ const SPECIES = {
     hw: 0.4, h: 1.1, health: 12, walkSpeed: 1.7, grazes: false, hopper: false,
     hostile: true, flying: true, dmg: 3, dims: new Set(['hollow']),
     biomes: new Set(),
-    drops(rng) { return [{ key: 'glowstone_dust', count: 1 }]; },
+    drops(rng) {
+      const o = [];
+      if (rng() < 0.6) o.push({ key: 'ender_pearl', count: 1 });
+      else o.push({ key: 'glowstone_dust', count: 1 });
+      return o;
+    },
   },
   sovereign: {
     hw: 0.9, h: 3.0, health: 220, walkSpeed: 1.6, grazes: false, hopper: false,
@@ -483,6 +488,13 @@ function creeperParts(e, parts) {
   addPart(parts, b, C.crpFace, 0.09, 1.24, 0.2, 0, 0, 0, 0, 0.07, 0.07, 0.03);
 }
 
+// Thrown ender pearl: a small spinning teal orb.
+function pearlParts(e, parts, nowS) {
+  const b = baseMat(e);
+  addPart(parts, b, [0.16, 0.56, 0.5], 0, 0.1, 0, (nowS || 0) * 4, 0, 0, 0, 0.17, 0.17, 0.17);
+  addPart(parts, b, [0.55, 0.86, 0.8], 0, 0.1, 0, (nowS || 0) * 4, 0, 0, 0, 0.08, 0.08, 0.08);
+}
+
 // Fishing bobber: red-and-white float that dips when a fish bites.
 function bobberParts(e, parts, nowS) {
   const b = baseMat(e);
@@ -557,6 +569,7 @@ const PART_BUILDERS = {
   arrow: arrowParts,
   tnt: tntParts,
   bobber: bobberParts,
+  pearl: pearlParts,
 };
 
 // Stable mid-tone tint per item key.
@@ -638,6 +651,7 @@ export class EntitySystem {
         else if (e.kind === 'arrow') this._updateArrow(e, dt, playerPos);
         else if (e.kind === 'tnt') this._updateTnt(e, dt, playerPos);
         else if (e.kind === 'bobber') this._updateBobber(e, dt, playerPos);
+        else if (e.kind === 'pearl') this._updatePearl(e, dt, playerPos);
         else this._updateCreature(e, dt, playerPos, sunLevel, nowS);
         if (e.pos[1] < -10) e.dead = true;
         if (e.kind === 'creature') {
@@ -1194,6 +1208,32 @@ export class EntitySystem {
     }
     if (r() < 0.5) return { items: [], xp: 0 };
     return { items: [{ key: ['string', 'bone', 'stick'][(r() * 3) | 0], count: 1 }], xp: 0 };
+  }
+
+  // ── Ender pearl ──────────────────────────────────────────────────
+  throwPearl(origin, dir) {
+    const sp = 18;
+    this.entities.push({
+      kind: 'pearl', species: 'pearl',
+      pos: [origin[0] + dir[0] * 0.5, origin[1] + dir[1] * 0.5, origin[2] + dir[2] * 0.5],
+      vel: [dir[0] * sp, dir[1] * sp, dir[2] * sp],
+      yaw: 0, phase: this.rng() * TWO_PI, hw: 0.12, h: 0.12, age: 0, dead: false,
+    });
+  }
+
+  _updatePearl(e, dt, pp) {
+    e.age += dt;
+    if (e.age > 5) { e.dead = true; return; }
+    e.vel[1] += GRAVITY * dt * 0.5;                        // pearls arc gently
+    const hx = this._moveAxis(e, 0, e.vel[0] * dt);
+    const hz = this._moveAxis(e, 2, e.vel[2] * dt);
+    const hy = this._moveAxis(e, 1, e.vel[1] * dt);
+    if (hx || hy || hz) {
+      this.hooks.teleportPlayer?.(e.pos[0], e.pos[1], e.pos[2]);
+      this.hooks.particles?.burstBlock?.(
+        Math.floor(e.pos[0]), Math.floor(e.pos[1]), Math.floor(e.pos[2]), 0, 14, 0.6, this.rng);
+      e.dead = true;
+    }
   }
 
   _updateTnt(e, dt, pp) {

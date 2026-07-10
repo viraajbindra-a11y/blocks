@@ -249,6 +249,12 @@ class Game {
       awardXp: (n) => this.player.addXp(n),
       castBobber: (x, y, z) => this.entities.castBobber(x, y, z),
       reelBobber: (b) => this.entities.reelBobber(b),
+      throwPearl: (origin, dir) => this.entities.throwPearl(origin, dir),
+      teleportPlayer: (x, y, z) => {
+        this.player.pos = [x, y + 0.1, z];
+        this.player.vel = [0, 0, 0];
+        this.player.damage(2.5, 'fall', true);   // pearl teleport jolt
+      },
       ignite: (x, y, z) => {
         const dim = tryIgnite(this.world, x, y, z);
         if (dim) this.hud.toast(`A rift to ${DIMENSIONS[dim].name} tears open…`);
