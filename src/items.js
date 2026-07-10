@@ -106,6 +106,14 @@ item('string', 'String', { desc: 'Unraveled fibre for bows.' });
 item('arrow', 'Arrow', { desc: 'Ammunition for a bow.' });
 item('slimeball', 'Slimeball', { desc: 'Bouncy translucent goo.' });
 item('ender_pearl', 'Ender Pearl', { maxStack: 16, desc: 'Throw it to blink to where it lands.' });
+
+// ── Dyes (16) ─────────────────────────────────────────────────────
+const DYE_ORDER = ['white', 'orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink', 'gray',
+  'light_gray', 'cyan', 'purple', 'blue', 'brown', 'green', 'red', 'black'];
+for (const c of DYE_ORDER) {
+  const label = c.split('_').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
+  item(`${c}_dye`, `${label} Dye`, { desc: 'Dye wool and more.' });
+}
 item('milk_bucket', 'Milk Bucket', { kind: 'food', maxStack: 1, food: { restore: 1 }, desc: 'Refreshing. Empties to a bucket.' });
 
 // ── Brewing ───────────────────────────────────────────────────────

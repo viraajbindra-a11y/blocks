@@ -67,6 +67,7 @@ export const SMELT = {
   oak_log: { out: 'coal', count: 1 },      // → charcoal
   spruce_log: { out: 'coal', count: 1 },   // → charcoal
   end_stone: { out: 'end_glass', count: 1 },
+  cactus: { out: 'green_dye', count: 1 },  // cactus → green dye
 };
 
 export const FUEL = {
@@ -183,6 +184,31 @@ shaped('bow', 1, [' RS', 'R S', ' RS'], { R: 'stick', S: 'string' }, 'worktable'
 shaped('shears', 1, [' I', 'I '], { I: 'iron_ingot' }, 'worktable');
 shaped('shield', 1, ['PIP', 'PPP', ' P '], { P: 'oak_planks', I: 'iron_ingot' }, 'worktable');
 shaped('fishing_rod', 1, ['  R', ' RS', 'R S'], { R: 'stick', S: 'string' }, 'worktable');
+
+// ── Dyes + colored wool ───────────────────────────────────────────
+// Primary dyes from natural sources, then Minecraft-style mixes.
+shapeless('white_dye', 1, ['bone_meal']);
+shapeless('black_dye', 1, ['coal']);
+shapeless('red_dye', 1, ['poppy']);
+shapeless('blue_dye', 1, ['cornflower']);
+shapeless('yellow_dye', 1, ['glowstone_dust']);         // bright pigment
+// (green_dye smelts from cactus — see SMELT above)
+shapeless('brown_dye', 1, ['red_dye', 'green_dye']);
+shapeless('orange_dye', 2, ['red_dye', 'yellow_dye']);
+shapeless('lime_dye', 2, ['green_dye', 'white_dye']);
+shapeless('pink_dye', 2, ['red_dye', 'white_dye']);
+shapeless('gray_dye', 2, ['black_dye', 'white_dye']);
+shapeless('light_gray_dye', 2, ['gray_dye', 'white_dye']);
+shapeless('cyan_dye', 2, ['blue_dye', 'green_dye']);
+shapeless('purple_dye', 2, ['red_dye', 'blue_dye']);
+shapeless('magenta_dye', 2, ['purple_dye', 'pink_dye']);
+shapeless('light_blue_dye', 2, ['blue_dye', 'white_dye']);
+// Fleece → white wool block; dye white wool into any color.
+shapeless('white_wool', 1, ['wool']);
+for (const c of ['orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink', 'gray',
+  'light_gray', 'cyan', 'purple', 'blue', 'brown', 'green', 'red', 'black']) {
+  shapeless(`${c}_wool`, 1, ['white_wool', `${c}_dye`], 'worktable');
+}
 shapeless('flint_and_steel', 1, ['iron_ingot', 'flint']);           // MC-accurate alt
 shaped('tnt', 1, ['GSG', 'SGS', 'GSG'], { G: 'gunpowder', S: 'sand' }, 'worktable');
 shaped('enchanting_table', 1, [' D ', 'DOD', 'OOO'], { D: 'diamond', O: 'obsidian' }, 'worktable');

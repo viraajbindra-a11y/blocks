@@ -64,6 +64,9 @@ export const B = {
   // ── Base content past the shaped families (mods start after this) ──
   TNT: 210,                 // 210
   ENCHANTING_TABLE: 211,    // 211
+  // 16 colored wools occupy 212..227 (see WOOL_ORDER below)
+  WOOL_WHITE: 212,
+  WOOL_BLACK: 227,
 };
 
 // ── Legacy internal aliases ───────────────────────────────────────
@@ -93,6 +96,11 @@ Object.assign(B, {
   VOIDGLASS: B.END_GLASS,      SUNSTONE_BLOCK: B.DIAMOND_BLOCK,
   SUNSTONE_ORE: B.DIAMOND_ORE,
 });
+
+// 16 dye colors → colored wool block ids 212..227, in Minecraft order.
+export const WOOL_ORDER = ['white', 'orange', 'magenta', 'light_blue', 'yellow', 'lime',
+  'pink', 'gray', 'light_gray', 'cyan', 'purple', 'blue', 'brown', 'green', 'red', 'black'];
+WOOL_ORDER.forEach((c, i) => { B['WOOL_' + c.toUpperCase()] = 212 + i; });
 
 // ── Fluid helpers ─────────────────────────────────────────────────
 export const isWater = id => id >= 15 && id <= 21;
@@ -371,6 +379,11 @@ def(B.ENCHANTING_TABLE, 'enchanting_table', 'Enchanting Table', {
   hardness: 5, tool: 'pick', minTier: 1, sound: 'stone', use: 'enchant', light: 7,
   tex: { top: 'enchanting_table_top', bottom: 'obsidian', side: 'enchanting_table_side' },
 });
+// Colored wool (212..227)
+const titleCase = (s) => s.split('_').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
+WOOL_ORDER.forEach((c, i) => def(212 + i, `${c}_wool`, `${titleCase(c)} Wool`, {
+  hardness: 0.8, sound: 'soft', tex: { all: `${c}_wool` },
+}));
 
 // ── The Nether ───────────────────────────────────────────────────
 def(B.NETHERRACK, 'netherrack', 'Netherrack', {
@@ -788,7 +801,7 @@ export const blockIdByKey = key => keyToId.get(key) ?? 0;
 // Assigns the next free id ≥ 210. Ids are stable for a given mod list +
 // order (worlds save raw ids, so changing the mod list can orphan blocks —
 // they degrade gracefully to air).
-let nextModId = 212;   // 210-211 = TNT + enchanting table (base); mods start after
+let nextModId = 228;   // 210-227 = TNT, enchanting table, 16 wools (base); mods after
 export function registerBlock(key, name, props = {}) {
   if (keyToId.has(key)) throw new Error(`block key "${key}" already registered`);
   while (nextModId < 256 && BLOCKS[nextModId]) nextModId++;

@@ -1072,6 +1072,35 @@ const POTIONS = {
 };
 for (const [k, col] of Object.entries(POTIONS)) P[k] = potionPainter(col);
 
+// ── Colored wool + dyes ───────────────────────────────────────────
+const WOOL_COLORS = {
+  white: [233, 236, 236], orange: [240, 118, 19], magenta: [199, 78, 189], light_blue: [58, 175, 217],
+  yellow: [248, 197, 39], lime: [112, 185, 25], pink: [237, 141, 172], gray: [70, 76, 80],
+  light_gray: [142, 142, 134], cyan: [21, 137, 145], purple: [121, 42, 172], blue: [60, 64, 160],
+  brown: [114, 71, 40], green: [84, 109, 27], red: [160, 39, 34], black: [26, 27, 31],
+};
+function woolPainter(col) {
+  return (d, rnd) => {
+    noisyFill(d, rnd, col, 0.05);
+    speckle(d, rnd, [shade(col, 1.12)], 0.14);
+    speckle(d, rnd, [shade(col, 0.84)], 0.14);
+    for (let i = 0; i < 6; i++) {
+      const x = (rnd() * 14) | 0, y = (rnd() * 14) | 0;
+      px(d, x, y, shade(col, 0.8)); px(d, x + 1, y + 1, shade(col, 1.12));
+    }
+  };
+}
+function dyePainter(col) {
+  return (d, rnd) => {
+    blob(d, rnd, 8, 10.5, 5, 2.6, col, { light: shade(col, 1.3), dark: shade(col, 0.62) });
+    for (let i = 0; i < 16; i++) px(d, 3 + ((rnd() * 10) | 0), 6 + ((rnd() * 8) | 0), jitter(col, rnd, 0.18));
+  };
+}
+for (const [c, col] of Object.entries(WOOL_COLORS)) {
+  P[`${c}_wool`] = woolPainter(col);
+  P[`${c}_dye`] = dyePainter(col);
+}
+
 // ── Extra block faces & item sprites ──────────────────────────────
 // Furniture, the Smolder/Hollow dimensions, the Dawn beacon, plus the
 // sunsteel tier's raw materials and a few utility items. Appended here
