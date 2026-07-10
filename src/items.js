@@ -139,6 +139,11 @@ item('shield', 'Shield', {
   tool: { type: 'shield', tier: 0, speed: 0, durability: 336, damage: 1 },
   desc: 'Hold right-click to raise and block incoming blows.',
 });
+item('fishing_rod', 'Fishing Rod', {
+  kind: 'tool', maxStack: 1,
+  tool: { type: 'fishing_rod', tier: 0, speed: 0, durability: 64, damage: 1 },
+  desc: 'Right-click water to cast; reel in when a fish bites.',
+});
 
 // ── Armor ─────────────────────────────────────────────────────────
 // slot 0 helmet · 1 chestplate · 2 leggings · 3 boots. points reduce
@@ -176,6 +181,10 @@ item('cooked_chicken', 'Cooked Chicken', { kind: 'food', food: { restore: 5 } })
 item('raw_mutton', 'Raw Mutton', { kind: 'food', food: { restore: 2 } });
 item('cooked_mutton', 'Cooked Mutton', { kind: 'food', food: { restore: 6 } });
 item('spider_eye', 'Spider Eye', { kind: 'food', food: { restore: 1 }, desc: 'Edible, but unpleasant.' });
+item('raw_cod', 'Raw Cod', { kind: 'food', food: { restore: 1 } });
+item('cooked_cod', 'Cooked Cod', { kind: 'food', food: { restore: 4 } });
+item('raw_salmon', 'Raw Salmon', { kind: 'food', food: { restore: 1 } });
+item('cooked_salmon', 'Cooked Salmon', { kind: 'food', food: { restore: 5 } });
 item('egg', 'Egg', { maxStack: 16, desc: 'Throw it, or cook with it.' });
 
 export const itemByKey = (key) => ITEMS.get(key) || null;

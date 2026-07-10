@@ -247,6 +247,8 @@ class Game {
       useOnEntity: (e, heldKey) => this.entities.useItemOn(e, heldKey),
       primeTnt: (x, y, z) => this.entities.primeTnt(x, y, z),
       awardXp: (n) => this.player.addXp(n),
+      castBobber: (x, y, z) => this.entities.castBobber(x, y, z),
+      reelBobber: (b) => this.entities.reelBobber(b),
       ignite: (x, y, z) => {
         const dim = tryIgnite(this.world, x, y, z);
         if (dim) this.hud.toast(`A rift to ${DIMENSIONS[dim].name} tears open…`);

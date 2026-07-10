@@ -364,6 +364,19 @@ function chunkPainter(fleck) {
   };
 }
 
+function fishPainter(body, belly) {
+  const dark = shade(body, 0.68);
+  return (d, rnd) => {
+    for (let y = 6; y <= 11; y++) for (let x = 3; x <= 11; x++) {
+      if (Math.hypot((x - 6.5) / 4, (y - 8.5) / 2.6) > 1) continue;
+      px(d, x, y, y > 9 ? belly : jitter(body, rnd, 0.06));
+    }
+    px(d, 11, 8, body); px(d, 12, 6, dark); px(d, 13, 8, dark); px(d, 12, 10, dark);   // tail fan
+    px(d, 7, 5, dark); px(d, 6, 5, dark);                                               // dorsal fin
+    px(d, 4, 8, [238, 238, 240]); px(d, 5, 8, [28, 28, 32]);                            // eye
+  };
+}
+
 function haunchPainter(main, marble, boneShade) {
   const dark = shade(main, 0.72), light = shade(main, 1.22);
   const bone = shade([232, 228, 214], boneShade);
@@ -790,6 +803,16 @@ const P = {
   cooked_chicken: haunchPainter([206, 150, 92], [232, 186, 122], 0.9),
   raw_mutton: haunchPainter([196, 92, 96], [224, 132, 132], 1),
   cooked_mutton: haunchPainter([148, 92, 64], [190, 130, 88], 0.9),
+  raw_cod: fishPainter([150, 140, 120], [206, 200, 184]),
+  cooked_cod: fishPainter([196, 150, 92], [224, 192, 140]),
+  raw_salmon: fishPainter([202, 96, 78], [230, 150, 128]),
+  cooked_salmon: fishPainter([196, 118, 74], [222, 160, 116]),
+  fishing_rod: (d, rnd) => {
+    const wood = [122, 86, 50], woodD = [92, 64, 38];
+    line(d, 2, 14, 11, 3, wood); line(d, 3, 14, 12, 3, woodD);          // rod
+    line(d, 12, 3, 13, 11, [222, 222, 228]);                           // line
+    px(d, 13, 12, [206, 62, 60]); px(d, 13, 13, [240, 240, 240]);       // bobber
+  },
   slimeball: (d, rnd) => {
     blob(d, rnd, 8, 8.5, 4.2, 3.8, [116, 190, 96], { light: [168, 224, 150], dark: [78, 146, 66], a: 235 });
     px(d, 6, 6, [206, 240, 196], 220); px(d, 7, 6, [190, 230, 180], 200);   // sheen

@@ -483,6 +483,14 @@ function creeperParts(e, parts) {
   addPart(parts, b, C.crpFace, 0.09, 1.24, 0.2, 0, 0, 0, 0, 0.07, 0.07, 0.03);
 }
 
+// Fishing bobber: red-and-white float that dips when a fish bites.
+function bobberParts(e, parts, nowS) {
+  const b = baseMat(e);
+  const bob = Math.sin((nowS || 0) * 4 + e.phase) * 0.03 + (e.biting ? -0.08 : 0);
+  addPart(parts, b, [0.85, 0.2, 0.18], 0, 0.11 + bob, 0, 0, 0, 0, 0, 0.14, 0.14, 0.14);
+  addPart(parts, b, [0.94, 0.94, 0.94], 0, 0.03 + bob, 0, 0, 0, 0, 0, 0.14, 0.08, 0.14);
+}
+
 // A loosed arrow: a thin dark shaft with a pale tip.
 function arrowParts(e, parts) {
   const b = baseMat(e);
@@ -548,6 +556,7 @@ const PART_BUILDERS = {
   slime: slimeParts,
   arrow: arrowParts,
   tnt: tntParts,
+  bobber: bobberParts,
 };
 
 // Stable mid-tone tint per item key.
@@ -628,6 +637,7 @@ export class EntitySystem {
         if (e.kind === 'item') this._updateItem(e, dt, playerPos);
         else if (e.kind === 'arrow') this._updateArrow(e, dt, playerPos);
         else if (e.kind === 'tnt') this._updateTnt(e, dt, playerPos);
+        else if (e.kind === 'bobber') this._updateBobber(e, dt, playerPos);
         else this._updateCreature(e, dt, playerPos, sunLevel, nowS);
         if (e.pos[1] < -10) e.dead = true;
         if (e.kind === 'creature') {
@@ -1139,6 +1149,51 @@ export class EntitySystem {
       pos: [x + 0.5, y, z + 0.5], vel: [0, 0.2, 0],
       yaw: 0, hw: 0.45, h: 0.9, fuse, flash: 0, onGround: false, dead: false,
     });
+  }
+
+  // ── Fishing ──────────────────────────────────────────────────────
+  castBobber(x, y, z) {
+    for (const e of this.entities) if (e.kind === 'bobber') e.dead = true;   // one per player
+    const e = {
+      kind: 'bobber', species: 'bobber', pos: [x, y, z], vel: [0, 0, 0], yaw: 0,
+      hw: 0.1, h: 0.2, dead: false, phase: this.rng() * TWO_PI, age: 0,
+      biteT: 3 + this.rng() * 8, biting: false, biteWindow: 0,
+    };
+    this.entities.push(e);
+    return e;
+  }
+
+  _updateBobber(e, dt, pp) {
+    e.age += dt;
+    const dx = pp[0] - e.pos[0], dz = pp[2] - e.pos[2];
+    if (dx * dx + dz * dz > 24 * 24 || e.age > 70) { e.dead = true; return; }
+    if (e.biting) {
+      e.biteWindow -= dt;
+      if (e.biteWindow <= 0) { e.biting = false; e.biteT = 2 + this.rng() * 6; }
+    } else {
+      e.biteT -= dt;
+      if (e.biteT <= 0) {
+        e.biting = true; e.biteWindow = 1.5;
+        this.hooks.audio?.play?.('splash', { vol: 0.35, pitch: 1.9 });
+      }
+    }
+  }
+
+  // Reel in: a live bite yields fish/treasure, an early yank mostly nothing.
+  reelBobber(e) {
+    if (!e || e.dead) return null;
+    e.dead = true;
+    const r = this.rng;
+    if (e.biting) {
+      const roll = r();
+      let items;
+      if (roll < 0.6) items = [{ key: 'raw_cod', count: 1 }];
+      else if (roll < 0.85) items = [{ key: 'raw_salmon', count: 1 }];
+      else items = [{ key: ['bone', 'string', 'leather', 'slimeball'][(r() * 4) | 0], count: 1 }];
+      return { items, xp: 1 + (r() * 3 | 0) };
+    }
+    if (r() < 0.5) return { items: [], xp: 0 };
+    return { items: [{ key: ['string', 'bone', 'stick'][(r() * 3) | 0], count: 1 }], xp: 0 };
   }
 
   _updateTnt(e, dt, pp) {

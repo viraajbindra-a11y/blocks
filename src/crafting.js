@@ -62,6 +62,8 @@ export const SMELT = {
   raw_beef: { out: 'cooked_beef', count: 1 },
   raw_chicken: { out: 'cooked_chicken', count: 1 },
   raw_mutton: { out: 'cooked_mutton', count: 1 },
+  raw_cod: { out: 'cooked_cod', count: 1 },
+  raw_salmon: { out: 'cooked_salmon', count: 1 },
   oak_log: { out: 'coal', count: 1 },      // → charcoal
   spruce_log: { out: 'coal', count: 1 },   // → charcoal
   end_stone: { out: 'end_glass', count: 1 },
@@ -180,6 +182,7 @@ shaped('arrow', 4, ['F', 'R', 'E'], { F: 'flint', R: 'stick', E: 'feather' }, 'w
 shaped('bow', 1, [' RS', 'R S', ' RS'], { R: 'stick', S: 'string' }, 'worktable');
 shaped('shears', 1, [' I', 'I '], { I: 'iron_ingot' }, 'worktable');
 shaped('shield', 1, ['PIP', 'PPP', ' P '], { P: 'oak_planks', I: 'iron_ingot' }, 'worktable');
+shaped('fishing_rod', 1, ['  R', ' RS', 'R S'], { R: 'stick', S: 'string' }, 'worktable');
 shapeless('flint_and_steel', 1, ['iron_ingot', 'flint']);           // MC-accurate alt
 shaped('tnt', 1, ['GSG', 'SGS', 'GSG'], { G: 'gunpowder', S: 'sand' }, 'worktable');
 shaped('enchanting_table', 1, [' D ', 'DOD', 'OOO'], { D: 'diamond', O: 'obsidian' }, 'worktable');

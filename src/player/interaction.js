@@ -319,6 +319,10 @@ export class Interaction {
       if (input.buttonPressed[2]) this._fillBottle();
       return;
     }
+    if (held.key === 'fishing_rod') {
+      if (input.buttonPressed[2]) this._useFishingRod();
+      return;
+    }
 
     // 1c. Flint & steel: prime TNT, else ignite a rift frame
     if (held.key === 'flint_and_steel') {
@@ -635,6 +639,36 @@ export class Interaction {
       case 'nether_brick_slab': return B.SCORCHBRICK;
       default: return null;
     }
+  }
+
+  // Fishing: first right-click casts a bobber at water; the next reels it in.
+  _useFishingRod() {
+    const p = this.player;
+    if (this.bobber && !this.bobber.dead) {
+      const res = this.hooks.reelBobber?.(this.bobber);
+      this.bobber = null;
+      if (res) {
+        for (const it of res.items) {
+          if (p.addItem(it.key, it.count) > 0) this.hooks.dropItems(p.pos[0], p.pos[1] + 1, p.pos[2], [it]);
+        }
+        if (res.xp) this.hooks.awardXp?.(res.xp);
+      }
+      p.damageHeldTool(1);
+      this.hooks.audio.play('splash', { vol: 0.5, pitch: 1.5 });
+      this.placeCooldown = 0.4;
+      this.swing = 0.8;
+      return;
+    }
+    // Cast toward water within reach.
+    const eye = p.eyePos();
+    const cp = Math.cos(p.pitch), sp = Math.sin(p.pitch);
+    const cy = Math.cos(p.yaw), sy = Math.sin(p.yaw);
+    const hit = this.world.raycastFluid(eye[0], eye[1], eye[2], -sy * cp, sp, -cy * cp, REACH + 3);
+    if (!hit || !isWater(hit.id)) { this.hooks.toast?.('Cast toward water'); return; }
+    this.bobber = this.hooks.castBobber?.(hit.x + 0.5, hit.y + 0.9, hit.z + 0.5) || null;
+    this.hooks.audio.play('splash', { vol: 0.4 });
+    this.placeCooldown = 0.4;
+    this.swing = 0.8;
   }
 
   // Fill a glass bottle from a water source → water bottle.
