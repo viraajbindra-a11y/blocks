@@ -15,7 +15,8 @@ const CREATURE_CAP = 10;
 const DESPAWN_DIST = 72;        // creatures vanish quietly beyond this
 const ITEM_LIFE = 240;          // seconds before a dropped item fades
 const ITEM_CAP = 128;
-const SPAWN_GROUND = new Set([B.GRASS, B.SNOW, B.SOIL, B.SAND]);
+const SPAWN_GROUND = new Set([B.GRASS, B.SNOW, B.SOIL, B.SAND,
+  B.NETHERRACK, B.SOUL_SAND, B.END_STONE, B.END_MOSS]);   // + Smolder/Hollow floors
 
 // ── Species table ─────────────────────────────────────────────────
 const SPECIES = {
@@ -148,6 +149,16 @@ const SPECIES = {
     biomes: new Set([BIOME.SWAMP]),
     drops(rng) { return [{ key: 'slimeball', count: 1 + (rng() * 2 | 0) }]; },
   },
+  blaze: {
+    hw: 0.4, h: 1.6, health: 14, walkSpeed: 1.4, grazes: false, hopper: false,
+    hostile: true, flying: true, ranged: true, fireball: true, dmg: 3,
+    dims: new Set(['smolder']), biomes: new Set(),
+    drops(rng) {
+      const o = [{ key: 'glowstone_dust', count: 1 + (rng() * 2 | 0) }];
+      if (rng() < 0.4) o.push({ key: 'netherite_scrap', count: 1 });
+      return o;
+    },
+  },
 };
 
 // ── Palette (0..1 rgb) ────────────────────────────────────────────
@@ -199,6 +210,7 @@ const C = {
   skBone: [0.878, 0.871, 0.831], skBone2: [0.745, 0.737, 0.694], skEye: [0.118, 0.118, 0.133],
   spBody: [0.16, 0.13, 0.13], spLeg: [0.11, 0.09, 0.09], spEye: [0.78, 0.22, 0.22],
   slBody: [0.44, 0.74, 0.38], slCore: [0.31, 0.57, 0.27], slEye: [0.14, 0.24, 0.13],
+  blCore: [1.0, 0.86, 0.36], blRod: [0.95, 0.6, 0.16], blSmoke: [0.28, 0.2, 0.14],
 };
 
 // ── Matrix helpers ────────────────────────────────────────────────
@@ -503,11 +515,31 @@ function bobberParts(e, parts, nowS) {
   addPart(parts, b, [0.94, 0.94, 0.94], 0, 0.03 + bob, 0, 0, 0, 0, 0, 0.14, 0.08, 0.14);
 }
 
-// A loosed arrow: a thin dark shaft with a pale tip.
+// A loosed arrow: a thin dark shaft with a pale tip — or a glowing fireball.
 function arrowParts(e, parts) {
   const b = baseMat(e);
+  if (e.fire) {
+    addPart(parts, b, [1.0, 0.66, 0.2], 0, 0, 0, 0, 0, 0, 0, 0.2, 0.2, 0.2);
+    addPart(parts, b, [1.0, 0.95, 0.62], 0, 0, 0, 0, 0, 0, 0, 0.11, 0.11, 0.11);
+    return;
+  }
   addPart(parts, b, [0.35, 0.27, 0.18], 0, 0, 0, e.pitch || 0, 0, 0, 0, 0.05, 0.05, 0.5);
   addPart(parts, b, [0.82, 0.82, 0.86], 0, 0, 0, e.pitch || 0, 0, 0, 0.28, 0.07, 0.07, 0.1);
+}
+
+// Blaze: a smoky core ringed by spinning fiery rods.
+function blazeParts(e, parts, nowS) {
+  const b = baseMat(e);
+  const t = (nowS || 0) * 2 + e.phase;
+  addPart(parts, b, C.blSmoke, 0, 0.7, 0, 0, 0, 0, 0, 0.34, 0.44, 0.34);
+  addPart(parts, b, C.blCore, 0, 0.94, 0, 0, 0, 0, 0, 0.26, 0.26, 0.26);
+  for (let i = 0; i < 8; i++) {
+    const a = t + (i / 8) * TWO_PI;
+    addPart(parts, b, C.blRod, Math.cos(a) * 0.28, 0.5 + (i % 2) * 0.5, Math.sin(a) * 0.28,
+      0, 0, 0, 0, 0.07, 0.34, 0.07);
+  }
+  addPart(parts, b, [1, 1, 0.85], -0.07, 0.98, 0.12, 0, 0, 0, 0, 0.05, 0.05, 0.04);
+  addPart(parts, b, [1, 1, 0.85], 0.07, 0.98, 0.12, 0, 0, 0, 0, 0.05, 0.05, 0.04);
 }
 
 // Primed TNT: a red cube with a cream band, flashing white before it blows.
@@ -566,6 +598,7 @@ const PART_BUILDERS = {
   creeper: creeperParts,
   spider: spiderParts,
   slime: slimeParts,
+  blaze: blazeParts,
   arrow: arrowParts,
   tnt: tntParts,
   bobber: bobberParts,
@@ -952,9 +985,9 @@ export class EntitySystem {
           e.fuse = Math.max(0, (e.fuse || 0) - dt * 0.6);
         }
       } else if (s.ranged) {
-        // Skeleton: loose arrows from a distance, back off if crowded.
-        if (distSq > 3.2 * 3.2 && distSq < 14 * 14 && e.atkCd <= 0) {
-          this._shootArrow(e, pp, s.dmg);
+        // Skeleton/blaze: loose projectiles from a distance, back off if crowded.
+        if (distSq > 3.2 * 3.2 && distSq < 16 * 16 && e.atkCd <= 0) {
+          if (s.fireball) this._shootFireball(e, pp); else this._shootArrow(e, pp, s.dmg);
           e.atkCd = 1.5 + this.rng() * 0.6;
           this.hooks.audio?.creature?.(e.species, 'attack');
         }
@@ -1262,6 +1295,23 @@ export class EntitySystem {
     });
   }
 
+  // Blaze fireball: a straight-flying projectile dealing 'fire' damage
+  // (so a Fire Resistance potion shrugs it off).
+  _shootFireball(e, pp) {
+    if (this._arrowCount() > 24) return;
+    const ex = e.pos[0], ey = e.pos[1] + e.h * 0.6, ez = e.pos[2];
+    let vx = pp[0] - ex, vy = (pp[1] + 0.9) - ey, vz = pp[2] - ez;
+    const L = Math.hypot(vx, vy, vz) || 1;
+    vx /= L; vy /= L; vz /= L;
+    const sp = 13;
+    this.entities.push({
+      kind: 'arrow', species: 'arrow', owner: 'mob', fire: true, straight: true, cause: 'fire',
+      pos: [ex + vx * 0.6, ey, ez + vz * 0.6], vel: [vx * sp, vy * sp, vz * sp],
+      yaw: Math.atan2(vx, vz), pitch: Math.atan2(vy, Math.hypot(vx, vz)),
+      hw: 0.15, h: 0.15, dmg: e.def.dmg, age: 0, dead: false,
+    });
+  }
+
   // A player-loosed arrow (from a drawn bow). power scales speed.
   spawnPlayerArrow(origin, dir, power, dmg) {
     if (this._arrowCount() > 24) return;
@@ -1284,7 +1334,7 @@ export class EntitySystem {
   _updateArrow(e, dt, pp) {
     e.age += dt;
     if (e.age > 4) { e.dead = true; return; }
-    e.vel[1] += GRAVITY * dt * 0.35;                          // light drop
+    if (!e.straight) e.vel[1] += GRAVITY * dt * 0.35;        // arrows drop; fireballs fly straight
     if (e.owner === 'player') {
       // player arrows strike creatures
       for (const c of this.entities) {
@@ -1301,9 +1351,9 @@ export class EntitySystem {
     } else {
       // mob arrows strike the player
       const dx = pp[0] - e.pos[0], dy = (pp[1] + 0.9) - e.pos[1], dz = pp[2] - e.pos[2];
-      if (dx * dx + dy * dy + dz * dz < 0.55 * 0.55) {
+      if (dx * dx + dy * dy + dz * dz < 0.6 * 0.6) {
         const d = Math.hypot(dx, dz) || 1;
-        this.hooks.attackPlayer?.(e.dmg, [dx / d, 0, dz / d]);
+        this.hooks.attackPlayer?.(e.dmg, [dx / d, 0, dz / d], e.cause);
         e.dead = true; return;
       }
     }
@@ -1491,7 +1541,7 @@ export class EntitySystem {
       if (e.kind === 'item') itemEntParts(e, parts, nowS);
       else PART_BUILDERS[e.species](e, parts, nowS);
       let light = 1;
-      if (e.species !== 'embermoth') {          // the moth glows on its own
+      if (e.species !== 'embermoth' && e.species !== 'blaze' && !e.fire) {   // these glow on their own
         const l = w.lightAt(
           Math.floor(e.pos[0]), Math.floor(e.pos[1] + e.h * 0.5), Math.floor(e.pos[2]));
         light = Math.max(0.08, Math.max(((l >> 4) / 15) * this._sun, (l & 15) / 15));

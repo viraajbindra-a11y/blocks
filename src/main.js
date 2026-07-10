@@ -196,7 +196,8 @@ class Game {
       const pitch = { bristleback: 0.55, mosshopper: 1.5, embermoth: 1.9,
         gloomstalker: 0.7, cinderling: 1.1, hollowshade: 0.85, sovereign: 0.4,
         pig: 0.6, cow: 0.42, sheep: 0.8, chicken: 1.6,
-        zombie: 0.55, skeleton: 0.95, creeper: 0.7 }[species] ?? 1;
+        zombie: 0.55, skeleton: 0.95, creeper: 0.7,
+        spider: 1.2, slime: 0.9, blaze: 0.8 }[species] ?? 1;
       this.audio.play(kind === 'death' ? 'death' : 'hurt', { pitch, vol: 0.45 });
     };
     this.entities = new EntitySystem(this.world, {
@@ -211,8 +212,8 @@ class Game {
         }
         return left;
       },
-      attackPlayer: (dmg, dir) => {
-        this.player.damage(dmg, 'slain');
+      attackPlayer: (dmg, dir, cause) => {
+        this.player.damage(dmg, cause || 'slain');
         if (dir) {
           this.player.vel[0] += dir[0] * 6;
           this.player.vel[1] = Math.max(this.player.vel[1], 4);
