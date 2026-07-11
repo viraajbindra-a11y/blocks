@@ -163,6 +163,22 @@ const SPECIES = {
       return o;
     },
   },
+  phantom: {
+    hw: 0.5, h: 0.5, health: 10, walkSpeed: 2.5, grazes: false, hopper: false,
+    hostile: true, flying: true, nightOnly: true, dmg: 3,
+    biomes: new Set([BIOME.PLAINS, BIOME.FOREST, BIOME.BEACH, BIOME.DESERT, BIOME.MOUNTAIN, BIOME.TUNDRA]),
+    drops(rng) { return rng() < 0.6 ? [{ key: 'leather', count: 1 }] : []; },
+  },
+  witch: {
+    hw: 0.4, h: 1.8, health: 16, walkSpeed: 1.4, grazes: false, hopper: false,
+    hostile: true, ranged: true, splash: true, dmg: 2,
+    biomes: new Set([BIOME.SWAMP]),
+    drops(rng) {
+      const o = [{ key: 'glowstone_dust', count: 1 + (rng() * 2 | 0) }];
+      if (rng() < 0.5) o.push({ key: ['gunpowder', 'spider_eye', 'glass_bottle'][(rng() * 3) | 0], count: 1 });
+      return o;
+    },
+  },
 };
 
 // ── Palette (0..1 rgb) ────────────────────────────────────────────
@@ -215,6 +231,8 @@ const C = {
   spBody: [0.16, 0.13, 0.13], spLeg: [0.11, 0.09, 0.09], spEye: [0.78, 0.22, 0.22],
   slBody: [0.44, 0.74, 0.38], slCore: [0.31, 0.57, 0.27], slEye: [0.14, 0.24, 0.13],
   blCore: [1.0, 0.86, 0.36], blRod: [0.95, 0.6, 0.16], blSmoke: [0.28, 0.2, 0.14],
+  phBody: [0.22, 0.25, 0.34], phWing: [0.15, 0.17, 0.26], phEye: [0.42, 0.78, 0.9],
+  wiRobe: [0.28, 0.24, 0.36], wiHat: [0.14, 0.12, 0.2], wiSkin: [0.42, 0.5, 0.42], wiNose: [0.5, 0.42, 0.4],
 };
 
 // ── Matrix helpers ────────────────────────────────────────────────
@@ -527,6 +545,11 @@ function arrowParts(e, parts) {
     addPart(parts, b, [1.0, 0.95, 0.62], 0, 0, 0, 0, 0, 0, 0, 0.11, 0.11, 0.11);
     return;
   }
+  if (e.splash) {
+    addPart(parts, b, [0.55, 0.62, 0.72], 0, 0, 0, 0, 0, 0, 0, 0.14, 0.16, 0.14);   // flask glass
+    addPart(parts, b, [0.42, 0.72, 0.32], 0, -0.02, 0, 0, 0, 0, 0, 0.12, 0.1, 0.12); // potion
+    return;
+  }
   addPart(parts, b, [0.35, 0.27, 0.18], 0, 0, 0, e.pitch || 0, 0, 0, 0, 0.05, 0.05, 0.5);
   addPart(parts, b, [0.82, 0.82, 0.86], 0, 0, 0, e.pitch || 0, 0, 0, 0.28, 0.07, 0.07, 0.1);
 }
@@ -544,6 +567,32 @@ function blazeParts(e, parts, nowS) {
   }
   addPart(parts, b, [1, 1, 0.85], -0.07, 0.98, 0.12, 0, 0, 0, 0, 0.05, 0.05, 0.04);
   addPart(parts, b, [1, 1, 0.85], 0.07, 0.98, 0.12, 0, 0, 0, 0, 0.05, 0.05, 0.04);
+}
+
+// Phantom: a flat winged night-flyer that flaps as it swoops.
+function phantomParts(e, parts, nowS) {
+  const b = baseMat(e);
+  const flap = Math.sin((nowS || 0) * 6 + e.phase) * 0.5;
+  addPart(parts, b, C.phBody, 0, 0.2, 0, 0, 0, 0, 0, 0.3, 0.16, 0.5);           // body
+  addPart(parts, b, C.phWing, -0.32, 0.22, 0, flap, 0, 0, 0, 0.4, 0.04, 0.34);  // wings
+  addPart(parts, b, C.phWing, 0.32, 0.22, 0, -flap, 0, 0, 0, 0.4, 0.04, 0.34);
+  addPart(parts, b, C.phBody, 0, 0.22, 0.3, 0, 0, 0, 0, 0.2, 0.14, 0.18);       // head
+  addPart(parts, b, C.phEye, -0.06, 0.24, 0.42, 0, 0, 0, 0, 0.05, 0.04, 0.03);
+  addPart(parts, b, C.phEye, 0.06, 0.24, 0.42, 0, 0, 0, 0, 0.05, 0.04, 0.03);
+}
+
+// Witch: hunched robed figure with a pointed hat and a long nose.
+function witchParts(e, parts) {
+  const b = baseMat(e);
+  const moving = Math.hypot(e.vel[0], e.vel[2]) > 0.2;
+  const sw = moving ? Math.sin(e.walkPhase) * 0.4 : 0;
+  addPart(parts, b, C.wiRobe, 0, 0.6, 0, 0, 0, 0, 0, 0.5, 1.1, 0.42);           // robe
+  addPart(parts, b, C.wiRobe, -0.14, 0.28, 0, sw, 0, -0.1, 0, 0.18, 0.5, 0.18); // feet
+  addPart(parts, b, C.wiRobe, 0.14, 0.28, 0, -sw, 0, -0.1, 0, 0.18, 0.5, 0.18);
+  addPart(parts, b, C.wiSkin, 0, 1.32, 0.02, 0, 0, 0, 0, 0.34, 0.34, 0.34);     // head
+  addPart(parts, b, C.wiNose, 0, 1.3, 0.2, 0, 0, 0, 0, 0.06, 0.06, 0.12);       // nose
+  addPart(parts, b, C.wiHat, 0, 1.52, 0, 0, 0, 0, 0, 0.52, 0.1, 0.52);          // brim
+  addPart(parts, b, C.wiHat, 0, 1.64, -0.03, 0.2, 0, 0, 0, 0.2, 0.34, 0.2);     // cone
 }
 
 // Primed TNT: a red cube with a cream band, flashing white before it blows.
@@ -603,6 +652,8 @@ const PART_BUILDERS = {
   spider: spiderParts,
   slime: slimeParts,
   blaze: blazeParts,
+  phantom: phantomParts,
+  witch: witchParts,
   arrow: arrowParts,
   tnt: tntParts,
   bobber: bobberParts,
@@ -991,8 +1042,10 @@ export class EntitySystem {
       } else if (s.ranged) {
         // Skeleton/blaze: loose projectiles from a distance, back off if crowded.
         if (distSq > 3.2 * 3.2 && distSq < 16 * 16 && e.atkCd <= 0) {
-          if (s.fireball) this._shootFireball(e, pp); else this._shootArrow(e, pp, s.dmg);
-          e.atkCd = 1.5 + this.rng() * 0.6;
+          if (s.fireball) this._shootFireball(e, pp);
+          else if (s.splash) this._throwSplash(e, pp);
+          else this._shootArrow(e, pp, s.dmg);
+          e.atkCd = (s.splash ? 2.2 : 1.5) + this.rng() * 0.6;
           this.hooks.audio?.creature?.(e.species, 'attack');
         }
         if (distSq < 4 * 4) { e.targetYaw = Math.atan2(dx, dz) + Math.PI; }  // strafe away
@@ -1316,6 +1369,22 @@ export class EntitySystem {
     });
   }
 
+  // Witch splash potion: an arcing flask that bursts a lingering effect
+  // on the player when it lands or reaches them.
+  _throwSplash(e, pp) {
+    if (this._arrowCount() > 24) return;
+    const ex = e.pos[0], ey = e.pos[1] + e.h * 0.7, ez = e.pos[2];
+    let vx = pp[0] - ex, vy = (pp[1] + 0.9) - ey, vz = pp[2] - ez;
+    const L = Math.hypot(vx, vy, vz) || 1;
+    vx /= L; vy = vy / L + 0.16; vz /= L;                 // lob it
+    const sp = 11;
+    this.entities.push({
+      kind: 'arrow', species: 'arrow', owner: 'mob', splash: true, effect: 'poison',
+      pos: [ex + vx * 0.6, ey, ez + vz * 0.6], vel: [vx * sp, vy * sp, vz * sp],
+      yaw: 0, pitch: 0, hw: 0.15, h: 0.15, age: 0, dead: false,
+    });
+  }
+
   // A player-loosed arrow (from a drawn bow). power scales speed.
   spawnPlayerArrow(origin, dir, power, dmg) {
     if (this._arrowCount() > 24) return;
@@ -1339,6 +1408,17 @@ export class EntitySystem {
     e.age += dt;
     if (e.age > 4) { e.dead = true; return; }
     if (!e.straight) e.vel[1] += GRAVITY * dt * 0.35;        // arrows drop; fireballs fly straight
+    if (e.splash) {
+      const dx = pp[0] - e.pos[0], dy = (pp[1] + 0.9) - e.pos[1], dz = pp[2] - e.pos[2];
+      const near = dx * dx + dy * dy + dz * dz < 1.2 * 1.2;
+      const hit = this._moveAxis(e, 0, e.vel[0] * dt) | this._moveAxis(e, 2, e.vel[2] * dt) | this._moveAxis(e, 1, e.vel[1] * dt);
+      if (near || hit) {
+        this.hooks.splashPotion?.(e.pos[0], e.pos[1], e.pos[2], e.effect);
+        this.hooks.particles?.burstBlock?.(Math.floor(e.pos[0]), Math.floor(e.pos[1]), Math.floor(e.pos[2]), 0, 14, 0.5, this.rng);
+        e.dead = true;
+      }
+      return;
+    }
     if (e.owner === 'player') {
       // player arrows strike creatures
       for (const c of this.entities) {

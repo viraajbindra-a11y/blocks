@@ -197,7 +197,7 @@ class Game {
         gloomstalker: 0.7, cinderling: 1.1, hollowshade: 0.85, sovereign: 0.4,
         pig: 0.6, cow: 0.42, sheep: 0.8, chicken: 1.6,
         zombie: 0.55, skeleton: 0.95, creeper: 0.7,
-        spider: 1.2, slime: 0.9, blaze: 0.8 }[species] ?? 1;
+        spider: 1.2, slime: 0.9, blaze: 0.8, phantom: 1.4, witch: 1.1 }[species] ?? 1;
       this.audio.play(kind === 'death' ? 'death' : 'hurt', { pitch, vol: 0.45 });
     };
     this.entities = new EntitySystem(this.world, {
@@ -223,6 +223,11 @@ class Game {
       getPlayer: () => this.player,
       dimension: () => this.dimKey,
       awardXp: (n) => this.player.addXp(n),
+      splashPotion: (x, y, z, effect) => {
+        const p = this.player;
+        const d = Math.hypot(p.pos[0] - x, (p.pos[1] + 0.9) - y, p.pos[2] - z);
+        if (d < 3.5 && effect) p.addEffect(effect, 8, 1);
+      },
     });
 
     this.interaction = new Interaction(this.world, this.player, {
