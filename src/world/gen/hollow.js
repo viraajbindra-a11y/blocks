@@ -49,7 +49,7 @@ export function makeHollowGenerator(rawSeed) {
   const biomeAt = () => 0;
 
   function generateChunk(cx, cz) {
-    const blocks = new Uint8Array(CHUNK_VOL);
+    const blocks = new Uint16Array(CHUNK_VOL);
     const hmap = new Uint8Array(CHUNK_X * CHUNK_Z);
     const biomes = new Uint8Array(CHUNK_X * CHUNK_Z);
     const ox = cx * CHUNK_X, oz = cz * CHUNK_Z;

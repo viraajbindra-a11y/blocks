@@ -33,7 +33,7 @@ export function makeSmolderGenerator(rawSeed) {
     CEILING - Math.round(Math.abs(nCeil.fbm2(wx * 0.01, wz * 0.01, 3)) * 26);
 
   function generateChunk(cx, cz) {
-    const blocks = new Uint8Array(CHUNK_VOL);
+    const blocks = new Uint16Array(CHUNK_VOL);
     const hmap = new Uint8Array(CHUNK_X * CHUNK_Z);
     const biomes = new Uint8Array(CHUNK_X * CHUNK_Z);
     const ox = cx * CHUNK_X, oz = cz * CHUNK_Z;

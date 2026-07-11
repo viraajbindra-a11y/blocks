@@ -4,6 +4,8 @@
 // Texture keys reference layers in the procedural atlas (render/atlas.js).
 // Tool tiers: 0 hand · 1 wooden · 2 stone · 3 copper · 4 iron.
 
+import { MAX_BLOCKS } from './core/constants.js';
+
 export const B = {
   AIR: 0,          BEDROCK: 1,      STONE: 2,        DIRT: 3,
   GRASS_BLOCK: 4,  SAND: 5,         GRAVEL: 6,       CLAY: 7,
@@ -127,8 +129,8 @@ export function fluidLevel(id) {
 // Ids 0-209 are reserved for the base game (0-74 terrain/utility, 75-104
 // shaped-block state families, 105-111 auto-connecting shapes, 112-209
 // door/trapdoor/pane families); 210+ are assigned to mods in
-// registration order (block storage is Uint8Array, so 256 ids total).
-export const BLOCKS = new Array(256).fill(null);
+// registration order (block storage is Uint16Array — see MAX_BLOCKS).
+export const BLOCKS = new Array(MAX_BLOCKS).fill(null);
 
 const DEFAULTS = {
   name: '', key: '',
@@ -835,8 +837,8 @@ export const blockIdByKey = key => keyToId.get(key) ?? 0;
 let nextModId = 244;   // 210-243 = base content incl. crops + anvil; mods after
 export function registerBlock(key, name, props = {}) {
   if (keyToId.has(key)) throw new Error(`block key "${key}" already registered`);
-  while (nextModId < 256 && BLOCKS[nextModId]) nextModId++;
-  if (nextModId >= 256) throw new Error('block id space exhausted (256 max)');
+  while (nextModId < MAX_BLOCKS && BLOCKS[nextModId]) nextModId++;
+  if (nextModId >= MAX_BLOCKS) throw new Error('block id space exhausted (MAX_BLOCKS)');
   const b = def(nextModId, key, name, props);
   keyToId.set(key, b.id);
   return b.id;

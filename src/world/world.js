@@ -286,7 +286,7 @@ export class World {
     this._pending.delete(key);
     const chunk = this.chunks.get(key);
     if (chunk && !chunk.blocks) {
-      chunk.attachBlocks(new Uint8Array(m.blocks.buffer ? m.blocks : m.blocks),
+      chunk.attachBlocks(m.blocks instanceof Uint16Array ? m.blocks : new Uint16Array(m.blocks),
                          m.hmap, m.biomes);
       this._onBlocksReady(chunk);
     }

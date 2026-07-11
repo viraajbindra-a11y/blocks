@@ -8,16 +8,16 @@
 //   getBlock(x,y,z)  -> block id (AIR when missing)
 //   markLightDirty(x,y,z) -> flag the containing render section for remesh
 
-import { CHUNK_X, CHUNK_Y, CHUNK_Z, MAX_LIGHT, bIdx, DIRS } from '../core/constants.js';
+import { CHUNK_X, CHUNK_Y, CHUNK_Z, MAX_LIGHT, MAX_BLOCKS, bIdx, DIRS } from '../core/constants.js';
 import { BLOCKS } from '../blocks.js';
 
 export const SKY = 0, BLK = 1;
 
 // How much light dies entering this block. 0 = free (air, glass, plants),
 // 15 = fully opaque.
-const OPACITY = new Uint8Array(256);
+const OPACITY = new Uint8Array(MAX_BLOCKS);
 export function refreshLightOpacity() {
-  for (let i = 0; i < 256; i++) {
+  for (let i = 0; i < MAX_BLOCKS; i++) {
     const b = BLOCKS[i];
     if (!b) { OPACITY[i] = 0; continue; }
     if (b.opaque) OPACITY[i] = 15;

@@ -87,7 +87,7 @@ export function makeGenerator(rawSeed, decorations = []) {
 
   // ── Full chunk generation ───────────────────────────────────────
   function generateChunk(cx, cz) {
-    const blocks = new Uint8Array(CHUNK_VOL);
+    const blocks = new Uint16Array(CHUNK_VOL);
     const hmap = new Uint8Array(CHUNK_X * CHUNK_Z);
     const biomes = new Uint8Array(CHUNK_X * CHUNK_Z);
     const heights = new Int16Array(CHUNK_X * CHUNK_Z);

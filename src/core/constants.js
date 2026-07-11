@@ -9,6 +9,11 @@ export const SECTIONS = CHUNK_Y / SECTION_Y;   // 8 sections per column
 export const SEA_LEVEL = 48;
 export const CHUNK_VOL = CHUNK_X * CHUNK_Y * CHUNK_Z;
 
+// Block ids are stored in a Uint16Array per chunk (was Uint8 — see SAVE_VERSION 2).
+// This lifts the old 256-id ceiling so the full block catalogue (concrete,
+// terracotta, glazed, redstone, rails, …) fits with room to spare.
+export const MAX_BLOCKS = 1024;
+
 // Block index inside a chunk. x:0-15, z:0-15, y:0-127.
 export const bIdx = (x, y, z) => (y << 8) | (z << 4) | x;
 
@@ -63,4 +68,4 @@ export const DIRS = [
 
 export const GAME_NAME = 'BLOCKS';
 export const GAME_TAGLINE = 'a boundless voxel wilderness';
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;   // 2: Uint16 block storage + 16-bit RLE chunks

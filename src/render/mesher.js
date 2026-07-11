@@ -27,7 +27,7 @@ const DIR_INFO = [
 const AXIS_VEC = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
 
 // Scratch buffers, reused between calls (single-threaded meshing).
-const blocksCache = new Uint8Array(P * P * P);
+const blocksCache = new Uint16Array(P * P * P);
 const lightCache = new Uint8Array(P * P * P);
 const mask = new Int32Array(256);
 const maskAO = new Uint8Array(256);

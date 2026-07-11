@@ -7,30 +7,46 @@ const DB_NAME = 'loam';   // legacy internal name — kept so pre-rebrand saves 
 const DB_VERSION = 1;
 const BIOMES_LEN = 256;
 
-// ── RLE codec (byte pairs: count 1..255, value) ───────────────────
-function rleEncode(src) {
-  const out = new Uint8Array(src.length * 2);
-  let o = 0, i = 0;
-  while (i < src.length) {
-    const v = src[i];
-    let run = 1;
-    while (run < 255 && i + run < src.length && src[i + run] === v) run++;
-    out[o++] = run;
-    out[o++] = v;
-    i += run;
-  }
-  return out.slice(0, o);
-}
-
-// Returns Uint8Array(expected) or null on corruption.
+// ── Legacy byte-RLE codec (SAVE_VERSION 1: count 1..255, value byte) ──
+// Kept only to read pre-Uint16 saves; new chunks are written with rle16.
 function rleDecode(enc, expected) {
   if (!(enc instanceof Uint8Array) || enc.length & 1) return null;
-  const out = new Uint8Array(expected);
+  const out = new Uint16Array(expected);   // widen legacy byte ids to Uint16
   let o = 0;
   for (let i = 0; i < enc.length; i += 2) {
     const n = enc[i];
     if (n === 0 || o + n > expected) return null;
     out.fill(enc[i + 1], o, o + n);
+    o += n;
+  }
+  return o === expected ? out : null;
+}
+
+// ── 16-bit RLE codec (SAVE_VERSION 2: count u16 LE, value u16 LE) ─────
+// 4 bytes per run; a u16 count lets a full column of AIR pack into one run.
+function rle16Encode(src) {
+  const out = [];
+  let i = 0;
+  while (i < src.length) {
+    const v = src[i];
+    let run = 1;
+    while (run < 65535 && i + run < src.length && src[i + run] === v) run++;
+    out.push(run & 255, run >> 8, v & 255, v >> 8);
+    i += run;
+  }
+  return Uint8Array.from(out);
+}
+
+// Returns Uint16Array(expected) or null on corruption.
+function rle16Decode(enc, expected) {
+  if (!(enc instanceof Uint8Array) || enc.length % 4) return null;
+  const out = new Uint16Array(expected);
+  let o = 0;
+  for (let i = 0; i < enc.length; i += 4) {
+    const n = enc[i] | (enc[i + 1] << 8);
+    const v = enc[i + 2] | (enc[i + 3] << 8);
+    if (n === 0 || o + n > expected) return null;
+    out.fill(v, o, o + n);
     o += n;
   }
   return o === expected ? out : null;
@@ -53,13 +69,14 @@ function newMeta({ name, seed, mode }) {
 }
 
 // Encode a live chunk into a storable record (copies — chunk keeps mutating).
+// `w:16` tags the 16-bit block format; records without it are legacy byte-RLE.
 function packChunk(chunk) {
-  return { b: rleEncode(chunk.blocks), bio: chunk.biomes.slice() };
+  return { b: rle16Encode(chunk.blocks), bio: chunk.biomes.slice(), w: 16 };
 }
 
 function unpackChunk(rec) {
   if (!rec) return null;
-  const blocks = rleDecode(rec.b, CHUNK_VOL);
+  const blocks = rec.w === 16 ? rle16Decode(rec.b, CHUNK_VOL) : rleDecode(rec.b, CHUNK_VOL);
   if (!blocks) return null;
   const biomes = rec.bio instanceof Uint8Array && rec.bio.length === BIOMES_LEN
     ? rec.bio : new Uint8Array(BIOMES_LEN);
