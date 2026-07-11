@@ -399,6 +399,18 @@ export class Interaction {
 
     if (!t) return;
 
+    // 2c. Bone meal: fertilize a crop, jumping it forward a stage or two
+    if (held.key === 'bone_meal') {
+      if (this._boneMeal(t)) {
+        p.consumeHeld(1);
+        this.hooks.audio.blockSound('place', 'plant');
+        this.hooks.particles?.burstBlock?.(t.x, t.y + 0.4, t.z, this.hooks.blockLayer(B.GRASS_BLOCK), 8, 0.9);
+        this.placeCooldown = 0.2;
+        this.swing = 0.6;
+      }
+      return;
+    }
+
     // 3. Tiller: till soil into farmland
     if (held.tool?.type === 'hoe') {
       if ((t.id === B.GRASS || t.id === B.SOIL) && t.ny === 1 &&
@@ -490,6 +502,18 @@ export class Interaction {
     this.hooks.toast?.(`Repaired ${def.name}`);
     this.placeCooldown = 0.4;
     this.swing = 0.6;
+  }
+
+  // Bone meal on a crop jumps it one or two growth stages closer to ripe.
+  _boneMeal(t) {
+    for (const base of [B.CROP_0, B.WHEAT_0, B.CARROT_0]) {
+      if (t.id >= base && t.id <= base + 3) {
+        if (t.id >= base + 3) return false;               // already mature
+        this.world.setBlock(t.x, t.y, t.z, Math.min(base + 3, t.id + 1 + (Math.random() * 2 | 0)));
+        return true;
+      }
+    }
+    return false;
   }
 
   _fireBow(charge, weapon = 'bow') {
