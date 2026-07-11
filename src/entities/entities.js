@@ -179,6 +179,12 @@ const SPECIES = {
       return o;
     },
   },
+  ghast: {
+    hw: 0.9, h: 2.0, health: 10, walkSpeed: 1.1, grazes: false, hopper: false,
+    hostile: true, flying: true, ranged: true, fireball: true, bigFire: true, dmg: 6,
+    dims: new Set(['smolder']), biomes: new Set(),
+    drops(rng) { return [{ key: 'gunpowder', count: 1 + (rng() * 2 | 0) }]; },
+  },
 };
 
 // ── Palette (0..1 rgb) ────────────────────────────────────────────
@@ -233,6 +239,7 @@ const C = {
   blCore: [1.0, 0.86, 0.36], blRod: [0.95, 0.6, 0.16], blSmoke: [0.28, 0.2, 0.14],
   phBody: [0.22, 0.25, 0.34], phWing: [0.15, 0.17, 0.26], phEye: [0.42, 0.78, 0.9],
   wiRobe: [0.28, 0.24, 0.36], wiHat: [0.14, 0.12, 0.2], wiSkin: [0.42, 0.5, 0.42], wiNose: [0.5, 0.42, 0.4],
+  ghBody: [0.85, 0.85, 0.89], ghDark: [0.58, 0.58, 0.66], ghEye: [0.16, 0.14, 0.18],
 };
 
 // ── Matrix helpers ────────────────────────────────────────────────
@@ -541,8 +548,9 @@ function bobberParts(e, parts, nowS) {
 function arrowParts(e, parts) {
   const b = baseMat(e);
   if (e.fire) {
-    addPart(parts, b, [1.0, 0.66, 0.2], 0, 0, 0, 0, 0, 0, 0, 0.2, 0.2, 0.2);
-    addPart(parts, b, [1.0, 0.95, 0.62], 0, 0, 0, 0, 0, 0, 0, 0.11, 0.11, 0.11);
+    const s = e.big ? 0.42 : 0.2;
+    addPart(parts, b, [1.0, 0.66, 0.2], 0, 0, 0, 0, 0, 0, 0, s, s, s);
+    addPart(parts, b, [1.0, 0.95, 0.62], 0, 0, 0, 0, 0, 0, 0, s * 0.55, s * 0.55, s * 0.55);
     return;
   }
   if (e.splash) {
@@ -593,6 +601,24 @@ function witchParts(e, parts) {
   addPart(parts, b, C.wiNose, 0, 1.3, 0.2, 0, 0, 0, 0, 0.06, 0.06, 0.12);       // nose
   addPart(parts, b, C.wiHat, 0, 1.52, 0, 0, 0, 0, 0, 0.52, 0.1, 0.52);          // brim
   addPart(parts, b, C.wiHat, 0, 1.64, -0.03, 0.2, 0, 0, 0, 0.2, 0.34, 0.2);     // cone
+}
+
+// Ghast: a big pale cube with a mournful face and nine dangling tentacles.
+function ghastParts(e, parts, nowS) {
+  const b = baseMat(e);
+  const firing = (e.atkCd || 0) > 1.0;                    // glows red just after a shot
+  addPart(parts, b, C.ghBody, 0, 1.2, 0, 0, 0, 0, 0, 1.1, 1.1, 1.1);
+  const face = firing ? [0.92, 0.22, 0.16] : C.ghEye;
+  addPart(parts, b, face, -0.24, 1.3, 0.57, 0, 0, 0, 0, 0.14, 0.16, 0.04);      // eyes
+  addPart(parts, b, face, 0.24, 1.3, 0.57, 0, 0, 0, 0, 0.14, 0.16, 0.04);
+  addPart(parts, b, face, 0, 1.02, 0.57, 0, 0, 0, 0, 0.24, 0.14, 0.04);         // mouth
+  const sway = Math.sin((nowS || 0) * 2 + e.phase);
+  let t = 0;
+  for (const tx of [-0.34, 0, 0.34]) for (const tz of [-0.34, 0, 0.34]) {
+    const len = 0.42 + (t % 3) * 0.16;
+    addPart(parts, b, C.ghDark, tx, 0.6, tz, sway * 0.15 * (t % 2 ? 1 : -1), 0, -len * 0.5, 0, 0.12, len, 0.12);
+    t++;
+  }
 }
 
 // Primed TNT: a red cube with a cream band, flashing white before it blows.
@@ -654,6 +680,7 @@ const PART_BUILDERS = {
   blaze: blazeParts,
   phantom: phantomParts,
   witch: witchParts,
+  ghast: ghastParts,
   arrow: arrowParts,
   tnt: tntParts,
   bobber: bobberParts,
@@ -1360,12 +1387,13 @@ export class EntitySystem {
     let vx = pp[0] - ex, vy = (pp[1] + 0.9) - ey, vz = pp[2] - ez;
     const L = Math.hypot(vx, vy, vz) || 1;
     vx /= L; vy /= L; vz /= L;
-    const sp = 13;
+    const big = e.def.bigFire;
+    const sp = big ? 9 : 13;                               // ghast lobs slower, bigger fire
     this.entities.push({
-      kind: 'arrow', species: 'arrow', owner: 'mob', fire: true, straight: true, cause: 'fire',
+      kind: 'arrow', species: 'arrow', owner: 'mob', fire: true, big, straight: true, cause: 'fire',
       pos: [ex + vx * 0.6, ey, ez + vz * 0.6], vel: [vx * sp, vy * sp, vz * sp],
       yaw: Math.atan2(vx, vz), pitch: Math.atan2(vy, Math.hypot(vx, vz)),
-      hw: 0.15, h: 0.15, dmg: e.def.dmg, age: 0, dead: false,
+      hw: big ? 0.3 : 0.15, h: big ? 0.3 : 0.15, dmg: e.def.dmg, age: 0, dead: false,
     });
   }
 
