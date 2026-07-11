@@ -6,6 +6,9 @@ import { B, BLOCKS, blockById, blockIdByKey, isFluid, isWater, isShaped, shapeBo
 import { itemByKey, enchantsFor, ENCHANT_NAMES } from '../items.js';
 import { PLAYER_W, PLAYER_H } from '../core/constants.js';
 
+// Repair material per tool tier (1..5), for the anvil.
+const TIER_MAT = [null, 'oak_planks', 'cobblestone', 'copper_ingot', 'iron_ingot', 'netherite_ingot'];
+
 export class Interaction {
   /**
    * hooks: {particles, audio, openStation(kind), dropItems(x,y,z,[{key,count}]),
@@ -251,6 +254,10 @@ export class Interaction {
         if (input.buttonPressed[2]) this._enchant();
         return;
       }
+      if (block.use === 'anvil') {
+        if (input.buttonPressed[2]) this._useAnvil();
+        return;
+      }
       if (block.use === 'sleep') {
         if (input.buttonPressed[2] && this.hooks.sleep) {
           this.hooks.sleep(t.x, t.y, t.z);
@@ -429,12 +436,13 @@ export class Interaction {
   _handleBow(dt, rightHeld) {
     const p = this.player;
     const held = p.heldItem();
-    if (!held || held.key !== 'bow') { this.bowCharge = 0; return false; }
+    if (!held || (held.key !== 'bow' && held.key !== 'crossbow')) { this.bowCharge = 0; return false; }
+    const drawT = held.key === 'crossbow' ? 1.1 : 0.85;                // crossbow loads slower
     const hasAmmo = p.mode === MODE_BUILDER || p.countOf('arrow') > 0;
     if (rightHeld && hasAmmo) {
-      this.bowCharge = Math.min(1, this.bowCharge + dt / 0.85);        // ~0.85s to full draw
+      this.bowCharge = Math.min(1, this.bowCharge + dt / drawT);
     } else {
-      if (this._wasRightDown && this.bowCharge > 0.12 && hasAmmo) this._fireBow(this.bowCharge);
+      if (this._wasRightDown && this.bowCharge > 0.12 && hasAmmo) this._fireBow(this.bowCharge, held.key);
       this.bowCharge = 0;
     }
     return true;
@@ -462,15 +470,38 @@ export class Interaction {
     this.swing = 0.7;
   }
 
-  _fireBow(charge) {
+  // Anvil: spend the held tool's tier material + 1 XP level to restore
+  // a chunk of its durability. No menu — repairs whatever you're holding.
+  _useAnvil() {
+    const p = this.player;
+    const s = p.heldStack();
+    const def = s && itemByKey(s.key);
+    if (!s || !def || !def.tool || s.dur === undefined) { this.hooks.toast?.('Hold a damaged tool to repair'); return; }
+    const maxDur = def.tool.durability;
+    if (s.dur >= maxDur) { this.hooks.toast?.('That tool is already pristine'); return; }
+    const mat = TIER_MAT[def.tool.tier];
+    if (!mat) { this.hooks.toast?.('This anvil can’t mend that'); return; }
+    if (p.countOf(mat) < 1) { this.hooks.toast?.(`Needs ${itemByKey(mat)?.name ?? mat} to repair`); return; }
+    if (p.mode !== MODE_BUILDER && p.xpLevel < 1) { this.hooks.toast?.('Needs an XP level'); return; }
+    p.removeItems(mat, 1);
+    if (p.mode !== MODE_BUILDER) p.xpLevel -= 1;
+    s.dur = Math.min(maxDur, s.dur + Math.ceil(maxDur * 0.4));
+    this.hooks.audio?.blockSound?.('break', 'metal');
+    this.hooks.toast?.(`Repaired ${def.name}`);
+    this.placeCooldown = 0.4;
+    this.swing = 0.6;
+  }
+
+  _fireBow(charge, weapon = 'bow') {
     const p = this.player;
     if (p.mode !== MODE_BUILDER) p.removeItems('arrow', 1);
     const eye = p.eyePos();
     const cp = Math.cos(p.pitch), sp = Math.sin(p.pitch);
     const cy = Math.cos(p.yaw), sy = Math.sin(p.yaw);
     const dir = [-sy * cp, sp, -cy * cp];
-    const power = 0.45 + charge * 0.55;                 // 0.45 → 1.0
-    const dmg = Math.max(1, Math.round(1 + charge * 5)) + (p.heldStack()?.ench?.power || 0);
+    const cross = weapon === 'crossbow';                // flatter, faster, harder-hitting
+    const power = (cross ? 0.9 : 0.45) + charge * (cross ? 0.4 : 0.55);
+    const dmg = Math.max(1, Math.round(1 + charge * 5)) + (cross ? 1 : 0) + (p.heldStack()?.ench?.power || 0);
     if (this.hooks.fireArrow) this.hooks.fireArrow(eye, dir, power, dmg);
     p.damageHeldTool(1);
     this.swing = 1;

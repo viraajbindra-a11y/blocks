@@ -73,6 +73,7 @@ export const B = {
   CHISELED_SANDSTONE: 234,
   WHEAT_0: 235, WHEAT_1: 236, WHEAT_2: 237, WHEAT_3: 238,
   CARROT_0: 239, CARROT_1: 240, CARROT_2: 241, CARROT_3: 242,
+  ANVIL: 243,
 };
 
 // ── Legacy internal aliases ───────────────────────────────────────
@@ -410,6 +411,10 @@ def(B.MOSSY_STONE_BRICKS, 'mossy_stone_bricks', 'Mossy Stone Bricks', { ...STONE
 def(B.SMOOTH_SANDSTONE, 'smooth_sandstone', 'Smooth Sandstone', { ...STONE_LIKE, hardness: 4 });
 def(B.CUT_SANDSTONE, 'cut_sandstone', 'Cut Sandstone', { ...STONE_LIKE, hardness: 4 });
 def(B.CHISELED_SANDSTONE, 'chiseled_sandstone', 'Chiseled Sandstone', { ...STONE_LIKE, hardness: 4 });
+def(B.ANVIL, 'anvil', 'Anvil', {
+  hardness: 5, tool: 'pick', minTier: 1, sound: 'metal', use: 'anvil', opaque: false,
+  tex: { top: 'anvil_top', bottom: 'iron_block', side: 'anvil_side' },
+});
 
 // ── The Nether ───────────────────────────────────────────────────
 def(B.NETHERRACK, 'netherrack', 'Netherrack', {
@@ -827,7 +832,7 @@ export const blockIdByKey = key => keyToId.get(key) ?? 0;
 // Assigns the next free id ≥ 210. Ids are stable for a given mod list +
 // order (worlds save raw ids, so changing the mod list can orphan blocks —
 // they degrade gracefully to air).
-let nextModId = 243;   // 210-242 = base content incl. wheat + carrot crops; mods after
+let nextModId = 244;   // 210-243 = base content incl. crops + anvil; mods after
 export function registerBlock(key, name, props = {}) {
   if (keyToId.has(key)) throw new Error(`block key "${key}" already registered`);
   while (nextModId < 256 && BLOCKS[nextModId]) nextModId++;

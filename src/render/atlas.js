@@ -1202,6 +1202,30 @@ P.chiseled_sandstone = (d, rnd) => {
   hline(d, 5, 10, 4, m); vline(d, 7, 5, 10, m); px(d, 6, 7, m); px(d, 9, 7, m); hline(d, 5, 10, 11, m);
 };
 
+// Anvil: dark iron profile (wide top, narrow waist, wide base).
+P.anvil_side = (d, rnd) => {
+  const dark = [58, 58, 64], mid = [88, 88, 96], lite = [122, 122, 130];
+  for (let y = 1; y <= 4; y++) for (let x = 1; x <= 14; x++) px(d, x, y, jitter(mid, rnd, 0.06));
+  hline(d, 1, 14, 1, lite); hline(d, 1, 14, 4, dark);
+  for (let y = 5; y <= 9; y++) for (let x = 5; x <= 10; x++) px(d, x, y, jitter(dark, rnd, 0.06));
+  for (let y = 10; y <= 14; y++) for (let x = 2; x <= 13; x++) px(d, x, y, jitter(mid, rnd, 0.06));
+  hline(d, 2, 13, 14, dark); hline(d, 2, 13, 10, lite);
+};
+P.anvil_top = (d, rnd) => {
+  const mid = [94, 94, 102], dark = [60, 60, 66], lite = [128, 128, 136];
+  noisyFill(d, rnd, mid, 0.05); border(d, dark);
+  hline(d, 3, 12, 3, lite); hline(d, 3, 12, 12, dark);
+  for (let i = 0; i < 6; i++) px(d, 4 + i * 1.6, 7 + ((rnd() * 2) | 0), dark);
+};
+P.crossbow = (d, rnd) => {
+  const wood = [122, 86, 50], woodD = [94, 66, 40], iron = [180, 184, 192], str = [226, 226, 230];
+  for (let x = 2; x <= 12; x++) { px(d, x, 9, jitter(wood, rnd, 0.06)); px(d, x, 10, woodD); }   // stock
+  line(d, 11, 3, 13, 6, iron); line(d, 11, 15, 13, 12, iron); px(d, 13, 9, iron);               // limbs
+  line(d, 13, 6, 13, 12, str);                                                                  // string
+  line(d, 4, 8, 12, 8, [112, 92, 66]); px(d, 3, 8, [142, 142, 146]);                            // loaded bolt
+  px(d, 5, 11, woodD); px(d, 4, 11, woodD); px(d, 5, 12, woodD);                                // trigger/grip
+};
+
 // ── Extra block faces & item sprites ──────────────────────────────
 // Furniture, the Smolder/Hollow dimensions, the Dawn beacon, plus the
 // sunsteel tier's raw materials and a few utility items. Appended here

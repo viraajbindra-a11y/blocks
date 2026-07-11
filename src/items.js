@@ -157,6 +157,11 @@ item('fishing_rod', 'Fishing Rod', {
   tool: { type: 'fishing_rod', tier: 0, speed: 0, durability: 64, damage: 1 },
   desc: 'Right-click water to cast; reel in when a fish bites.',
 });
+item('crossbow', 'Crossbow', {
+  kind: 'tool', maxStack: 1,
+  tool: { type: 'crossbow', tier: 0, speed: 2.4, durability: 326, damage: 1 },
+  desc: 'Slower to load than a bow, but its bolt flies flat and hits harder.',
+});
 
 // ── Armor ─────────────────────────────────────────────────────────
 // slot 0 helmet · 1 chestplate · 2 leggings · 3 boots. points reduce

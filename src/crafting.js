@@ -192,6 +192,8 @@ shaped('bow', 1, [' RS', 'R S', ' RS'], { R: 'stick', S: 'string' }, 'worktable'
 shaped('shears', 1, [' I', 'I '], { I: 'iron_ingot' }, 'worktable');
 shaped('shield', 1, ['PIP', 'PPP', ' P '], { P: 'oak_planks', I: 'iron_ingot' }, 'worktable');
 shaped('fishing_rod', 1, ['  R', ' RS', 'R S'], { R: 'stick', S: 'string' }, 'worktable');
+shaped('crossbow', 1, ['SIS', 'RRR', ' R '], { S: 'string', I: 'iron_ingot', R: 'stick' }, 'worktable');
+shaped('anvil', 1, ['III', ' i ', 'iii'], { I: 'iron_block', i: 'iron_ingot' }, 'worktable');
 
 // ── Dyes + colored wool ───────────────────────────────────────────
 // Primary dyes from natural sources, then Minecraft-style mixes.
