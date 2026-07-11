@@ -1162,6 +1162,43 @@ for (const [c, col] of Object.entries(WOOL_COLORS)) {
   P[`${c}_dye`] = dyePainter(col);
 }
 
+// ── Concrete / terracotta / glazed terracotta (16 colors each) ─────
+const cmix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+const CLAY_BASE = [150, 92, 66];
+function concretePainter(col) {                 // flat, vivid, near-uniform
+  const c = shade(col, 1.05);
+  return (d, rnd) => {
+    noisyFill(d, rnd, c, 0.02);
+    speckle(d, rnd, [shade(c, 1.05)], 0.04);
+    speckle(d, rnd, [shade(c, 0.95)], 0.05);
+  };
+}
+function terracottaPainter(col) {               // earthy — clay tinted by the dye
+  const c = cmix(CLAY_BASE, col, 0.55);
+  return (d, rnd) => {
+    noisyFill(d, rnd, c, 0.07);
+    speckle(d, rnd, [shade(c, 0.84)], 0.1);
+    speckle(d, rnd, [shade(c, 1.13)], 0.06);
+    hline(d, 0, 15, 5, shade(c, 0.9)); hline(d, 0, 15, 11, shade(c, 0.9));  // faint strata
+  };
+}
+function glazedPainter(col) {                    // ornate symmetric ceramic motif
+  const base = shade(col, 1.12), dark = shade(col, 0.58), lite = [236, 234, 226];
+  return (d, rnd) => {
+    noisyFill(d, rnd, base, 0.015);
+    border(d, dark);
+    for (let i = 2; i <= 13; i++) { px(d, i, i, lite); px(d, 15 - i, i, dark); }
+    for (let i = 4; i <= 11; i++) px(d, i, 15 - i, lite);
+    hline(d, 5, 10, 2, lite); vline(d, 2, 5, 10, lite);
+    px(d, 7, 7, dark); px(d, 8, 8, dark); px(d, 7, 8, lite); px(d, 8, 7, lite);
+  };
+}
+for (const [c, col] of Object.entries(WOOL_COLORS)) {
+  P[`${c}_concrete`] = concretePainter(col);
+  P[`${c}_terracotta`] = terracottaPainter(col);
+  P[`${c}_glazed_terracotta`] = glazedPainter(col);
+}
+
 // ── Building variants ─────────────────────────────────────────────
 const SBRICK = [124, 122, 118], SAND2 = [216, 205, 160];
 function sBrick(d, rnd, base) {

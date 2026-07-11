@@ -219,6 +219,21 @@ for (const c of ['orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink', 'g
   'light_gray', 'cyan', 'purple', 'blue', 'brown', 'green', 'red', 'black']) {
   shapeless(`${c}_wool`, 1, ['white_wool', `${c}_dye`], 'worktable');
 }
+// ── Concrete / terracotta / glazed terracotta (16 colours) ─────────
+// Concrete: 4 sand + 4 gravel + dye (hardens directly). Terracotta:
+// smelt clay → white terracotta, then dye it. Glazed: smelt terracotta.
+const COLORS16 = ['white', 'orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink',
+  'gray', 'light_gray', 'cyan', 'purple', 'blue', 'brown', 'green', 'red', 'black'];
+for (const c of COLORS16) {
+  shapeless(`${c}_concrete`, 8,
+    ['sand', 'sand', 'sand', 'sand', 'gravel', 'gravel', 'gravel', 'gravel', `${c}_dye`], 'worktable');
+  if (c !== 'white') {
+    shapeless(`${c}_terracotta`, 8, [...Array(8).fill('white_terracotta'), `${c}_dye`], 'worktable');
+  }
+  SMELT[`${c}_terracotta`] = { out: `${c}_glazed_terracotta`, count: 1 };
+}
+SMELT.clay = { out: 'white_terracotta', count: 1 };   // fired clay block → terracotta
+
 shapeless('flint_and_steel', 1, ['iron_ingot', 'flint']);           // MC-accurate alt
 shaped('tnt', 1, ['GSG', 'SGS', 'GSG'], { G: 'gunpowder', S: 'sand' }, 'worktable');
 shaped('enchanting_table', 1, [' D ', 'DOD', 'OOO'], { D: 'diamond', O: 'obsidian' }, 'worktable');

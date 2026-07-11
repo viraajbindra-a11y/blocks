@@ -111,6 +111,15 @@ export const WOOL_ORDER = ['white', 'orange', 'magenta', 'light_blue', 'yellow',
   'pink', 'gray', 'light_gray', 'cyan', 'purple', 'blue', 'brown', 'green', 'red', 'black'];
 WOOL_ORDER.forEach((c, i) => { B['WOOL_' + c.toUpperCase()] = 212 + i; });
 
+// 16-colour building families (each in WOOL_ORDER order).
+export const CONCRETE_BASE = 244, TERRACOTTA_BASE = 260, GLAZED_BASE = 276;
+WOOL_ORDER.forEach((c, i) => {
+  const U = c.toUpperCase();
+  B[U + '_CONCRETE'] = CONCRETE_BASE + i;
+  B[U + '_TERRACOTTA'] = TERRACOTTA_BASE + i;
+  B[U + '_GLAZED_TERRACOTTA'] = GLAZED_BASE + i;
+});
+
 // ── Fluid helpers ─────────────────────────────────────────────────
 export const isWater = id => id >= 15 && id <= 21;
 export const isLava  = id => id >= 22 && id <= 25;
@@ -404,6 +413,16 @@ const titleCase = (s) => s.split('_').map((w) => w[0].toUpperCase() + w.slice(1)
 WOOL_ORDER.forEach((c, i) => def(212 + i, `${c}_wool`, `${titleCase(c)} Wool`, {
   hardness: 0.8, sound: 'soft', tex: { all: `${c}_wool` },
 }));
+// Concrete / terracotta / glazed terracotta (244..291)
+WOOL_ORDER.forEach((c, i) => {
+  const T = titleCase(c);
+  def(CONCRETE_BASE + i, `${c}_concrete`, `${T} Concrete`, {
+    hardness: 1.8, tool: 'pick', sound: 'stone', tex: { all: `${c}_concrete` } });
+  def(TERRACOTTA_BASE + i, `${c}_terracotta`, `${T} Terracotta`, {
+    hardness: 1.25, tool: 'pick', minTier: 1, sound: 'stone', tex: { all: `${c}_terracotta` } });
+  def(GLAZED_BASE + i, `${c}_glazed_terracotta`, `${T} Glazed Terracotta`, {
+    hardness: 1.4, tool: 'pick', minTier: 1, sound: 'stone', tex: { all: `${c}_glazed_terracotta` } });
+});
 // Decorative stone/sandstone building variants (228..234)
 const STONE_LIKE = { hardness: 6, tool: 'pick', minTier: 1, sound: 'stone' };
 def(B.SMOOTH_STONE, 'smooth_stone', 'Smooth Stone', { ...STONE_LIKE });
@@ -834,7 +853,7 @@ export const blockIdByKey = key => keyToId.get(key) ?? 0;
 // Assigns the next free id ≥ 210. Ids are stable for a given mod list +
 // order (worlds save raw ids, so changing the mod list can orphan blocks —
 // they degrade gracefully to air).
-let nextModId = 244;   // 210-243 = base content incl. crops + anvil; mods after
+let nextModId = 292;   // 210-243 base content; 244-291 concrete/terracotta/glazed; mods after
 export function registerBlock(key, name, props = {}) {
   if (keyToId.has(key)) throw new Error(`block key "${key}" already registered`);
   while (nextModId < MAX_BLOCKS && BLOCKS[nextModId]) nextModId++;
