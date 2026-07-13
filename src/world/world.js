@@ -190,7 +190,18 @@ export class World {
     if (isFluid(id)) this.fluids.schedule(x, y, z, now, isLava(id));
     this.fluids.scheduleAround(x, y, z, now);
     if (this.redstone) this.redstone.onEdit(x, y, z, old, id);
+    // Multiplayer: share this edit with peers (skip fluid churn + echoes).
+    if (this.netBroadcast && !this._netSuppress && !isFluid(id) && !isFluid(old)) {
+      this.netBroadcast(x, y, z, id);
+    }
     return true;
+  }
+
+  // Apply a peer's block edit without re-broadcasting it back.
+  applyRemoteBlock(x, y, z, id) {
+    this._netSuppress = true;
+    this.setBlock(x, y, z, id);
+    this._netSuppress = false;
   }
 
   // ── Streaming ────────────────────────────────────────────────────

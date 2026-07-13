@@ -4,6 +4,7 @@
 import { Settings } from './core/config.js';
 import { Input } from './core/input.js';
 import { TouchControls } from './core/touch.js';
+import { NetSession } from './net/net.js';
 import { World } from './world/world.js';
 import { Renderer, computeEnv } from './render/renderer.js';
 import { Particles } from './render/particles.js';
@@ -63,6 +64,7 @@ class Game {
     this.store = await openStore();
     this.input = new Input(this.canvas);
     this.touch = new TouchControls(this.canvas, this.input);   // no-op on desktop
+    this.net = null;                                           // multiplayer session (lazy)
     this.renderer = new Renderer(this.canvas, this.settings);
     this.renderer.setAtlas(this.atlas.layers, this.atlas.layerOf);
     this.particles = new Particles();
@@ -346,6 +348,65 @@ class Game {
   // ── Dimension travel ─────────────────────────────────────────────
   // opts: {portal: {ax, ay, az, riftKind}} — build/find an arrival portal
   //       {pos: [x,y,z]}                   — direct placement (respawn)
+  // Lazily create the P2P session and route its events into the world.
+  _netStart() {
+    if (this.net) return this.net;
+    this.net = new NetSession({
+      onBlock: (x, y, z, id) => this.world.applyRemoteBlock(x, y, z, id),
+      onPlayer: (id, x, y, z, yaw) => this.entities.setRemotePlayer(id, x, y, z, yaw),
+      onChat: (id, s) => this.hud.toast(s),
+      onPeerGone: (id) => this.entities.removeRemotePlayer(id),
+      onStatus: (s) => this.hud.toast('Multiplayer: ' + s),
+    });
+    this.world.netBroadcast = (x, y, z, id) => this.net.broadcastBlock(x, y, z, id);
+    return this.net;
+  }
+
+  // Minimal host/join modal — swaps SDP codes by hand, no server needed.
+  _openMultiplayer() {
+    if (document.getElementById('mp-modal')) return;
+    const net = this._netStart();
+    this.input.enabled = false;
+    const m = document.createElement('div');
+    m.id = 'mp-modal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);font:14px system-ui,sans-serif;color:#eee';
+    const ta = (label, val, ro) => `<label style="display:block;margin:10px 0 2px;color:#939681">${label}</label>`
+      + `<textarea ${ro ? 'readonly' : ''} style="width:100%;height:56px;background:#14160e;color:#9ad86f;border:1px solid #33372a;border-radius:6px;font:11px monospace">${val || ''}</textarea>`;
+    m.innerHTML = `<div style="background:#1e2117;border:1px solid #33372a;border-radius:12px;padding:20px;width:min(520px,92vw);max-height:90vh;overflow:auto">
+      <h2 style="margin:0 0 4px;font-size:18px">Multiplayer — peer to peer</h2>
+      <p style="color:#939681;margin:0 0 12px">No server needed. Swap the codes below to link two players; your builds sync live.</p>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button id="mp-host" style="flex:1;padding:8px">Host a game</button>
+        <button id="mp-join" style="flex:1;padding:8px">Join a game</button>
+        <button id="mp-close" style="padding:8px 12px">✕</button>
+      </div><div id="mp-body"></div></div>`;
+    document.body.appendChild(m);
+    const body = m.querySelector('#mp-body');
+    const close = () => { this.input.enabled = true; m.remove(); };
+    m.querySelector('#mp-close').onclick = close;
+    m.querySelector('#mp-host').onclick = async () => {
+      body.innerHTML = '<p>Generating code…</p>';
+      const offer = await net.createOffer();
+      body.innerHTML = ta('1 · Send this code to your friend:', offer, true)
+        + ta('2 · Paste their reply here:', '', false)
+        + '<button id="mp-go" style="margin-top:8px;padding:8px">Connect</button>';
+      body.querySelector('#mp-go').onclick = async () => {
+        try { await net.acceptAnswer(body.querySelectorAll('textarea')[1].value.trim()); this.hud.toast('Connecting…'); close(); }
+        catch { this.hud.toast('Bad reply code'); }
+      };
+    };
+    m.querySelector('#mp-join').onclick = () => {
+      body.innerHTML = ta('1 · Paste the host\'s code:', '', false)
+        + '<button id="mp-gen" style="margin-top:8px;padding:8px">Generate reply</button><div id="mp-ans"></div>';
+      body.querySelector('#mp-gen').onclick = async () => {
+        try {
+          const answer = await net.acceptOffer(body.querySelector('textarea').value.trim());
+          body.querySelector('#mp-ans').innerHTML = ta('2 · Send this reply back to the host:', answer, true);
+        } catch { this.hud.toast('Bad host code'); }
+      };
+    };
+  }
+
   // Wire the current world's redstone sim to gameplay effects.
   _wireRedstone() {
     this.world.redstone.hooks = {
@@ -595,6 +656,7 @@ class Game {
       }
       if (e.code === 'Escape') { this.pause(); return; }
       if (e.code === 'KeyQ') { this._dropHeld(); return; }
+      if (e.code === 'KeyM') { e.preventDefault(); this._openMultiplayer(); return; }
       if (/^Digit[1-9]$/.test(e.code)) {
         this.player.selected = Number(e.code.slice(5)) - 1;
         return;
@@ -741,6 +803,10 @@ class Game {
       const dim = dimension(this.dimKey);
       const env = computeEnv(this.timeOfDay, dim.hasWeather ? this.weather : null, dim);
       this.entities.update(dt, p.pos, now / 1000, env.sunLevel);
+      if (this.net && this.net.connected) {                    // share our pose ~10×/s
+        this._netPoseT = (this._netPoseT || 0) + dt;
+        if (this._netPoseT >= 0.1) { this._netPoseT = 0; this.net.broadcastPose(p.pos[0], p.pos[1], p.pos[2], p.yaw, p.pitch); }
+      }
       this._tickFurnaces(dt);
       if (dim.hasWeather) this.weather.update(dt, p.pos, this.timeOfDay, now / 1000);
       this.particles.update(dt, this.world);

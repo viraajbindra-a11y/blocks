@@ -822,7 +822,22 @@ const PART_BUILDERS = {
   tnt: tntParts,
   bobber: bobberParts,
   pearl: pearlParts,
+  remoteplayer: remotePlayerParts,
 };
+
+// A networked remote player — a simple blocky humanoid avatar.
+function remotePlayerParts(e, parts) {
+  const b = baseMat(e);
+  const sw = Math.sin(e.walkPhase || 0) * 0.4;
+  addPart(parts, b, [0.25, 0.30, 0.55], -0.11, 0.42, 0, sw, 0, -0.22, 0, 0.14, 0.46, 0.14);   // legs
+  addPart(parts, b, [0.25, 0.30, 0.55], 0.11, 0.42, 0, -sw, 0, -0.22, 0, 0.14, 0.46, 0.14);
+  addPart(parts, b, [0.30, 0.62, 0.78], 0, 1.02, 0, 0, 0, 0, 0, 0.4, 0.62, 0.24);              // torso
+  addPart(parts, b, [0.72, 0.56, 0.44], -0.28, 1.24, 0, sw * 0.6, 0, -0.24, 0, 0.13, 0.46, 0.13); // arms
+  addPart(parts, b, [0.72, 0.56, 0.44], 0.28, 1.24, 0, -sw * 0.6, 0, -0.24, 0, 0.13, 0.46, 0.13);
+  addPart(parts, b, [0.80, 0.62, 0.50], 0, 1.54, 0, 0, 0, 0, 0, 0.34, 0.34, 0.34);             // head
+  addPart(parts, b, [0.10, 0.10, 0.12], -0.08, 1.56, 0.18, 0, 0, 0, 0, 0.06, 0.06, 0.03);      // eyes
+  addPart(parts, b, [0.10, 0.10, 0.12], 0.08, 1.56, 0.18, 0, 0, 0, 0, 0.06, 0.06, 0.03);
+}
 
 // Stable mid-tone tint per item key.
 const TINTS = new Map();
@@ -876,7 +891,29 @@ export class EntitySystem {
     this._bossesDown = new Set(); // boss species slain this session (no respawn)
   }
 
-  clear() { this.entities.length = 0; }
+  clear() { this.entities.length = 0; if (this._remotes) this._remotes.clear(); }
+
+  // Networked players: upsert / remove an avatar driven by net poses.
+  setRemotePlayer(id, x, y, z, yaw) {
+    this._remotes = this._remotes || new Map();
+    let e = this._remotes.get(id);
+    if (!e) {
+      e = { kind: 'remote', species: 'remoteplayer', pos: [x, y, z], yaw: yaw || 0,
+        hw: 0.3, h: 1.8, walkPhase: 0, flash: 0, dead: false, aabb: makeAabb() };
+      this._remotes.set(id, e);
+      this.entities.push(e);
+    } else {
+      e.walkPhase += Math.hypot(x - e.pos[0], z - e.pos[2]) * 5;
+      e.pos[0] = x; e.pos[1] = y; e.pos[2] = z; e.yaw = yaw || 0;
+    }
+  }
+  removeRemotePlayer(id) {
+    const e = this._remotes && this._remotes.get(id);
+    if (!e) return;
+    const i = this.entities.indexOf(e);
+    if (i >= 0) this.entities.splice(i, 1);
+    this._remotes.delete(id);
+  }
 
   update(dt, playerPos, nowS, sunLevel) {
     dt = Math.min(dt, 0.1);
@@ -898,6 +935,7 @@ export class EntitySystem {
     const list = this.entities;
     for (let i = list.length - 1; i >= 0; i--) {
       const e = list[i];
+      if (e.kind === 'remote') continue;            // pose driven by the network
       if (!e.dead) {
         if (e.kind === 'item') this._updateItem(e, dt, playerPos);
         else if (e.kind === 'arrow') this._updateArrow(e, dt, playerPos);
