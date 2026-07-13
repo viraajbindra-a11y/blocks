@@ -262,6 +262,13 @@ shaped('redstone_lamp', 1, [' R ', 'RGR', ' R '], { R: 'redstone', G: 'glowstone
 shaped('dispenser', 1, ['CCC', 'CBC', 'CRC'], { C: 'cobblestone', B: 'bow', R: 'redstone' }, 'worktable');
 shaped('hopper', 1, ['I I', 'ICI', ' I '], { I: 'iron_ingot', C: 'chest' }, 'worktable');
 
+// ── Rails + vehicles ───────────────────────────────────────────────
+shaped('rail', 16, ['I I', 'ISI', 'I I'], { I: 'iron_ingot', S: 'stick' }, 'worktable');
+shaped('powered_rail', 6, ['C C', 'CRC', 'CSC'], { C: 'copper_ingot', R: 'redstone', S: 'stick' }, 'worktable');
+shaped('detector_rail', 6, ['I I', 'IRI', 'ISI'], { I: 'iron_ingot', R: 'redstone', S: 'stone' }, 'worktable');
+shaped('minecart', 1, ['I I', 'III'], { I: 'iron_ingot' }, 'worktable');
+shaped('boat', 1, ['P P', 'PPP'], { P: 'oak_planks' }, 'worktable');
+
 shapeless('flint_and_steel', 1, ['iron_ingot', 'flint']);           // MC-accurate alt
 shaped('tnt', 1, ['GSG', 'SGS', 'GSG'], { G: 'gunpowder', S: 'sand' }, 'worktable');
 shaped('enchanting_table', 1, [' D ', 'DOD', 'OOO'], { D: 'diamond', O: 'obsidian' }, 'worktable');

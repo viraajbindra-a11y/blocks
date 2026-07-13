@@ -1301,6 +1301,27 @@ P.hopper_top = (d, rnd) => { noisyFill(d, rnd, [96, 96, 100], 0.05); border(d, [
   for (let x = 2; x <= 13; x++) { px(d, x, 3, [40, 40, 44]); px(d, x, 12, [40, 40, 44]); } };
 P.hopper_side = (d, rnd) => { noisyFill(d, rnd, [82, 82, 86], 0.05);
   for (let x = 4; x <= 11; x++) { px(d, x, 10, [50, 50, 54]); } vline(d, 7, 10, 15, [50, 50, 54]); vline(d, 8, 10, 15, [50, 50, 54]); };
+// ── Rails + vehicles ───────────────────────────────────────────────
+function railPainter(tie) {
+  return (d, rnd) => {
+    vline(d, 4, 1, 14, [120, 120, 126]); vline(d, 11, 1, 14, [120, 120, 126]);   // two rails
+    vline(d, 5, 1, 14, [80, 80, 86]); vline(d, 10, 1, 14, [80, 80, 86]);
+    for (let y = 2; y <= 13; y += 4) { hline(d, 3, 12, y, [110, 82, 52]); if (tie) hline(d, 3, 12, y, tie(rnd)); }  // wooden ties
+  };
+}
+P.rail = railPainter(null);
+P.powered_rail = railPainter(() => [200, 40, 40]);
+P.detector_rail = railPainter(() => [90, 120, 200]);
+P.minecart = (d, rnd) => {
+  noisyFill(d, rnd, [70, 70, 76], 0.04);
+  for (let x = 3; x <= 12; x++) { px(d, x, 5, [110, 110, 116]); px(d, x, 11, [40, 40, 44]); }
+  vline(d, 3, 5, 11, [110, 110, 116]); vline(d, 12, 5, 11, [110, 110, 116]);
+  px(d, 5, 13, [30, 30, 32]); px(d, 10, 13, [30, 30, 32]);          // wheels
+};
+P.boat = (d, rnd) => {
+  for (let y = 6; y <= 12; y++) { const w = 6 - Math.abs(y - 9); hline(d, 8 - w, 7 + w, y, [150, 112, 66]); }
+  hline(d, 2, 13, 6, [110, 80, 44]); px(d, 7, 4, [110, 80, 44]); px(d, 8, 4, [110, 80, 44]);   // paddle
+};
 P.nether_star = (d, rnd) => {                           // 4-point pale star
   for (let i = 0; i < 16; i++) { px(d, 7, i, [236, 240, 246]); px(d, 8, i, [236, 240, 246]); }
   for (let x = 0; x < 16; x++) { px(d, x, 7, [236, 240, 246]); px(d, x, 8, [236, 240, 246]); }

@@ -136,6 +136,7 @@ Object.assign(B, {
   STONE_BUTTON: 322, STONE_BUTTON_ON: 323,
   REDSTONE_LAMP: 324, REDSTONE_LAMP_ON: 325,
   DISPENSER: 326, HOPPER: 327, REDSTONE_ORE: 328,
+  RAIL: 329, POWERED_RAIL: 330, DETECTOR_RAIL: 331,
 });
 
 // ── Fluid helpers ─────────────────────────────────────────────────
@@ -533,6 +534,13 @@ def(B.DISPENSER, 'dispenser', 'Dispenser', {
 def(B.HOPPER, 'hopper', 'Hopper', {
   hardness: 3, tool: 'pick', minTier: 1, sound: 'metal', opaque: false,
   tex: { top: 'hopper_top', bottom: 'iron_block', side: 'hopper_side' } });
+
+// Rails (329..331) — flat tracks a minecart rides along.
+const RAIL_DEF = { solid: false, opaque: false, cross: true, hardness: 0.7, tool: 'pick',
+  sound: 'metal', needsFloor: true };
+def(B.RAIL, 'rail', 'Rail', { ...RAIL_DEF, tex: { all: 'rail' } });
+def(B.POWERED_RAIL, 'powered_rail', 'Powered Rail', { ...RAIL_DEF, tex: { all: 'powered_rail' } });
+def(B.DETECTOR_RAIL, 'detector_rail', 'Detector Rail', { ...RAIL_DEF, tex: { all: 'detector_rail' } });
 // Decorative stone/sandstone building variants (228..234)
 const STONE_LIKE = { hardness: 6, tool: 'pick', minTier: 1, sound: 'stone' };
 def(B.SMOOTH_STONE, 'smooth_stone', 'Smooth Stone', { ...STONE_LIKE });
@@ -963,7 +971,7 @@ export const blockIdByKey = key => keyToId.get(key) ?? 0;
 // Assigns the next free id ≥ 210. Ids are stable for a given mod list +
 // order (worlds save raw ids, so changing the mod list can orphan blocks —
 // they degrade gracefully to air).
-let nextModId = 329;   // 210-315 base content; 316-328 redstone/automation; mods after
+let nextModId = 332;   // 210-328 base content; 329-331 rails; mods after
 export function registerBlock(key, name, props = {}) {
   if (keyToId.has(key)) throw new Error(`block key "${key}" already registered`);
   while (nextModId < MAX_BLOCKS && BLOCKS[nextModId]) nextModId++;

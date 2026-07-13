@@ -203,6 +203,8 @@ item('sugar', 'Sugar', { desc: 'Refined from sugar cane.' });
 item('pumpkin_pie', 'Pumpkin Pie', { kind: 'food', food: { restore: 8 } });
 item('nether_star', 'Nether Star', { maxStack: 1, desc: 'Torn from the Wither. A beacon\'s heart.' });
 item('emerald', 'Emerald', { desc: 'A villager\'s currency.' });
+item('minecart', 'Minecart', { maxStack: 1, desc: 'Set it on rails, then ride.' });
+item('boat', 'Boat', { maxStack: 1, desc: 'Set it on water, then row.' });
 item('cake', 'Cake', { kind: 'block', block: B.CAKE_0, icon: 'cake_side', maxStack: 1, desc: 'Place it, then eat a slice at a time.' });
 item('raw_porkchop', 'Raw Porkchop', { kind: 'food', food: { restore: 2 } });
 item('cooked_porkchop', 'Cooked Porkchop', { kind: 'food', food: { restore: 7 } });

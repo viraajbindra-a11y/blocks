@@ -243,6 +243,20 @@ export class Interaction {
       }
     }
 
+    // 0b. Mount a rideable entity under the crosshair (horse must be tamed).
+    if (input.buttonPressed[2] && this.hooks.mount) {
+      const eye = p.eyePos();
+      const cp = Math.cos(p.pitch), sp = Math.sin(p.pitch);
+      const cy = Math.cos(p.yaw), sy = Math.sin(p.yaw);
+      const hit = this._entityUnderRay(eye, [-sy * cp, sp, -cy * cp]);
+      if (hit && (!t || hit.dist < t.dist)) {
+        const e = hit.entity, r = e.def && e.def.rideable;
+        if (r && (r !== 'land' || e.tamed) && this.hooks.mount(e)) {
+          this.placeCooldown = 0.4; this.swing = 0.4; return;
+        }
+      }
+    }
+
     // 1. Interactive blocks (unless sneaking)
     if (t && !p.crouching) {
       const block = blockById(t.id);
@@ -491,6 +505,22 @@ export class Interaction {
         this.hooks.audio.blockSound('place', 'plant');
         this.placeCooldown = 0.24;
         this.swing = 0.7;
+      }
+      return;
+    }
+
+    // 4b. Vehicles: a minecart onto rails, a boat onto water.
+    if (held.key === 'minecart' && this.hooks.spawnVehicle) {
+      if (t.id === B.RAIL || t.id === B.POWERED_RAIL || t.id === B.DETECTOR_RAIL) {
+        this.hooks.spawnVehicle('minecart', t.x + 0.5, t.y + 0.1, t.z + 0.5);
+        p.consumeHeld(1); this.placeCooldown = 0.3; this.swing = 0.6;
+      }
+      return;
+    }
+    if (held.key === 'boat' && this.hooks.spawnVehicle) {
+      if (isWater(t.id)) {
+        this.hooks.spawnVehicle('boat', t.x + 0.5, t.y + 0.7, t.z + 0.5);
+        p.consumeHeld(1); this.placeCooldown = 0.3; this.swing = 0.6;
       }
       return;
     }

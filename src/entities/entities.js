@@ -99,6 +99,25 @@ const SPECIES = {
     biomes: new Set([BIOME.PLAINS, BIOME.FOREST]),
     drops() { return []; },
   },
+  // Horse — tame with wheat, then ride it across the land.
+  horse: {
+    hw: 0.45, h: 1.6, health: 22, walkSpeed: 2.4, grazes: true, hopper: false,
+    tamable: 'wheat', rideable: 'land',
+    biomes: new Set([BIOME.PLAINS]),
+    drops(rng) { return rng() < 0.6 ? [{ key: 'leather', count: 1 + (rng() * 2 | 0) }] : []; },
+  },
+  // Minecart — placed on rails; ride it along the track. Not spawned wild.
+  minecart: {
+    hw: 0.42, h: 0.55, health: 6, walkSpeed: 0, grazes: false, hopper: false,
+    vehicle: true, rideable: 'rail', biomes: new Set(),
+    drops() { return [{ key: 'minecart', count: 1 }]; },
+  },
+  // Boat — placed on water; row it about. Not spawned wild.
+  boat: {
+    hw: 0.6, h: 0.4, health: 6, walkSpeed: 0, grazes: false, hopper: false,
+    vehicle: true, rideable: 'water', biomes: new Set(),
+    drops() { return [{ key: 'boat', count: 1 }]; },
+  },
   // Enderman — tall, teleporting overworld hostile. Drops ender pearls.
   enderman: {
     hw: 0.35, h: 2.6, health: 40, walkSpeed: 2.4, grazes: false, hopper: false,
@@ -290,6 +309,9 @@ const C = {
   woFur: [0.78, 0.76, 0.72], woBelly: [0.90, 0.89, 0.86], woDark: [0.44, 0.42, 0.40],
   woEye: [0.80, 0.55, 0.20], woCollar: [0.80, 0.24, 0.22],
   caFur: [0.90, 0.62, 0.24], caBelly: [0.96, 0.90, 0.82], caDark: [0.62, 0.40, 0.16], caEye: [0.42, 0.78, 0.45],
+  hoBody: [0.55, 0.38, 0.22], hoMane: [0.28, 0.19, 0.11], hoLeg: [0.40, 0.28, 0.16], hoHoof: [0.16, 0.13, 0.10],
+  mcBody: [0.52, 0.52, 0.56], mcWheel: [0.28, 0.28, 0.30],
+  btWood: [0.62, 0.46, 0.28], btTrim: [0.46, 0.33, 0.19],
 };
 
 // ── Matrix helpers ────────────────────────────────────────────────
@@ -746,6 +768,35 @@ function witherParts(e, parts, nowS) {
   addPart(parts, t, eye, 0.5, 2.36, 0.18, 0, 0, 0, 0, 0.12, 0.04, 0.03);
 }
 
+function horseParts(e, parts) {
+  const b = baseMat(e);
+  const moving = Math.hypot(e.vel[0], e.vel[2]) > 0.2;
+  const sw = moving ? Math.sin(e.walkPhase) * 0.6 : 0;
+  for (const [lx, lz, sgn] of [[-0.24, 0.32, 1], [0.24, 0.32, -1], [-0.24, -0.32, -1], [0.24, -0.32, 1]]) {
+    addPart(parts, b, C.hoLeg, lx, 0.42, lz, sw * sgn, 0, -0.22, 0, 0.13, 0.5, 0.13);
+    addPart(parts, b, C.hoHoof, lx, 0.06, lz, 0, 0, 0, 0, 0.14, 0.1, 0.14);
+  }
+  addPart(parts, b, C.hoBody, 0, 0.98, -0.05, 0, 0, 0, 0, 0.5, 0.5, 1.1);            // barrel
+  addPart(parts, b, C.hoBody, 0, 1.2, 0.52, -0.5, 0, 0, 0.1, 0.28, 0.5, 0.3);        // neck
+  addPart(parts, b, C.hoBody, 0, 1.5, 0.74, -0.2, 0, 0, 0.1, 0.24, 0.28, 0.42);      // head
+  addPart(parts, b, C.hoMane, 0, 1.36, 0.44, -0.5, 0, 0, 0.1, 0.08, 0.5, 0.14);      // mane
+  addPart(parts, b, C.hoMane, 0, 0.98, -0.6, 0.4, 0, -0.2, 0, 0.06, 0.5, 0.06);      // tail
+}
+function minecartParts(e, parts) {
+  const b = baseMat(e);
+  addPart(parts, b, C.mcBody, 0, 0.28, 0, 0, 0, 0, 0, 0.44, 0.12, 0.6);              // floor
+  for (const [lx, lz] of [[-0.4, 0], [0.4, 0], [0, -0.56], [0, 0.56]])
+    addPart(parts, b, C.mcBody, lx, 0.42, lz, 0, 0, 0, 0, Math.abs(lx) > 0 ? 0.06 : 0.44, 0.28, Math.abs(lz) > 0 ? 0.06 : 0.6);  // walls
+  addPart(parts, b, C.mcWheel, -0.3, 0.12, 0.3, 0, 0, 0, 0, 0.12, 0.12, 0.06);
+  addPart(parts, b, C.mcWheel, 0.3, 0.12, -0.3, 0, 0, 0, 0, 0.12, 0.12, 0.06);
+}
+function boatParts(e, parts) {
+  const b = baseMat(e);
+  addPart(parts, b, C.btWood, 0, 0.16, 0, 0, 0, 0, 0, 0.58, 0.14, 0.9);              // hull floor
+  for (const [lx, lz, sx, sz] of [[-0.54, 0, 0.06, 0.9], [0.54, 0, 0.06, 0.9], [0, -0.86, 0.58, 0.06], [0, 0.86, 0.58, 0.06]])
+    addPart(parts, b, C.btTrim, lx, 0.3, lz, 0, 0, 0, 0, sx, 0.2, sz);              // gunwales
+}
+
 function villagerParts(e, parts) {
   const b = baseMat(e);
   const moving = Math.hypot(e.vel[0], e.vel[2]) > 0.2;
@@ -799,6 +850,9 @@ const PART_BUILDERS = {
   villager: villagerParts,
   wolf: wolfParts,
   cat: catParts,
+  horse: horseParts,
+  minecart: minecartParts,
+  boat: boatParts,
   mosshopper: mosshopperParts,
   embermoth: embermothParts,
   gloomstalker: gloomstalkerParts,
@@ -915,6 +969,13 @@ export class EntitySystem {
     this._remotes.delete(id);
   }
 
+  // Spawn a placed vehicle (minecart/boat) and return it for mounting.
+  spawnVehicle(species, x, y, z) {
+    const e = this._makeCreature(species, x, y, z, 0);
+    this.entities.push(e);
+    return e;
+  }
+
   update(dt, playerPos, nowS, sunLevel) {
     dt = Math.min(dt, 0.1);
     this._nowS = nowS;
@@ -998,7 +1059,7 @@ export class EntitySystem {
       const options = [];
       for (const name of Object.keys(SPECIES)) {
         const s = SPECIES[name];
-        if (s.boss) continue;                          // boss spawns via _spawnBoss
+        if (s.boss || s.vehicle) continue;             // bosses/vehicles aren't spawned wild
         if (!this._dimOk(s, dim)) continue;
         if (s.nightOnly && sun >= 0.25) continue;
         if (s.hostile && hostilesFull) continue;
@@ -1082,8 +1143,9 @@ export class EntitySystem {
   _updateCreature(e, dt, pp, sun, nowS) {
     e.flash = Math.max(0, e.flash - dt * 4);
     const s = e.def;
+    if (e.ridden) { this._updateRidden(e, dt); return; }
     if (s.hostile) { this._updateHostile(e, dt, pp, sun, nowS); return; }
-    if (e.tamed) { this._updateTamed(e, dt, pp, nowS); return; }
+    if (e.tamed && (e.species === 'wolf' || e.species === 'cat')) { this._updateTamed(e, dt, pp, nowS); return; }
     if (s.flying) { this._updateMoth(e, dt, sun, nowS); return; }
 
     if (this.rng() < dt * 0.05) this.hooks.audio?.creature?.(e.species, 'idle');
@@ -1261,6 +1323,33 @@ export class EntitySystem {
     if (moving) { e.vel[0] = fx * speed; e.vel[2] = fz * speed; }
     else { const f = Math.max(0, 1 - dt * 8); e.vel[0] *= f; e.vel[2] *= f; }
     this._stepPhysics(e, dt);
+    e.walkPhase += Math.hypot(e.vel[0], e.vel[2]) * dt * 5;
+  }
+
+  // A vehicle carrying the player. riderInput (fwd/yaw/jump) is set by main
+  // each frame; horses & carts step through ground physics, boats float.
+  _updateRidden(e, dt) {
+    const inp = e.riderInput || { fwd: 0, yaw: e.yaw, jump: false };
+    const kind = e.def.rideable;
+    const speed = (e.def.walkSpeed || 3) * 1.5;
+    e.yaw = inp.yaw;
+    const fx = -Math.sin(inp.yaw), fz = -Math.cos(inp.yaw);
+    const drive = inp.fwd > 0 ? 1 : inp.fwd < 0 ? -0.5 : 0;
+    if (kind === 'rail') {
+      const here = this.world.getBlock(Math.floor(e.pos[0]), Math.floor(e.pos[1]), Math.floor(e.pos[2]));
+      const onRail = here === B.RAIL || here === B.POWERED_RAIL || here === B.DETECTOR_RAIL;
+      e.vel[0] = fx * speed * (onRail ? drive : 0);
+      e.vel[2] = fz * speed * (onRail ? drive : 0);
+      this._stepPhysics(e, dt);
+    } else if (kind === 'water') {
+      e.vel[0] = fx * speed * drive; e.vel[2] = fz * speed * drive; e.vel[1] = 0;
+      this._moveAxis(e, 0, e.vel[0] * dt);
+      this._moveAxis(e, 2, e.vel[2] * dt);
+    } else { // land — a horse
+      e.vel[0] = fx * speed * drive; e.vel[2] = fz * speed * drive;
+      if (inp.jump && e.onGround) e.vel[1] = 6.4;
+      this._stepPhysics(e, dt);
+    }
     e.walkPhase += Math.hypot(e.vel[0], e.vel[2]) * dt * 5;
   }
 

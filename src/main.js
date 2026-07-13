@@ -203,7 +203,8 @@ class Game {
         pig: 0.6, cow: 0.42, sheep: 0.8, chicken: 1.6,
         zombie: 0.55, skeleton: 0.95, creeper: 0.7,
         spider: 1.2, slime: 0.9, blaze: 0.8, phantom: 1.4, witch: 1.1, ghast: 0.5,
-        enderman: 0.7, wither: 0.4, villager: 1.0, wolf: 1.3, cat: 1.7 }[species] ?? 1;
+        enderman: 0.7, wither: 0.4, villager: 1.0, wolf: 1.3, cat: 1.7,
+        horse: 0.9, minecart: 1.4, boat: 1.2 }[species] ?? 1;
       this.audio.play(kind === 'death' ? 'death' : 'hurt', { pitch, vol: 0.45 });
     };
     this.entities = new EntitySystem(this.world, {
@@ -258,6 +259,8 @@ class Game {
       fireArrow: (origin, dir, power, dmg) => this.entities.spawnPlayerArrow(origin, dir, power, dmg),
       useOnEntity: (e, heldKey) => this.entities.useItemOn(e, heldKey),
       primeTnt: (x, y, z) => this.entities.primeTnt(x, y, z),
+      mount: (e) => { this.player.riding = e; e.ridden = true; return true; },
+      spawnVehicle: (species, x, y, z) => this.entities.spawnVehicle(species, x, y, z),
       awardXp: (n) => this.player.addXp(n),
       castBobber: (x, y, z) => this.entities.castBobber(x, y, z),
       reelBobber: (b) => this.entities.reelBobber(b),
@@ -405,6 +408,30 @@ class Game {
         } catch { this.hud.toast('Bad host code'); }
       };
     };
+  }
+
+  // Feed the ridden vehicle this frame's steering (before it updates).
+  _setRiderInput() {
+    const e = this.player.riding, inp = this.input;
+    e.riderInput = {
+      fwd: (inp.down('KeyW') ? 1 : 0) - (inp.down('KeyS') ? 1 : 0),
+      yaw: this.player.yaw,
+      jump: inp.down('Space'),
+    };
+  }
+
+  // Pin the player onto the vehicle after it moves; sneak dismounts.
+  _snapRider() {
+    const p = this.player, e = p.riding;
+    if (!e || e.dead) { if (e) e.ridden = false; p.riding = null; return; }
+    if (this.input.pressed('ShiftLeft') || this.input.pressed('ShiftRight')) {
+      e.ridden = false; p.riding = null;
+      p.pos = [e.pos[0] + 0.7, e.pos[1] + 0.6, e.pos[2]]; p.vel = [0, 0, 0];
+      return;
+    }
+    const saddle = e.def.rideable === 'land' ? 1.1 : 0.4;
+    p.pos[0] = e.pos[0]; p.pos[1] = e.pos[1] + saddle; p.pos[2] = e.pos[2];
+    p.vel[0] = p.vel[1] = p.vel[2] = 0;
   }
 
   // Wire the current world's redstone sim to gameplay effects.
@@ -781,7 +808,7 @@ class Game {
 
       this.accumulator = Math.min(this.accumulator + dt, 0.12);
       while (this.accumulator >= TICK_DT) {
-        p.update(TICK_DT, move, now / 1000);
+        if (!p.riding) p.update(TICK_DT, move, now / 1000);   // riding: pose comes from the vehicle
         this.accumulator -= TICK_DT;
       }
 
@@ -802,7 +829,9 @@ class Game {
       this.world.update(dt, p.pos[0], p.pos[2], now);
       const dim = dimension(this.dimKey);
       const env = computeEnv(this.timeOfDay, dim.hasWeather ? this.weather : null, dim);
+      if (p.riding) this._setRiderInput();
       this.entities.update(dt, p.pos, now / 1000, env.sunLevel);
+      if (p.riding) this._snapRider();
       if (this.net && this.net.connected) {                    // share our pose ~10×/s
         this._netPoseT = (this._netPoseT || 0) + dt;
         if (this._netPoseT >= 0.1) { this._netPoseT = 0; this.net.broadcastPose(p.pos[0], p.pos[1], p.pos[2], p.yaw, p.pitch); }
