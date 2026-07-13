@@ -354,6 +354,22 @@ export class Interaction {
         if (input.buttonPressed[2]) { this._useStonecutter(); this.placeCooldown = 0.3; }
         return;
       }
+      if (block.use === 'lever') {
+        if (input.buttonPressed[2]) {
+          this.world.setBlock(t.x, t.y, t.z, t.id ^ 1);        // LEVER (320) ↔ LEVER_ON (321)
+          this.hooks.audio.blockSound('place', 'wood');
+          this.placeCooldown = 0.25; this.swing = 0.5;
+        }
+        return;
+      }
+      if (block.use === 'button') {
+        if (input.buttonPressed[2] && t.id === B.STONE_BUTTON) {
+          this.world.setBlock(t.x, t.y, t.z, B.STONE_BUTTON_ON);   // redstone sim pops it back
+          this.hooks.audio.blockSound('place', 'stone');
+          this.placeCooldown = 0.25; this.swing = 0.5;
+        }
+        return;
+      }
     }
 
     if (!held) return;

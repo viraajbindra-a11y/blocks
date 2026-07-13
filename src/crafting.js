@@ -252,6 +252,16 @@ shaped('beacon', 1, ['GGG', 'GNG', 'OOO'],
 shaped('emerald_block', 1, ['EEE', 'EEE', 'EEE'], { E: 'emerald' }, 'worktable');
 shapeless('emerald', 9, ['emerald_block']);
 
+// ── Redstone / automation ──────────────────────────────────────────
+shaped('redstone_block', 1, ['RRR', 'RRR', 'RRR'], { R: 'redstone' }, 'worktable');
+shapeless('redstone', 9, ['redstone_block']);
+shaped('redstone_torch', 1, ['R', 'S'], { R: 'redstone', S: 'stick' }, 'worktable');
+shaped('lever', 1, ['S', 'C'], { S: 'stick', C: 'cobblestone' });
+shapeless('stone_button', 1, ['stone']);
+shaped('redstone_lamp', 1, [' R ', 'RGR', ' R '], { R: 'redstone', G: 'glowstone' }, 'worktable');
+shaped('dispenser', 1, ['CCC', 'CBC', 'CRC'], { C: 'cobblestone', B: 'bow', R: 'redstone' }, 'worktable');
+shaped('hopper', 1, ['I I', 'ICI', ' I '], { I: 'iron_ingot', C: 'chest' }, 'worktable');
+
 shapeless('flint_and_steel', 1, ['iron_ingot', 'flint']);           // MC-accurate alt
 shaped('tnt', 1, ['GSG', 'SGS', 'GSG'], { G: 'gunpowder', S: 'sand' }, 'worktable');
 shaped('enchanting_table', 1, [' D ', 'DOD', 'OOO'], { D: 'diamond', O: 'obsidian' }, 'worktable');

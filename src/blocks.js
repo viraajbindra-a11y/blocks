@@ -129,6 +129,13 @@ Object.assign(B, {
   CAKE_0: 305, CAKE_6: 311,
   GRINDSTONE: 312, STONECUTTER: 313,
   EMERALD_ORE: 314, EMERALD_BLOCK: 315,
+  // Redstone / automation (316..328)
+  REDSTONE_BLOCK: 316, REDSTONE_WIRE: 317,
+  REDSTONE_TORCH: 318, REDSTONE_TORCH_OFF: 319,
+  LEVER: 320, LEVER_ON: 321,
+  STONE_BUTTON: 322, STONE_BUTTON_ON: 323,
+  REDSTONE_LAMP: 324, REDSTONE_LAMP_ON: 325,
+  DISPENSER: 326, HOPPER: 327, REDSTONE_ORE: 328,
 });
 
 // ── Fluid helpers ─────────────────────────────────────────────────
@@ -487,6 +494,45 @@ def(B.EMERALD_ORE, 'emerald_ore', 'Emerald Ore', {
   drops: [{ item: 'emerald', min: 1, max: 1 }], tex: { all: 'emerald_ore' } });
 def(B.EMERALD_BLOCK, 'emerald_block', 'Block of Emerald', {
   hardness: 5, tool: 'pick', minTier: 3, sound: 'metal', tex: { all: 'emerald_block' } });
+
+// ── Redstone / automation (316..328) ──────────────────────────────
+def(B.REDSTONE_BLOCK, 'redstone_block', 'Block of Redstone', {
+  hardness: 5, tool: 'pick', sound: 'stone', tex: { all: 'redstone_block' } });
+def(B.REDSTONE_ORE, 'redstone_ore', 'Redstone Ore', {
+  hardness: 4.5, tool: 'pick', minTier: 2, sound: 'stone', light: 3,
+  drops: [{ item: 'redstone', min: 4, max: 5 }], tex: { all: 'redstone_ore' } });
+// Ground dust — a cross sprite; placed by the 'redstone' item.
+def(B.REDSTONE_WIRE, 'redstone_wire', 'Redstone Dust', {
+  solid: false, opaque: false, cross: true, hardness: 0, sound: 'stone',
+  needsFloor: true, item: 'redstone', tex: { all: 'redstone_wire' } });
+def(B.REDSTONE_TORCH, 'redstone_torch', 'Redstone Torch', {
+  solid: false, opaque: false, cross: true, hardness: 0, sound: 'wood', light: 7,
+  needsFloor: true, tex: { all: 'redstone_torch' } });
+def(B.REDSTONE_TORCH_OFF, 'redstone_torch_off', 'Redstone Torch', {
+  solid: false, opaque: false, cross: true, hardness: 0, sound: 'wood',
+  needsFloor: true, tex: { all: 'redstone_torch_off' } });
+def(B.LEVER, 'lever', 'Lever', {
+  solid: false, opaque: false, cross: true, hardness: 0, sound: 'wood',
+  needsFloor: true, use: 'lever', tex: { all: 'lever' } });
+def(B.LEVER_ON, 'lever_on', 'Lever', {
+  solid: false, opaque: false, cross: true, hardness: 0, sound: 'wood',
+  needsFloor: true, use: 'lever', light: 0, tex: { all: 'lever_on' } });
+def(B.STONE_BUTTON, 'stone_button', 'Stone Button', {
+  solid: false, opaque: false, cross: true, hardness: 0, sound: 'stone',
+  needsFloor: true, use: 'button', tex: { all: 'stone_button' } });
+def(B.STONE_BUTTON_ON, 'stone_button_on', 'Stone Button', {
+  solid: false, opaque: false, cross: true, hardness: 0, sound: 'stone',
+  needsFloor: true, use: 'button', tex: { all: 'stone_button' } });
+def(B.REDSTONE_LAMP, 'redstone_lamp', 'Redstone Lamp', {
+  hardness: 0.6, sound: 'glass', tex: { all: 'redstone_lamp' } });
+def(B.REDSTONE_LAMP_ON, 'redstone_lamp_on', 'Redstone Lamp', {
+  hardness: 0.6, sound: 'glass', light: 15, tex: { all: 'redstone_lamp_on' } });
+def(B.DISPENSER, 'dispenser', 'Dispenser', {
+  hardness: 3.5, tool: 'pick', minTier: 1, sound: 'stone',
+  tex: { top: 'furnace_top', bottom: 'furnace_top', side: 'dispenser_front' } });
+def(B.HOPPER, 'hopper', 'Hopper', {
+  hardness: 3, tool: 'pick', minTier: 1, sound: 'metal', opaque: false,
+  tex: { top: 'hopper_top', bottom: 'iron_block', side: 'hopper_side' } });
 // Decorative stone/sandstone building variants (228..234)
 const STONE_LIKE = { hardness: 6, tool: 'pick', minTier: 1, sound: 'stone' };
 def(B.SMOOTH_STONE, 'smooth_stone', 'Smooth Stone', { ...STONE_LIKE });
@@ -917,7 +963,7 @@ export const blockIdByKey = key => keyToId.get(key) ?? 0;
 // Assigns the next free id ≥ 210. Ids are stable for a given mod list +
 // order (worlds save raw ids, so changing the mod list can orphan blocks —
 // they degrade gracefully to air).
-let nextModId = 316;   // 210-313 base content; 314-315 emerald ore/block; mods after
+let nextModId = 329;   // 210-315 base content; 316-328 redstone/automation; mods after
 export function registerBlock(key, name, props = {}) {
   if (keyToId.has(key)) throw new Error(`block key "${key}" already registered`);
   while (nextModId < MAX_BLOCKS && BLOCKS[nextModId]) nextModId++;

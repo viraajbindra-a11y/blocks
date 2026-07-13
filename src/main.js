@@ -148,6 +148,7 @@ class Game {
       decorations: this.dimKey === 'overworld' ? this.mods.decorations : [],
       dimension: this.dimKey,
     });
+    this._wireRedstone();
 
     // Worlds remember the mods they were created with; warn on drift
     // (removed mods degrade their blocks to air, new mods change gen).
@@ -343,6 +344,17 @@ class Game {
   // ── Dimension travel ─────────────────────────────────────────────
   // opts: {portal: {ax, ay, az, riftKind}} — build/find an arrival portal
   //       {pos: [x,y,z]}                   — direct placement (respawn)
+  // Wire the current world's redstone sim to gameplay effects.
+  _wireRedstone() {
+    this.world.redstone.hooks = {
+      primeTnt: (x, y, z) => this.entities?.primeTnt(x, y, z),
+      dispense: (x, y, z) => {
+        this.entities?.spawnPlayerArrow?.([x + 0.5, y + 0.9, z + 0.5], [0, 0.35, 1], 1, 4);
+        this.audio?.play?.('bow', { vol: 0.3 });
+      },
+    };
+  }
+
   _switchDimension(dimKey, opts) {
     const dim = DIMENSIONS[dimKey];
     this._flushAll();
@@ -357,6 +369,7 @@ class Game {
       decorations: dimKey === 'overworld' ? this.mods.decorations : [],
       dimension: dimKey,
     });
+    this._wireRedstone();
     this.renderer.attachWorld(this.world);
     this._rebindSystems();
     const p = this.player;

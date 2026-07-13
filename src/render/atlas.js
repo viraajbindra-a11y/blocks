@@ -1257,6 +1257,50 @@ P.emerald_block = (d, rnd) => {
   noisyFill(d, rnd, [46, 190, 104], 0.05); border(d, [24, 120, 66]);
   vline(d, 5, 2, 13, [120, 232, 150]); vline(d, 10, 2, 13, [26, 130, 72]); hline(d, 3, 12, 8, [90, 216, 130]);
 };
+// ── Redstone / automation ──────────────────────────────────────────
+const RED = [200, 20, 24], RED_D = [120, 10, 14], RED_HI = [248, 70, 60];
+P.redstone = (d, rnd) => {                              // dust item
+  for (let i = 0; i < 22; i++) px(d, 3 + ((rnd() * 10) | 0), 3 + ((rnd() * 10) | 0), i % 2 ? RED : RED_HI);
+};
+P.redstone_block = (d, rnd) => {
+  noisyFill(d, rnd, RED, 0.06); border(d, RED_D);
+  speckle(d, rnd, [RED_HI], 0.08); speckle(d, rnd, [RED_D], 0.08);
+};
+P.redstone_ore = (d, rnd) => {
+  noisyFill(d, rnd, [128, 128, 130], 0.05);
+  for (let i = 0; i < 6; i++) { const x = 3 + ((rnd() * 10) | 0), y = 3 + ((rnd() * 10) | 0);
+    px(d, x, y, RED); px(d, x + 1, y, RED_HI); }
+};
+P.redstone_wire = (d) => {                              // ground cross of dust
+  hline(d, 1, 14, 7, RED); hline(d, 1, 14, 8, RED_D);
+  vline(d, 7, 1, 14, RED); vline(d, 8, 1, 14, RED_D);
+  px(d, 7, 7, RED_HI); px(d, 8, 8, RED_HI);
+};
+function torchPainterR(head) {
+  return (d) => {
+    for (let y = 2; y <= 11; y++) { px(d, 7, y, [104, 76, 48]); px(d, 8, y, [80, 56, 34]); }  // stick
+    px(d, 7, 12, head); px(d, 8, 12, head); px(d, 7, 13, head); px(d, 8, 13, head);           // tip
+    px(d, 7, 14, shade(head, 1.3));
+  };
+}
+P.redstone_torch = torchPainterR([230, 40, 36]);
+P.redstone_torch_off = torchPainterR([96, 30, 30]);
+P.lever = (d) => { for (let y = 2; y <= 9; y++) { px(d, 8, y, [120, 96, 70]); px(d, 9, y - 1, [150, 120, 88]); }
+  hline(d, 6, 10, 11, [80, 80, 82]); hline(d, 6, 10, 12, [60, 60, 62]); };   // cobble base + handle right
+P.lever_on = (d) => { for (let y = 2; y <= 9; y++) { px(d, 7, y, [150, 120, 88]); px(d, 6, y - 1, [120, 96, 70]); }
+  hline(d, 6, 10, 11, [80, 80, 82]); hline(d, 6, 10, 12, [60, 60, 62]); };    // handle flipped left
+P.stone_button = (d, rnd) => { for (let y = 6; y <= 9; y++) hline(d, 5, 10, y, jitter([120, 120, 122], rnd, 0.08));
+  border(d, [80, 80, 82]); };
+P.redstone_lamp = (d, rnd) => { noisyFill(d, rnd, [92, 70, 40], 0.05); border(d, [60, 46, 28]);
+  for (let i = 0; i < 4; i++) px(d, 4 + ((rnd() * 8) | 0), 4 + ((rnd() * 8) | 0), [140, 108, 60]); };
+P.redstone_lamp_on = (d, rnd) => { noisyFill(d, rnd, [236, 196, 108], 0.04); border(d, [200, 150, 70]);
+  for (let i = 0; i < 6; i++) px(d, 4 + ((rnd() * 8) | 0), 4 + ((rnd() * 8) | 0), [255, 236, 170]); };
+P.dispenser_front = (d, rnd) => { noisyFill(d, rnd, [124, 124, 126], 0.05); border(d, [80, 80, 82]);
+  for (let y = 6; y <= 10; y++) hline(d, 5, 10, y, [30, 30, 32]); };   // dark launcher mouth
+P.hopper_top = (d, rnd) => { noisyFill(d, rnd, [96, 96, 100], 0.05); border(d, [60, 60, 64]);
+  for (let x = 2; x <= 13; x++) { px(d, x, 3, [40, 40, 44]); px(d, x, 12, [40, 40, 44]); } };
+P.hopper_side = (d, rnd) => { noisyFill(d, rnd, [82, 82, 86], 0.05);
+  for (let x = 4; x <= 11; x++) { px(d, x, 10, [50, 50, 54]); } vline(d, 7, 10, 15, [50, 50, 54]); vline(d, 8, 10, 15, [50, 50, 54]); };
 P.nether_star = (d, rnd) => {                           // 4-point pale star
   for (let i = 0; i < 16; i++) { px(d, 7, i, [236, 240, 246]); px(d, 8, i, [236, 240, 246]); }
   for (let x = 0; x < 16; x++) { px(d, x, 7, [236, 240, 246]); px(d, x, 8, [236, 240, 246]); }

@@ -11,6 +11,7 @@ import { B, BLOCKS, blockById, isFluid, isLava, solidAt, opaqueAt, isShaped, sha
 import { BIOME } from './gen/terrain.js';
 import { dimension as dimensionOf } from './dimensions.js';
 import { FluidSim } from './fluids.js';
+import { RedstoneSim } from './redstone.js';
 import { placeAlder, placeFern, hasTreeRoom } from './gen/features.js';
 import { mulberry32 } from '../math/noise.js';
 
@@ -42,6 +43,7 @@ export class World {
     this.chunks = new Map();          // key -> Chunk
     this.meshDirty = new Set();       // "cx,cz,sy" sections needing remesh
     this.fluids = new FluidSim(this);
+    this.redstone = new RedstoneSim(this);   // hooks wired by main.js
     this.onChunkUnload = null;        // renderer hook: dispose meshes
     this.randomTickTimer = 0;
     this.rng = mulberry32((Date.now ? 12345 : 12345) ^ 0);  // gameplay-only randomness
@@ -187,6 +189,7 @@ export class World {
     const now = opts.now ?? performance.now();
     if (isFluid(id)) this.fluids.schedule(x, y, z, now, isLava(id));
     this.fluids.scheduleAround(x, y, z, now);
+    if (this.redstone) this.redstone.onEdit(x, y, z, old, id);
     return true;
   }
 
@@ -227,6 +230,7 @@ export class World {
 
     // Simulation ticks
     this.fluids.tick(nowMs);
+    if (this.redstone) this.redstone.tick(nowMs);
     this.randomTickTimer += dt * 1000;
     if (this.randomTickTimer >= RANDOM_TICK_MS) {
       this.randomTickTimer = 0;
