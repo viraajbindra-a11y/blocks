@@ -1244,6 +1244,19 @@ P.cake_side = (d, rnd) => {
   hline(d, 0, 15, 2, [246, 244, 232]); hline(d, 0, 15, 3, [232, 96, 110]);   // frosting
 };
 P.cake_bottom = (d, rnd) => noisyFill(d, rnd, [150, 108, 70], 0.05);
+P.emerald = (d, rnd) => {                               // faceted green gem
+  blob(d, rnd, 8, 8.5, 3.6, 4.2, [42, 176, 96], { light: [120, 232, 150], dark: [22, 110, 60] });
+  vline(d, 8, 3, 13, [150, 240, 176]); hline(d, 4, 11, 6, [24, 120, 66]);
+};
+P.emerald_ore = (d, rnd) => {
+  noisyFill(d, rnd, [128, 128, 130], 0.05);
+  for (let i = 0; i < 5; i++) { const x = 3 + ((rnd() * 10) | 0), y = 3 + ((rnd() * 10) | 0);
+    px(d, x, y, [42, 176, 96]); px(d, x + 1, y, [90, 216, 130]); px(d, x, y + 1, [26, 120, 66]); }
+};
+P.emerald_block = (d, rnd) => {
+  noisyFill(d, rnd, [46, 190, 104], 0.05); border(d, [24, 120, 66]);
+  vline(d, 5, 2, 13, [120, 232, 150]); vline(d, 10, 2, 13, [26, 130, 72]); hline(d, 3, 12, 8, [90, 216, 130]);
+};
 P.nether_star = (d, rnd) => {                           // 4-point pale star
   for (let i = 0; i < 16; i++) { px(d, 7, i, [236, 240, 246]); px(d, 8, i, [236, 240, 246]); }
   for (let x = 0; x < 16; x++) { px(d, x, 7, [236, 240, 246]); px(d, x, 8, [236, 240, 246]); }

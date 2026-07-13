@@ -249,6 +249,8 @@ shapeless('grindstone', 1, ['stone', 'stick', 'stick', 'oak_planks', 'oak_planks
 shaped('stonecutter', 1, [' I ', 'SSS'], { I: 'iron_ingot', S: 'stone' }, 'worktable');
 shaped('beacon', 1, ['GGG', 'GNG', 'OOO'],
   { G: 'glass', N: 'nether_star', O: 'obsidian' }, 'worktable');   // Wither drops the star
+shaped('emerald_block', 1, ['EEE', 'EEE', 'EEE'], { E: 'emerald' }, 'worktable');
+shapeless('emerald', 9, ['emerald_block']);
 
 shapeless('flint_and_steel', 1, ['iron_ingot', 'flint']);           // MC-accurate alt
 shaped('tnt', 1, ['GSG', 'SGS', 'GSG'], { G: 'gunpowder', S: 'sand' }, 'worktable');

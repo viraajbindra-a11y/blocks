@@ -78,6 +78,27 @@ const SPECIES = {
               { key: 'glowstone_dust', count: 3 + (rng() * 3 | 0) }];
     },
   },
+  // Villager — passive; right-click to trade goods for emeralds (and back).
+  villager: {
+    hw: 0.4, h: 1.9, health: 20, walkSpeed: 1.3, grazes: false, hopper: false,
+    trades: true,
+    biomes: new Set([BIOME.PLAINS, BIOME.FOREST]),
+    drops() { return []; },
+  },
+  // Wolf — tame with a bone; tamed wolves follow you and maul hostiles.
+  wolf: {
+    hw: 0.4, h: 0.85, health: 12, walkSpeed: 2.4, grazes: false, hopper: false,
+    tamable: 'bone',
+    biomes: new Set([BIOME.FOREST, BIOME.TUNDRA]),
+    drops() { return []; },
+  },
+  // Cat — tame with raw cod; tamed cats trail after you.
+  cat: {
+    hw: 0.3, h: 0.7, health: 8, walkSpeed: 2.5, grazes: false, hopper: false,
+    tamable: 'raw_cod',
+    biomes: new Set([BIOME.PLAINS, BIOME.FOREST]),
+    drops() { return []; },
+  },
   // Enderman — tall, teleporting overworld hostile. Drops ender pearls.
   enderman: {
     hw: 0.35, h: 2.6, health: 40, walkSpeed: 2.4, grazes: false, hopper: false,
@@ -264,6 +285,11 @@ const C = {
   ghBody: [0.85, 0.85, 0.89], ghDark: [0.58, 0.58, 0.66], ghEye: [0.16, 0.14, 0.18],
   enBody: [0.05, 0.05, 0.07], enHead: [0.09, 0.09, 0.12], enEye: [0.85, 0.30, 0.95],
   wiDark: [0.12, 0.12, 0.14], wiSkull: [0.24, 0.22, 0.20], wiEye: [1.0, 0.5, 0.2],
+  vlRobe: [0.52, 0.38, 0.29], vlApron: [0.40, 0.30, 0.24], vlSkin: [0.65, 0.52, 0.44],
+  vlNose: [0.58, 0.45, 0.38], vlBrow: [0.30, 0.24, 0.20],
+  woFur: [0.78, 0.76, 0.72], woBelly: [0.90, 0.89, 0.86], woDark: [0.44, 0.42, 0.40],
+  woEye: [0.80, 0.55, 0.20], woCollar: [0.80, 0.24, 0.22],
+  caFur: [0.90, 0.62, 0.24], caBelly: [0.96, 0.90, 0.82], caDark: [0.62, 0.40, 0.16], caEye: [0.42, 0.78, 0.45],
 };
 
 // ── Matrix helpers ────────────────────────────────────────────────
@@ -279,6 +305,12 @@ function baseMat(e, yawOff = 0) {
 
 // What each farm animal breeds with.
 const BREED_FOOD = { pig: 'potato', cow: 'potato', sheep: 'potato', chicken: 'seeds' };
+
+// Villager economy: goods it buys for an emerald, and goods it sells for one.
+const VILLAGER_BUYS = new Set(['wheat', 'carrot', 'potato', 'raw_beef', 'raw_porkchop',
+  'raw_chicken', 'wool', 'leather', 'coal', 'sugar_cane', 'pumpkin', 'melon_slice', 'sugar']);
+const VILLAGER_SELLS = ['bread', 'iron_ingot', 'ender_pearl', 'glowstone_dust', 'arrow',
+  'cooked_beef', 'bone', 'string', 'glass', 'lantern'];
 
 // part = base * T(pivot) * Rx(rx) * T(offset) * S(size); unit cube at origin.
 function addPart(parts, base, color, px, py, pz, rx, ox, oy, oz, sx, sy, sz) {
@@ -714,10 +746,59 @@ function witherParts(e, parts, nowS) {
   addPart(parts, t, eye, 0.5, 2.36, 0.18, 0, 0, 0, 0, 0.12, 0.04, 0.03);
 }
 
+function villagerParts(e, parts) {
+  const b = baseMat(e);
+  const moving = Math.hypot(e.vel[0], e.vel[2]) > 0.2;
+  const sw = moving ? Math.sin(e.walkPhase) * 0.5 : 0;
+  addPart(parts, b, C.vlRobe, -0.12, 0.42, 0, sw, 0, -0.22, 0, 0.15, 0.46, 0.15);   // legs
+  addPart(parts, b, C.vlRobe, 0.12, 0.42, 0, -sw, 0, -0.22, 0, 0.15, 0.46, 0.15);
+  addPart(parts, b, C.vlRobe, 0, 1.04, 0, 0, 0, 0, 0, 0.42, 0.66, 0.26);            // robe torso
+  addPart(parts, b, C.vlApron, 0, 1.0, 0.12, 0, 0, 0, 0, 0.3, 0.5, 0.06);           // apron
+  addPart(parts, b, C.vlSkin, -0.27, 1.24, 0.02, 0, 0, 0, 0, 0.12, 0.42, 0.14);     // arms crossed
+  addPart(parts, b, C.vlSkin, 0.27, 1.24, 0.02, 0, 0, 0, 0, 0.12, 0.42, 0.14);
+  addPart(parts, b, C.vlSkin, 0, 1.56, 0.02, 0, 0, 0, 0, 0.34, 0.36, 0.34);         // head
+  addPart(parts, b, C.vlBrow, 0, 1.66, 0.06, 0, 0, 0, 0, 0.32, 0.06, 0.3);          // unibrow
+  addPart(parts, b, C.vlNose, 0, 1.52, 0.2, 0, 0, 0, 0, 0.08, 0.12, 0.12);          // big nose
+}
+function wolfParts(e, parts) {
+  const b = baseMat(e);
+  const moving = Math.hypot(e.vel[0], e.vel[2]) > 0.2;
+  const sw = moving ? Math.sin(e.walkPhase) * 0.6 : 0;
+  for (const [lx, lz, sgn] of [[-0.16, 0.24, 1], [0.16, 0.24, -1], [-0.16, -0.24, -1], [0.16, -0.24, 1]])
+    addPart(parts, b, C.woDark, lx, 0.2, lz, sw * sgn, 0, -0.1, 0, 0.11, 0.24, 0.11);
+  addPart(parts, b, C.woFur, 0, 0.48, -0.04, 0, 0, 0, 0, 0.34, 0.34, 0.66);         // body
+  addPart(parts, b, C.woBelly, 0, 0.38, 0.02, 0, 0, 0, 0, 0.28, 0.16, 0.5);         // belly
+  addPart(parts, b, C.woFur, 0, 0.58, 0.4, 0, 0, 0, 0, 0.3, 0.3, 0.28);             // head
+  addPart(parts, b, C.woFur, -0.1, 0.78, 0.42, 0, 0, 0, 0, 0.08, 0.12, 0.06);       // ears
+  addPart(parts, b, C.woFur, 0.1, 0.78, 0.42, 0, 0, 0, 0, 0.08, 0.12, 0.06);
+  addPart(parts, b, C.woEye, -0.08, 0.6, 0.54, 0, 0, 0, 0, 0.05, 0.05, 0.03);
+  addPart(parts, b, C.woEye, 0.08, 0.6, 0.54, 0, 0, 0, 0, 0.05, 0.05, 0.03);
+  addPart(parts, b, C.woFur, 0, 0.5, -0.42, moving ? Math.sin(e.walkPhase * 2) * 0.3 : 0.3, 0, -0.1, 0, 0.08, 0.28, 0.08); // tail
+  if (e.tamed) addPart(parts, b, C.woCollar, 0, 0.5, 0.28, 0, 0, 0, 0, 0.32, 0.08, 0.3);   // collar
+}
+function catParts(e, parts) {
+  const b = baseMat(e);
+  const moving = Math.hypot(e.vel[0], e.vel[2]) > 0.2;
+  const sw = moving ? Math.sin(e.walkPhase) * 0.55 : 0;
+  for (const [lx, lz, sgn] of [[-0.11, 0.18, 1], [0.11, 0.18, -1], [-0.11, -0.18, -1], [0.11, -0.18, 1]])
+    addPart(parts, b, C.caDark, lx, 0.16, lz, sw * sgn, 0, -0.08, 0, 0.08, 0.2, 0.08);
+  addPart(parts, b, C.caFur, 0, 0.38, -0.02, 0, 0, 0, 0, 0.22, 0.24, 0.5);          // body
+  addPart(parts, b, C.caBelly, 0, 0.3, 0.02, 0, 0, 0, 0, 0.18, 0.12, 0.4);          // belly
+  addPart(parts, b, C.caFur, 0, 0.46, 0.32, 0, 0, 0, 0, 0.22, 0.2, 0.2);            // head
+  addPart(parts, b, C.caFur, -0.08, 0.6, 0.32, 0, 0, 0, 0, 0.06, 0.08, 0.05);       // ears
+  addPart(parts, b, C.caFur, 0.08, 0.6, 0.32, 0, 0, 0, 0, 0.06, 0.08, 0.05);
+  addPart(parts, b, C.caEye, -0.06, 0.48, 0.42, 0, 0, 0, 0, 0.04, 0.05, 0.03);
+  addPart(parts, b, C.caEye, 0.06, 0.48, 0.42, 0, 0, 0, 0, 0.04, 0.05, 0.03);
+  addPart(parts, b, C.caFur, 0, 0.5, -0.28, moving ? Math.sin(e.walkPhase) * 0.3 : 0.6, 0, -0.14, 0, 0.06, 0.34, 0.06); // tail
+}
+
 const PART_BUILDERS = {
   bristleback: bristlebackParts,
   enderman: endermanParts,
   wither: witherParts,
+  villager: villagerParts,
+  wolf: wolfParts,
+  cat: catParts,
   mosshopper: mosshopperParts,
   embermoth: embermothParts,
   gloomstalker: gloomstalkerParts,
@@ -964,6 +1045,7 @@ export class EntitySystem {
     e.flash = Math.max(0, e.flash - dt * 4);
     const s = e.def;
     if (s.hostile) { this._updateHostile(e, dt, pp, sun, nowS); return; }
+    if (e.tamed) { this._updateTamed(e, dt, pp, nowS); return; }
     if (s.flying) { this._updateMoth(e, dt, sun, nowS); return; }
 
     if (this.rng() < dt * 0.05) this.hooks.audio?.creature?.(e.species, 'idle');
@@ -1096,6 +1178,54 @@ export class EntitySystem {
   // Hostiles: chase the player within range, melee on cooldown, wander when
   // far. Grounded stalkers use gravity + step-up; hollowshade-style flyers
   // hover toward the player like the moth. Grazers' logic is untouched.
+  // Tamed pets: trail the owner (teleporting if left far behind); wolves
+  // break off to maul any nearby hostile.
+  _updateTamed(e, dt, pp, nowS) {
+    const s = e.def;
+    e.atkCd = Math.max(0, (e.atkCd || 0) - dt);
+    const dx = pp[0] - e.pos[0], dz = pp[2] - e.pos[2];
+    const d2 = dx * dx + dz * dz;
+
+    let tgt = null;
+    if (e.species === 'wolf') {
+      for (const o of this.entities) {
+        if (o.kind !== 'creature' || !o.def.hostile || o.dead) continue;
+        const ox = o.pos[0] - e.pos[0], oz = o.pos[2] - e.pos[2];
+        if (ox * ox + oz * oz < 11 * 11) { tgt = o; break; }
+      }
+    }
+
+    let moving = false, speed = s.walkSpeed;
+    if (tgt) {
+      const tx = tgt.pos[0] - e.pos[0], tz = tgt.pos[2] - e.pos[2], td2 = tx * tx + tz * tz;
+      e.targetYaw = Math.atan2(tx, tz); moving = td2 > 1.5 * 1.5; speed = s.walkSpeed * 1.3;
+      if (td2 < 1.8 * 1.8 && e.atkCd <= 0) {
+        const d = Math.sqrt(td2) || 1;
+        this.hitEntity(tgt, 4, [tx / d, 0, tz / d]);
+        e.atkCd = 1;
+        this.hooks.audio?.creature?.(e.species, 'attack');
+      }
+    } else if (d2 > 3 * 3) {
+      if (d2 > 22 * 22) { e.pos[0] = pp[0] + (this.rng() - 0.5); e.pos[2] = pp[2] + (this.rng() - 0.5); } // teleport to owner
+      e.targetYaw = Math.atan2(dx, dz); moving = true; speed = s.walkSpeed * (d2 > 7 * 7 ? 1.5 : 1);
+    } else if (this.rng() < dt * 0.05) {
+      this.hooks.audio?.creature?.(e.species, 'idle');
+    }
+
+    let dyaw = e.targetYaw - e.yaw;
+    dyaw = Math.atan2(Math.sin(dyaw), Math.cos(dyaw));
+    e.yaw += dyaw * Math.min(1, dt * 8);
+    const fx = Math.sin(e.yaw), fz = Math.cos(e.yaw);
+    if (moving) {
+      e.probeT -= dt;
+      if (e.probeT <= 0) { e.probeT = 0.3; if (!this._groundAheadOk(e)) moving = false; }
+    }
+    if (moving) { e.vel[0] = fx * speed; e.vel[2] = fz * speed; }
+    else { const f = Math.max(0, 1 - dt * 8); e.vel[0] *= f; e.vel[2] *= f; }
+    this._stepPhysics(e, dt);
+    e.walkPhase += Math.hypot(e.vel[0], e.vel[2]) * dt * 5;
+  }
+
   _updateHostile(e, dt, pp, sun, nowS) {
     const s = e.def;
     if (s.nightOnly && sun >= 0.25) { e.dead = true; return; }   // gone at dawn
@@ -1630,6 +1760,25 @@ export class EntitySystem {
       e.love = 20;
       this._tryBreed(e);
       return { handled: true, consumeItem: true, damageTool: false };
+    }
+    // Tame a wolf (bone) or cat (raw cod) — tamed pets follow the owner.
+    if (e.def.tamable && heldKey === e.def.tamable && !e.tamed) {
+      e.tamed = true; e.owner = true; e.love = 0;
+      this.hooks.audio?.creature?.(e.species, 'idle');
+      this.hooks.particles?.burstBlock?.(
+        Math.floor(e.pos[0]), Math.floor(e.pos[1] + 1), Math.floor(e.pos[2]), 0, 8, 0.4, this.rng);
+      return { handled: true, consumeItem: true, damageTool: false };
+    }
+    // Villager trade: goods ↔ emeralds, one at a time.
+    if (e.def.trades) {
+      if (VILLAGER_BUYS.has(heldKey)) {
+        this.hooks.audio?.creature?.(e.species, 'idle');
+        return { handled: true, consumeItem: true, giveItem: 'emerald' };
+      }
+      if (heldKey === 'emerald') {
+        this.hooks.audio?.creature?.(e.species, 'idle');
+        return { handled: true, consumeItem: true, giveItem: VILLAGER_SELLS[(this.rng() * VILLAGER_SELLS.length) | 0] };
+      }
     }
     return { handled: false };
   }
