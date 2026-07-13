@@ -3,6 +3,7 @@
 
 import { Settings } from './core/config.js';
 import { Input } from './core/input.js';
+import { TouchControls } from './core/touch.js';
 import { World } from './world/world.js';
 import { Renderer, computeEnv } from './render/renderer.js';
 import { Particles } from './render/particles.js';
@@ -61,6 +62,7 @@ class Game {
     this.audio = createAudio(this.settings);
     this.store = await openStore();
     this.input = new Input(this.canvas);
+    this.touch = new TouchControls(this.canvas, this.input);   // no-op on desktop
     this.renderer = new Renderer(this.canvas, this.settings);
     this.renderer.setAtlas(this.atlas.layers, this.atlas.layerOf);
     this.particles = new Particles();
@@ -691,6 +693,7 @@ class Game {
     const playing = this.state === 'playing';
     const uiOpen = this.inventory.isOpen || !playing;
     const p = this.player;
+    this.touch.setActive(playing && !uiOpen);
 
     // Look
     if (playing && this.input.locked && !uiOpen) {
