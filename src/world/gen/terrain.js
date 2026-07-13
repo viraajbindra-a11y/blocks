@@ -9,6 +9,7 @@ import {
 import { Simplex, mulberry32, hash2, hash3, normalizeSeed, clamp, lerp, smoothstep } from '../../math/noise.js';
 import { B, waterFlowId, opaqueAt } from '../../blocks.js';
 import { placeAlder, placeFern, placeSpineplant } from './features.js';
+import { placeStructures } from './structures.js';
 
 export const BIOME = {
   OCEAN: 0, BEACH: 1, PLAINS: 2, FOREST: 3, DESERT: 4,
@@ -207,6 +208,7 @@ export function makeGenerator(rawSeed, decorations = []) {
     for (let v = 0; v < 8; v++)  vein(B.COPPER_ORE, 6, 60, 3 + rng() * 4);
     for (let v = 0; v < 6; v++)  vein(B.IRON_ORE, 4, 38, 2 + rng() * 3);
     if (rng() < 0.75) vein(B.SUNSTONE_ORE, 4, 14, 1 + rng() * 2);
+    if (rng() < 0.14) vein(B.EMERALD_ORE, 6, 30, 1 + (rng() * 2 | 0));   // rare, single-ish
     for (let v = 0; v < 4; v++)  vein(B.SOIL, 24, 72, 5 + rng() * 5);
     for (let v = 0; v < 3; v++)  vein(B.GRAVEL, 12, 64, 4 + rng() * 5);
     for (let v = 0; v < 2; v++)  vein(B.MOSSROCK, 30, 60, 3 + rng() * 4);
@@ -304,6 +306,11 @@ export function makeGenerator(rawSeed, decorations = []) {
         }
       }
     }
+
+    // 4b. Structures (villages / desert temples / strongholds). Deterministic
+    //     from the seed, drawn via setLocal so they clip to this chunk and
+    //     span chunk borders without any neighbor writes.
+    placeStructures(cx, cz, seed, heightAt, biomeAt, setLocal);
 
     // 5. Final heightmap: highest opaque block per column — must match
     //    computeHeightmap (chunk.js) and setBlock upkeep semantics exactly,
