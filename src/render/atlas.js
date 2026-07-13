@@ -1244,6 +1244,12 @@ P.cake_side = (d, rnd) => {
   hline(d, 0, 15, 2, [246, 244, 232]); hline(d, 0, 15, 3, [232, 96, 110]);   // frosting
 };
 P.cake_bottom = (d, rnd) => noisyFill(d, rnd, [150, 108, 70], 0.05);
+P.nether_star = (d, rnd) => {                           // 4-point pale star
+  for (let i = 0; i < 16; i++) { px(d, 7, i, [236, 240, 246]); px(d, 8, i, [236, 240, 246]); }
+  for (let x = 0; x < 16; x++) { px(d, x, 7, [236, 240, 246]); px(d, x, 8, [236, 240, 246]); }
+  for (let i = 3; i <= 12; i++) { px(d, i, i, [210, 214, 230]); px(d, 15 - i, i, [210, 214, 230]); }
+  blob(d, rnd, 7.5, 7.5, 2.4, 2.4, [255, 255, 255], { light: [255, 255, 255], dark: [200, 206, 224] });
+};
 P.pumpkin_seeds = (d, rnd) => {
   for (let i = 0; i < 9; i++) { const x = 4 + ((rnd() * 8) | 0), y = 4 + ((rnd() * 8) | 0);
     px(d, x, y, [226, 210, 152]); px(d, x, y + 1, [190, 170, 112]); }

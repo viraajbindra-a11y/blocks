@@ -18,6 +18,9 @@ const ITEM_CAP = 128;
 const SPAWN_GROUND = new Set([B.GRASS, B.SNOW, B.SOIL, B.SAND,
   B.NETHERRACK, B.SOUL_SAND, B.END_STONE, B.END_MOSS]);   // + Smolder/Hollow floors
 
+// Which boss presides over each dimension (spawned once per session).
+const BOSS_BY_DIM = { hollow: 'sovereign', smolder: 'wither' };
+
 // ── Species table ─────────────────────────────────────────────────
 const SPECIES = {
   bristleback: {
@@ -68,11 +71,30 @@ const SPECIES = {
   },
   sovereign: {
     hw: 0.9, h: 3.0, health: 220, walkSpeed: 1.6, grazes: false, hopper: false,
-    hostile: true, boss: true, dmg: 9, dims: new Set(['hollow']),
+    hostile: true, boss: true, dmg: 9, dims: new Set(['hollow']), bossName: 'Ender Dragon',
     biomes: new Set(),
     drops(rng) {
       return [{ key: 'dragon_core', count: 1 },
               { key: 'glowstone_dust', count: 3 + (rng() * 3 | 0) }];
+    },
+  },
+  // Enderman — tall, teleporting overworld hostile. Drops ender pearls.
+  enderman: {
+    hw: 0.35, h: 2.6, health: 40, walkSpeed: 2.4, grazes: false, hopper: false,
+    hostile: true, nightOnly: true, teleports: true, dmg: 7,
+    biomes: new Set([BIOME.PLAINS, BIOME.FOREST, BIOME.DESERT, BIOME.MOUNTAIN,
+                     BIOME.TUNDRA, BIOME.SWAMP]),
+    drops(rng) { return [{ key: 'ender_pearl', count: 1 + (rng() < 0.5 ? 1 : 0) }]; },
+  },
+  // Wither — the Smolder boss: floats, hurls big skull-fire, drops a Nether Star.
+  wither: {
+    hw: 0.6, h: 2.8, health: 300, walkSpeed: 1.6, grazes: false, hopper: false,
+    hostile: true, boss: true, flying: true, ranged: true, fireball: true, bigFire: true,
+    dmg: 8, dims: new Set(['smolder']), bossName: 'The Wither',
+    biomes: new Set(),
+    drops(rng) {
+      return [{ key: 'nether_star', count: 1 },
+              { key: 'glowstone_dust', count: 4 + (rng() * 4 | 0) }];
     },
   },
   // ── Minecraft farm animals (passive, overworld daylight-safe) ──
@@ -240,6 +262,8 @@ const C = {
   phBody: [0.22, 0.25, 0.34], phWing: [0.15, 0.17, 0.26], phEye: [0.42, 0.78, 0.9],
   wiRobe: [0.28, 0.24, 0.36], wiHat: [0.14, 0.12, 0.2], wiSkin: [0.42, 0.5, 0.42], wiNose: [0.5, 0.42, 0.4],
   ghBody: [0.85, 0.85, 0.89], ghDark: [0.58, 0.58, 0.66], ghEye: [0.16, 0.14, 0.18],
+  enBody: [0.05, 0.05, 0.07], enHead: [0.09, 0.09, 0.12], enEye: [0.85, 0.30, 0.95],
+  wiDark: [0.12, 0.12, 0.14], wiSkull: [0.24, 0.22, 0.20], wiEye: [1.0, 0.5, 0.2],
 };
 
 // ── Matrix helpers ────────────────────────────────────────────────
@@ -660,8 +684,40 @@ function slimeParts(e, parts, nowS) {
   addPart(parts, b, C.slEye, 0, sq * 0.38, ez, 0, 0, 0, 0, 0.06, 0.05, 0.03);
 }
 
+function endermanParts(e, parts) {
+  const b = baseMat(e);
+  const moving = Math.hypot(e.vel[0], e.vel[2]) > 0.2;
+  const sw = moving ? Math.sin(e.walkPhase) * 0.5 : 0;
+  addPart(parts, b, C.enBody, -0.1, 0.7, 0, sw, 0, -0.55, 0, 0.1, 1.1, 0.1);        // long legs
+  addPart(parts, b, C.enBody, 0.1, 0.7, 0, -sw, 0, -0.55, 0, 0.1, 1.1, 0.1);
+  addPart(parts, b, C.enBody, 0, 1.75, 0, 0, 0, 0, 0, 0.26, 0.6, 0.18);             // slim torso
+  addPart(parts, b, C.enBody, -0.24, 1.7, 0, -sw * 0.6, 0, -0.5, 0, 0.08, 1.0, 0.08); // arms
+  addPart(parts, b, C.enBody, 0.24, 1.7, 0, sw * 0.6, 0, -0.5, 0, 0.08, 1.0, 0.08);
+  addPart(parts, b, C.enHead, 0, 2.42, 0, 0, 0, 0, 0, 0.24, 0.28, 0.22);            // head
+  addPart(parts, b, C.enEye, -0.08, 2.46, 0.2, 0, 0, 0, 0, 0.08, 0.04, 0.03);       // magenta eyes
+  addPart(parts, b, C.enEye, 0.08, 2.46, 0.2, 0, 0, 0, 0, 0.08, 0.04, 0.03);
+}
+function witherParts(e, parts, nowS) {
+  const b = baseMat(e);
+  const t = new Float32Array(b);
+  translate(t, t, 0, Math.sin(nowS * 2 + e.phase) * 0.08, 0);                       // hover bob
+  addPart(parts, t, C.wiDark, 0, 1.6, 0, 0, 0, 0, 0, 0.16, 0.9, 0.16);              // spine
+  addPart(parts, t, C.wiDark, 0, 2.2, 0, 0, 0, 0, 0, 0.5, 0.14, 0.14);             // shoulder bar
+  addPart(parts, t, C.wiDark, 0, 1.15, 0, 0, 0, 0, 0, 0.34, 0.18, 0.14);           // ribs
+  addPart(parts, t, C.wiSkull, 0, 2.5, 0.02, 0, 0, 0, 0, 0.3, 0.32, 0.28);         // centre skull
+  addPart(parts, t, C.wiSkull, -0.5, 2.34, 0, 0, 0, 0, 0, 0.22, 0.24, 0.2);        // side skulls
+  addPart(parts, t, C.wiSkull, 0.5, 2.34, 0, 0, 0, 0, 0, 0.22, 0.24, 0.2);
+  const g = 0.6 + 0.4 * Math.sin(nowS * 6);
+  const eye = [C.wiEye[0] * g, C.wiEye[1] * g, C.wiEye[2] * g];
+  addPart(parts, t, eye, 0, 2.52, 0.24, 0, 0, 0, 0, 0.16, 0.05, 0.03);
+  addPart(parts, t, eye, -0.5, 2.36, 0.18, 0, 0, 0, 0, 0.12, 0.04, 0.03);
+  addPart(parts, t, eye, 0.5, 2.36, 0.18, 0, 0, 0, 0, 0.12, 0.04, 0.03);
+}
+
 const PART_BUILDERS = {
   bristleback: bristlebackParts,
+  enderman: endermanParts,
+  wither: witherParts,
   mosshopper: mosshopperParts,
   embermoth: embermothParts,
   gloomstalker: gloomstalkerParts,
@@ -736,7 +792,7 @@ export class EntitySystem {
     this._sun = 1;
     this._lastPP = null;
     this._pSpeed = 0;             // smoothed player ground speed (sprint scare)
-    this._bossDown = false;       // Hollow Sovereign killed this session
+    this._bossesDown = new Set(); // boss species slain this session (no respawn)
   }
 
   clear() { this.entities.length = 0; }
@@ -790,10 +846,11 @@ export class EntitySystem {
   _trySpawn(pp, sun) {
     const dim = this.hooks.dimension ? this.hooks.dimension() : 'overworld';
 
-    // Boss: spawn the Hollow Sovereign once when the player is in the
-    // Hollow and none is alive (and it hasn't been slain this session).
-    if (dim === 'hollow' && !this._bossDown && !this._bossAlive()) {
-      if (this._spawnBoss(pp)) return;
+    // Boss: each boss-carrying dimension spawns its boss once when the
+    // player is present, none is alive, and it wasn't slain this session.
+    const bossName = BOSS_BY_DIM[dim];
+    if (bossName && !this._bossesDown.has(bossName) && !this._bossAlive()) {
+      if (this._spawnBoss(pp, bossName)) return;
     }
 
     // Separate caps: grazers must not starve out night flyers (and vice
@@ -847,19 +904,20 @@ export class EntitySystem {
     return false;
   }
 
-  // Spawn the Hollow Sovereign a little away from the player on solid ground.
-  _spawnBoss(pp) {
+  // Spawn a dimension boss a little away from the player on solid ground.
+  _spawnBoss(pp, bossName = 'sovereign') {
     const r = this.rng, w = this.world;
+    const flying = SPECIES[bossName].flying;
     for (let attempt = 0; attempt < 6; attempt++) {
       const ang = r() * TWO_PI, d = 12 + r() * 8;
       const x = Math.floor(pp[0] + Math.sin(ang) * d);
       const z = Math.floor(pp[2] + Math.cos(ang) * d);
       if (!w.isLoaded(x, z)) continue;
       const gy = w.heightAt(x, z);
-      const y = gy + 1;
+      const y = gy + 1 + (flying ? 4 : 0);
       if (w.isSolid(x, y, z) || w.isSolid(x, y + 1, z)) continue;
       const biome = w.biomeAt(x, z);
-      this.entities.push(this._makeCreature('sovereign', x + 0.5, y, z + 0.5, biome));
+      this.entities.push(this._makeCreature(bossName, x + 0.5, y, z + 0.5, biome));
       return true;
     }
     return false;
@@ -869,7 +927,7 @@ export class EntitySystem {
   bossInfo() {
     for (const e of this.entities) {
       if (e.kind === 'creature' && e.def.boss && !e.dead) {
-        return { name: 'Ender Dragon', health: Math.max(0, e.health), max: e.def.health };
+        return { name: e.def.bossName || 'Boss', health: Math.max(0, e.health), max: e.def.health };
       }
     }
     return null;
@@ -1621,7 +1679,7 @@ export class EntitySystem {
 
     if (e.health <= 0) {
       e.dead = true;
-      if (e.def.boss) this._bossDown = true;   // don't respawn the boss this session
+      if (e.def.boss) this._bossesDown.add(e.species);   // don't respawn this boss this session
       if (e.species === 'slime' && (e.size || 0) > 1) this._splitSlime(e);
       this.hooks.audio?.creature?.(e.species, 'death');
       const xp = e.def.boss ? 50 : e.def.hostile ? 5 : 1 + (this.rng() * 3 | 0);
