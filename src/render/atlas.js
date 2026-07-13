@@ -1199,6 +1199,75 @@ for (const [c, col] of Object.entries(WOOL_COLORS)) {
   P[`${c}_glazed_terracotta`] = glazedPainter(col);
 }
 
+// ── Cucurbits, sugar cane, cake ────────────────────────────────────
+const PUMP = [216, 126, 26], PUMP_D = [150, 82, 14], PUMP_RIB = [182, 100, 18];
+P.pumpkin_top = (d, rnd) => {
+  noisyFill(d, rnd, [176, 122, 42], 0.06); border(d, [120, 84, 26]);
+  px(d, 7, 6, [130, 90, 30]); px(d, 8, 7, [130, 90, 30]);            // stalk stump
+};
+P.pumpkin_side = (d, rnd) => {
+  noisyFill(d, rnd, PUMP, 0.05);
+  for (let x = 1; x < 16; x += 3) vline(d, x, 0, 15, PUMP_RIB);       // vertical ribs
+  speckle(d, rnd, [PUMP_D], 0.05);
+};
+function faceGourd(d, rnd, glow) {
+  P.pumpkin_side(d, rnd);
+  const eye = glow ? [255, 216, 88] : [64, 36, 10];
+  px(d, 4, 6, eye); px(d, 5, 6, eye); px(d, 5, 7, eye);              // left eye
+  px(d, 11, 6, eye); px(d, 10, 6, eye); px(d, 10, 7, eye);          // right eye
+  hline(d, 4, 11, 10, eye); px(d, 5, 11, eye); px(d, 8, 11, eye); px(d, 10, 11, eye);  // grin
+}
+P.carved_pumpkin_face = (d, rnd) => faceGourd(d, rnd, false);
+P.jack_o_lantern_face = (d, rnd) => faceGourd(d, rnd, true);
+P.melon_top = (d, rnd) => { noisyFill(d, rnd, [116, 150, 40], 0.06); speckle(d, rnd, [[92, 126, 32]], 0.1); };
+P.melon_side = (d, rnd) => {
+  noisyFill(d, rnd, [70, 128, 44], 0.05);
+  for (let x = 0; x < 16; x += 2) vline(d, x, 0, 15, [46, 96, 34]);   // rind stripes
+  speckle(d, rnd, [[122, 162, 62]], 0.06);
+};
+P.crop_stem = (d) => {
+  for (let y = 5; y < 16; y++) {
+    const x = 7 + Math.round(Math.sin(y * 0.6) * 1.6);
+    px(d, x, y, [92, 142, 42]); px(d, x + 1, y, [70, 118, 32]);
+  }
+};
+P.sugar_cane = (d) => {
+  for (let y = 0; y < 16; y++) { px(d, 7, y, [128, 198, 122]); px(d, 8, y, [152, 216, 142]); }
+  hline(d, 6, 9, 5, [96, 160, 96]); hline(d, 6, 9, 11, [96, 160, 96]);  // node bands
+};
+P.cake_top = (d, rnd) => {
+  noisyFill(d, rnd, [242, 236, 214], 0.03); border(d, [214, 190, 150]);
+  for (let i = 0; i < 5; i++) px(d, 3 + ((rnd() * 10) | 0), 3 + ((rnd() * 10) | 0), [220, 60, 70]);
+};
+P.cake_side = (d, rnd) => {
+  noisyFill(d, rnd, [220, 200, 168], 0.04);
+  hline(d, 0, 15, 2, [246, 244, 232]); hline(d, 0, 15, 3, [232, 96, 110]);   // frosting
+};
+P.cake_bottom = (d, rnd) => noisyFill(d, rnd, [150, 108, 70], 0.05);
+P.pumpkin_seeds = (d, rnd) => {
+  for (let i = 0; i < 9; i++) { const x = 4 + ((rnd() * 8) | 0), y = 4 + ((rnd() * 8) | 0);
+    px(d, x, y, [226, 210, 152]); px(d, x, y + 1, [190, 170, 112]); }
+};
+P.melon_seeds = (d, rnd) => {
+  for (let i = 0; i < 9; i++) { const x = 4 + ((rnd() * 8) | 0), y = 4 + ((rnd() * 8) | 0);
+    px(d, x, y, [40, 50, 30]); px(d, x, y + 1, [72, 82, 52]); }
+};
+P.melon_slice = (d) => {                                  // wedge: green rind + red flesh
+  for (let y = 3; y <= 13; y++) {
+    const w = y - 3;
+    for (let x = 7 - Math.ceil(w / 2); x <= 7 + Math.floor(w / 2); x++) px(d, x, y, [220, 60, 66]);
+    px(d, 7 - Math.ceil(w / 2) - 1, y, [70, 150, 60]); px(d, 7 + Math.floor(w / 2) + 1, y, [70, 150, 60]);
+  }
+};
+P.sugar = (d, rnd) => {
+  blob(d, rnd, 8, 9, 4, 3.4, [238, 240, 246], { light: [255, 255, 255], dark: [198, 202, 214] });
+  speckle(d, rnd, [[255, 255, 255]], 0.2);
+};
+P.pumpkin_pie = (d, rnd) => {
+  blob(d, rnd, 8, 9, 5, 3.6, [206, 150, 54], { light: [236, 190, 96], dark: [150, 96, 26] });
+  hline(d, 3, 12, 5, [236, 206, 150]); speckle(d, rnd, [[120, 70, 20]], 0.06);
+};
+
 // ── Building variants ─────────────────────────────────────────────
 const SBRICK = [124, 122, 118], SAND2 = [216, 205, 160];
 function sBrick(d, rnd, base) {

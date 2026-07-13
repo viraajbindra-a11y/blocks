@@ -313,6 +313,29 @@ export class Interaction {
         this.swing = 0.7;
         return;
       }
+      if (block.use === 'carve') {
+        // Shears carve a pumpkin into a carved pumpkin, shedding seeds.
+        if (held && held.key === 'shears' && input.buttonPressed[2]) {
+          this.world.setBlock(t.x, t.y, t.z, B.CARVED_PUMPKIN);
+          this.hooks.dropItems(t.x + 0.5, t.y + 0.9, t.z + 0.5, [{ key: 'pumpkin_seeds', count: 4 }]);
+          this.hooks.audio.blockSound('break', 'plant');
+          p.damageHeldTool(1);
+          this.placeCooldown = 0.3;
+          this.swing = 0.7;
+          return;
+        }
+        // No shears: fall through so the pumpkin can be built upon normally.
+      }
+      if (block.use === 'cake') {
+        if (input.buttonPressed[2] && this.eatCooldown <= 0 && p.eat({ restore: 2 })) {
+          const next = t.id + 1;
+          this.world.setBlock(t.x, t.y, t.z, next > B.CAKE_6 ? B.AIR : next);
+          this.hooks.audio.play('eat');
+          this.eatCooldown = 0.6;
+          this.swing = 0.6;
+        }
+        return;
+      }
     }
 
     if (!held) return;
@@ -424,8 +447,9 @@ export class Interaction {
       return;
     }
 
-    // 4. Seeds (potato or wheat) → plant on farmland
-    const cropBase = { seeds: B.CROP_0, wheat_seeds: B.WHEAT_0, carrot: B.CARROT_0 }[held.key];
+    // 4. Seeds (potato / wheat / carrot / pumpkin / melon) → plant on farmland
+    const cropBase = { seeds: B.CROP_0, wheat_seeds: B.WHEAT_0, carrot: B.CARROT_0,
+      pumpkin_seeds: B.PUMPKIN_STEM_0, melon_seeds: B.MELON_STEM_0 }[held.key];
     if (cropBase !== undefined) {
       if (t.id === B.FARMLAND && this.world.getBlock(t.x, t.y + 1, t.z) === B.AIR) {
         this.world.setBlock(t.x, t.y + 1, t.z, cropBase);

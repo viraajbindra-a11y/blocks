@@ -27,6 +27,9 @@ const NO_ITEM = new Set([B.AIR, B.BEDROCK, B.WATER, B.LAVA,
   B.FARMLAND, B.CROP_0, B.CROP_1, B.CROP_2, B.CROP_3, B.SWEET_BERRY_BUSH_RIPE,
   B.WHEAT_0, B.WHEAT_1, B.WHEAT_2, B.WHEAT_3,
   B.CARROT_0, B.CARROT_1, B.CARROT_2, B.CARROT_3,
+  B.PUMPKIN_STEM_0, B.PUMPKIN_STEM_0 + 1, B.PUMPKIN_STEM_0 + 2, B.PUMPKIN_STEM_3,
+  B.MELON_STEM_0, B.MELON_STEM_0 + 1, B.MELON_STEM_0 + 2, B.MELON_STEM_3,
+  B.CAKE_0, B.CAKE_0 + 1, B.CAKE_0 + 2, B.CAKE_0 + 3, B.CAKE_0 + 4, B.CAKE_0 + 5, B.CAKE_6,
   B.NETHER_PORTAL, B.END_PORTAL]);
 for (const b of BLOCKS) {
   if (!b || NO_ITEM.has(b.id)) continue;
@@ -192,6 +195,12 @@ item('potato', 'Potato', { kind: 'food', food: { restore: 3 } });
 item('baked_potato', 'Baked Potato', { kind: 'food', food: { restore: 6 } });
 item('bread', 'Bread', { kind: 'food', food: { restore: 5 } });
 item('carrot', 'Carrot', { kind: 'food', food: { restore: 3 }, desc: 'Eat it, or plant it on farmland.' });
+item('pumpkin_seeds', 'Pumpkin Seeds', { desc: 'Plant on farmland to grow pumpkins.' });
+item('melon_seeds', 'Melon Seeds', { desc: 'Plant on farmland to grow melons.' });
+item('melon_slice', 'Melon Slice', { kind: 'food', food: { restore: 2 } });
+item('sugar', 'Sugar', { desc: 'Refined from sugar cane.' });
+item('pumpkin_pie', 'Pumpkin Pie', { kind: 'food', food: { restore: 8 } });
+item('cake', 'Cake', { kind: 'block', block: B.CAKE_0, icon: 'cake_side', maxStack: 1, desc: 'Place it, then eat a slice at a time.' });
 item('raw_porkchop', 'Raw Porkchop', { kind: 'food', food: { restore: 2 } });
 item('cooked_porkchop', 'Cooked Porkchop', { kind: 'food', food: { restore: 7 } });
 item('raw_beef', 'Raw Beef', { kind: 'food', food: { restore: 2 } });

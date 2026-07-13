@@ -374,6 +374,26 @@ export class World {
       case 'berry':
         if (this.rng() < 0.25) this.setBlock(x, y, z, B.BERRYBUSH_RIPE, { now });
         break;
+      case 'stem': {
+        // Mature stem: occasionally set its fruit on a free adjacent ground cell.
+        if (this.rng() > 0.35) break;
+        const fruit = BLOCKS[id].fruit;
+        const [dx, dz] = [[1, 0], [-1, 0], [0, 1], [0, -1]][(this.rng() * 4) | 0];
+        if (this.getBlock(x + dx, y, z + dz) !== B.AIR) break;
+        const below = this.getBlock(x + dx, y - 1, z + dz);
+        if (below === B.FARMLAND || below === B.SOIL || below === B.GRASS || below === B.SAND) {
+          this.setBlock(x + dx, y, z + dz, fruit, { now });
+        }
+        break;
+      }
+      case 'cane': {
+        // Grow upward, capped at 3 tall.
+        if (this.getBlock(x, y + 1, z) !== B.AIR) break;
+        if (this.getBlock(x, y - 1, z) === B.SUGAR_CANE &&
+            this.getBlock(x, y - 2, z) === B.SUGAR_CANE) break;
+        if (this.rng() < 0.5) this.setBlock(x, y + 1, z, B.SUGAR_CANE, { now });
+        break;
+      }
       case 'sprout': {
         if (this.rng() > 0.2) break;
         const get = (gx, gy, gz) => this.getBlock(gx, gy, gz);

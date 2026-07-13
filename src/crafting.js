@@ -234,6 +234,16 @@ for (const c of COLORS16) {
 }
 SMELT.clay = { out: 'white_terracotta', count: 1 };   // fired clay block → terracotta
 
+// ── Pumpkin / melon / sugar cane / cake ────────────────────────────
+shapeless('pumpkin_seeds', 4, ['pumpkin']);
+shapeless('melon_seeds', 1, ['melon_slice']);
+shaped('melon', 1, ['SSS', 'SSS', 'SSS'], { S: 'melon_slice' }, 'worktable');
+shapeless('sugar', 1, ['sugar_cane']);
+shapeless('jack_o_lantern', 1, ['carved_pumpkin', 'glowstone_dust']);
+shapeless('pumpkin_pie', 1, ['pumpkin', 'sugar', 'egg']);
+shaped('cake', 1, ['MMM', 'SES', 'WWW'],
+  { M: 'milk_bucket', S: 'sugar', E: 'egg', W: 'wheat' }, 'worktable');
+
 shapeless('flint_and_steel', 1, ['iron_ingot', 'flint']);           // MC-accurate alt
 shaped('tnt', 1, ['GSG', 'SGS', 'GSG'], { G: 'gunpowder', S: 'sand' }, 'worktable');
 shaped('enchanting_table', 1, [' D ', 'DOD', 'OOO'], { D: 'diamond', O: 'obsidian' }, 'worktable');

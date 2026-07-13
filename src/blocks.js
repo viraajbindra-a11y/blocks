@@ -120,6 +120,15 @@ WOOL_ORDER.forEach((c, i) => {
   B[U + '_GLAZED_TERRACOTTA'] = GLAZED_BASE + i;
 });
 
+// Cucurbits, sugar cane, cake (292..311)
+Object.assign(B, {
+  PUMPKIN: 292, CARVED_PUMPKIN: 293, JACK_O_LANTERN: 294, MELON: 295,
+  PUMPKIN_STEM_0: 296, PUMPKIN_STEM_3: 299,
+  MELON_STEM_0: 300, MELON_STEM_3: 303,
+  SUGAR_CANE: 304,
+  CAKE_0: 305, CAKE_6: 311,
+});
+
 // ── Fluid helpers ─────────────────────────────────────────────────
 export const isWater = id => id >= 15 && id <= 21;
 export const isLava  = id => id >= 22 && id <= 25;
@@ -423,6 +432,44 @@ WOOL_ORDER.forEach((c, i) => {
   def(GLAZED_BASE + i, `${c}_glazed_terracotta`, `${T} Glazed Terracotta`, {
     hardness: 1.4, tool: 'pick', minTier: 1, sound: 'stone', tex: { all: `${c}_glazed_terracotta` } });
 });
+
+// Pumpkins & melons (292..295)
+def(B.PUMPKIN, 'pumpkin', 'Pumpkin', {
+  hardness: 1, tool: 'axe', sound: 'wood', use: 'carve',
+  tex: { top: 'pumpkin_top', bottom: 'pumpkin_top', side: 'pumpkin_side' } });
+def(B.CARVED_PUMPKIN, 'carved_pumpkin', 'Carved Pumpkin', {
+  hardness: 1, tool: 'axe', sound: 'wood',
+  tex: { top: 'pumpkin_top', bottom: 'pumpkin_top', side: 'carved_pumpkin_face' } });
+def(B.JACK_O_LANTERN, 'jack_o_lantern', "Jack o'Lantern", {
+  hardness: 1, tool: 'axe', sound: 'wood', light: 15,
+  tex: { top: 'pumpkin_top', bottom: 'pumpkin_top', side: 'jack_o_lantern_face' } });
+def(B.MELON, 'melon', 'Melon', {
+  hardness: 1, tool: 'axe', sound: 'wood', drops: [{ item: 'melon_slice', min: 3, max: 7 }],
+  tex: { top: 'melon_top', bottom: 'melon_top', side: 'melon_side' } });
+
+// Pumpkin/melon stems (296..303) — crop stages 0..2 grow via 'crop';
+// the mature stage (3) spawns its fruit on an adjacent ground cell.
+const STEM = { solid: false, opaque: false, cross: true, sway: true, hardness: 0,
+  sound: 'plant', needsFloor: true, drops: [], tex: { all: 'crop_stem' } };
+for (let i = 0; i < 4; i++) {
+  def(296 + i, `pumpkin_stem_${i}`, 'Pumpkin Stem',
+    { ...STEM, randomTick: i < 3 ? 'crop' : 'stem', fruit: B.PUMPKIN });
+  def(300 + i, `melon_stem_${i}`, 'Melon Stem',
+    { ...STEM, randomTick: i < 3 ? 'crop' : 'stem', fruit: B.MELON });
+}
+
+// Sugar cane (304) — grows up to 3 tall on sand/dirt beside water.
+def(B.SUGAR_CANE, 'sugar_cane', 'Sugar Cane', {
+  solid: false, opaque: false, cross: true, sway: true, hardness: 0, sound: 'plant',
+  needsFloor: true, randomTick: 'cane', tex: { all: 'sugar_cane' },
+  placeOn: [B.SAND, B.DIRT, B.GRASS_BLOCK, B.SUGAR_CANE, B.FARMLAND] });
+
+// Cake (305..311) — 7 bite states; right-click eats a slice.
+for (let i = 0; i < 7; i++) {
+  def(305 + i, `cake_${i}`, 'Cake', {
+    solid: true, opaque: false, hardness: 0.5, sound: 'soft', use: 'cake',
+    tex: { top: 'cake_top', bottom: 'cake_bottom', side: 'cake_side' } });
+}
 // Decorative stone/sandstone building variants (228..234)
 const STONE_LIKE = { hardness: 6, tool: 'pick', minTier: 1, sound: 'stone' };
 def(B.SMOOTH_STONE, 'smooth_stone', 'Smooth Stone', { ...STONE_LIKE });
@@ -853,7 +900,7 @@ export const blockIdByKey = key => keyToId.get(key) ?? 0;
 // Assigns the next free id ≥ 210. Ids are stable for a given mod list +
 // order (worlds save raw ids, so changing the mod list can orphan blocks —
 // they degrade gracefully to air).
-let nextModId = 292;   // 210-243 base content; 244-291 concrete/terracotta/glazed; mods after
+let nextModId = 312;   // 210-291 base+colour families; 292-311 cucurbits/cane/cake; mods after
 export function registerBlock(key, name, props = {}) {
   if (keyToId.has(key)) throw new Error(`block key "${key}" already registered`);
   while (nextModId < MAX_BLOCKS && BLOCKS[nextModId]) nextModId++;
