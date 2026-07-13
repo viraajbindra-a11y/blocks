@@ -9,6 +9,16 @@ import { PLAYER_W, PLAYER_H } from '../core/constants.js';
 // Repair material per tool tier (1..5), for the anvil.
 const TIER_MAT = [null, 'oak_planks', 'cobblestone', 'copper_ingot', 'iron_ingot', 'netherite_ingot'];
 
+// Stonecutter cut-rings: each right-click converts a held stack to the next
+// variant, cycling within its family (stone ring, sandstone ring).
+const STONECUT_NEXT = {
+  stone: 'stone_bricks', stone_bricks: 'chiseled_stone_bricks',
+  chiseled_stone_bricks: 'smooth_stone', smooth_stone: 'stone',
+  cobblestone: 'stone_bricks',
+  sandstone: 'cut_sandstone', cut_sandstone: 'chiseled_sandstone',
+  chiseled_sandstone: 'smooth_sandstone', smooth_sandstone: 'sandstone',
+};
+
 export class Interaction {
   /**
    * hooks: {particles, audio, openStation(kind), dropItems(x,y,z,[{key,count}]),
@@ -336,6 +346,14 @@ export class Interaction {
         }
         return;
       }
+      if (block.use === 'grindstone') {
+        if (input.buttonPressed[2]) { this._useGrindstone(); this.placeCooldown = 0.4; }
+        return;
+      }
+      if (block.use === 'stonecutter') {
+        if (input.buttonPressed[2]) { this._useStonecutter(); this.placeCooldown = 0.3; }
+        return;
+      }
     }
 
     if (!held) return;
@@ -504,6 +522,44 @@ export class Interaction {
     this.hooks.toast?.(`Enchanted — ${ENCHANT_NAMES[pick]} ${s.ench[pick]}`);
     this.placeCooldown = 0.5;
     this.swing = 0.7;
+  }
+
+  // Grindstone: strip enchantments (refunding XP) and grind off tool wear.
+  _useGrindstone() {
+    const p = this.player;
+    const s = p.heldStack();
+    if (!s) { this.hooks.toast?.('Hold an item to grind'); return; }
+    let did = false;
+    if (s.ench) {
+      const levels = Object.values(s.ench).reduce((a, b) => a + b, 0);
+      s.ench = null;
+      p.addXp(levels * 3);
+      this.hooks.toast?.('Disenchanted — XP recovered');
+      did = true;
+    }
+    const max = itemByKey(s.key)?.tool?.durability;
+    if (max && s.dur !== undefined && s.dur < max) {
+      s.dur = Math.min(max, s.dur + Math.ceil(max * 0.25));
+      this.hooks.toast?.('Ground off the wear');
+      did = true;
+    }
+    if (!did) { this.hooks.toast?.('Nothing to grind off'); return; }
+    this.hooks.audio?.blockSound?.('break', 'stone');
+    this.swing = 0.7;
+  }
+
+  // Stonecutter: cut the held stone/sandstone stack to the next variant.
+  _useStonecutter() {
+    const p = this.player;
+    const s = p.heldStack();
+    const next = s && STONECUT_NEXT[s.key];
+    if (!next) { this.hooks.toast?.('Hold stone or sandstone to cut'); return; }
+    s.key = next;
+    s.ench = null;
+    s.dur = undefined;
+    this.hooks.audio?.blockSound?.('break', 'stone');
+    this.hooks.toast?.(`Cut into ${itemByKey(next)?.name ?? next}`);
+    this.swing = 0.6;
   }
 
   // Anvil: spend the held tool's tier material + 1 XP level to restore

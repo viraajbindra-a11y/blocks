@@ -1268,6 +1268,30 @@ P.pumpkin_pie = (d, rnd) => {
   hline(d, 3, 12, 5, [236, 206, 150]); speckle(d, rnd, [[120, 70, 20]], 0.06);
 };
 
+// ── Grindstone / stonecutter ───────────────────────────────────────
+const STONEG = [132, 132, 134];
+P.grindstone_side = (d, rnd) => {
+  noisyFill(d, rnd, [112, 100, 92], 0.05);                        // wooden frame
+  vline(d, 2, 2, 13, [80, 66, 54]); vline(d, 13, 2, 13, [80, 66, 54]);
+  for (let y = 4; y <= 11; y++) for (let x = 4; x <= 11; x++) {   // round grind wheel
+    if (Math.hypot(x - 7.5, y - 7.5) <= 3.6) px(d, x, y, jitter(STONEG, rnd, 0.08));
+  }
+  border(d, [70, 58, 48], 0);
+};
+P.grindstone_top = (d, rnd) => {
+  noisyFill(d, rnd, [104, 92, 82], 0.05);
+  hline(d, 3, 12, 7, [72, 60, 50]); hline(d, 3, 12, 8, [140, 140, 142]);   // wheel edge
+};
+P.stonecutter_side = (d, rnd) => {
+  noisyFill(d, rnd, STONEG, 0.05); border(d, shade(STONEG, 0.7));
+  hline(d, 0, 15, 11, [96, 96, 98]);
+};
+P.stonecutter_top = (d, rnd) => {
+  noisyFill(d, rnd, shade(STONEG, 0.9), 0.05);
+  for (let x = 3; x <= 12; x++) px(d, x, 8, [210, 210, 214]);      // saw blade slot
+  for (let x = 3; x <= 12; x += 2) { px(d, x, 7, [230, 230, 236]); px(d, x, 9, [180, 180, 186]); }  // teeth
+};
+
 // ── Building variants ─────────────────────────────────────────────
 const SBRICK = [124, 122, 118], SAND2 = [216, 205, 160];
 function sBrick(d, rnd, base) {

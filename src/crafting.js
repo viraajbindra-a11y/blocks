@@ -244,6 +244,10 @@ shapeless('pumpkin_pie', 1, ['pumpkin', 'sugar', 'egg']);
 shaped('cake', 1, ['MMM', 'SES', 'WWW'],
   { M: 'milk_bucket', S: 'sugar', E: 'egg', W: 'wheat' }, 'worktable');
 
+// ── Utility stations ───────────────────────────────────────────────
+shapeless('grindstone', 1, ['stone', 'stick', 'stick', 'oak_planks', 'oak_planks']);
+shaped('stonecutter', 1, [' I ', 'SSS'], { I: 'iron_ingot', S: 'stone' }, 'worktable');
+
 shapeless('flint_and_steel', 1, ['iron_ingot', 'flint']);           // MC-accurate alt
 shaped('tnt', 1, ['GSG', 'SGS', 'GSG'], { G: 'gunpowder', S: 'sand' }, 'worktable');
 shaped('enchanting_table', 1, [' D ', 'DOD', 'OOO'], { D: 'diamond', O: 'obsidian' }, 'worktable');

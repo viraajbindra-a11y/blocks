@@ -127,6 +127,7 @@ Object.assign(B, {
   MELON_STEM_0: 300, MELON_STEM_3: 303,
   SUGAR_CANE: 304,
   CAKE_0: 305, CAKE_6: 311,
+  GRINDSTONE: 312, STONECUTTER: 313,
 });
 
 // ── Fluid helpers ─────────────────────────────────────────────────
@@ -470,6 +471,14 @@ for (let i = 0; i < 7; i++) {
     solid: true, opaque: false, hardness: 0.5, sound: 'soft', use: 'cake',
     tex: { top: 'cake_top', bottom: 'cake_bottom', side: 'cake_side' } });
 }
+
+// Utility stations (312..313)
+def(B.GRINDSTONE, 'grindstone', 'Grindstone', {
+  hardness: 3, tool: 'pick', minTier: 1, sound: 'stone', use: 'grindstone', opaque: false,
+  tex: { top: 'grindstone_top', bottom: 'stone', side: 'grindstone_side' } });
+def(B.STONECUTTER, 'stonecutter', 'Stonecutter', {
+  hardness: 3.5, tool: 'pick', minTier: 1, sound: 'stone', use: 'stonecutter', opaque: false,
+  tex: { top: 'stonecutter_top', bottom: 'stone', side: 'stonecutter_side' } });
 // Decorative stone/sandstone building variants (228..234)
 const STONE_LIKE = { hardness: 6, tool: 'pick', minTier: 1, sound: 'stone' };
 def(B.SMOOTH_STONE, 'smooth_stone', 'Smooth Stone', { ...STONE_LIKE });
@@ -900,7 +909,7 @@ export const blockIdByKey = key => keyToId.get(key) ?? 0;
 // Assigns the next free id ≥ 210. Ids are stable for a given mod list +
 // order (worlds save raw ids, so changing the mod list can orphan blocks —
 // they degrade gracefully to air).
-let nextModId = 312;   // 210-291 base+colour families; 292-311 cucurbits/cane/cake; mods after
+let nextModId = 314;   // 210-311 base content; 312-313 grindstone/stonecutter; mods after
 export function registerBlock(key, name, props = {}) {
   if (keyToId.has(key)) throw new Error(`block key "${key}" already registered`);
   while (nextModId < MAX_BLOCKS && BLOCKS[nextModId]) nextModId++;
