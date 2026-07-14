@@ -472,6 +472,10 @@ export class Interaction {
     // 2. Food
     if (held.kind === 'food') {
       if (this.eatCooldown <= 0 && p.eat(held.food)) {
+        if (held.food.effect) {                       // e.g. golden apple → Regeneration
+          const ef = held.food.effect;
+          p.addEffect(ef.kind, ef.dur, ef.level || 1);
+        }
         p.consumeHeld(1);
         this.hooks.audio.play('eat');
         this.eatCooldown = 0.9;

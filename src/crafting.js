@@ -25,7 +25,7 @@ shaped('furnace', 1, ['RRR', 'R R', 'RRR'], { R: 'cobblestone' }, 'worktable');
 // ── Tools (crafting table) ────────────────────────────────────────
 const toolMats = {
   wooden: 'oak_planks', stone: 'cobblestone', copper: 'copper_ingot',
-  iron: 'iron_ingot', netherite: 'netherite_ingot',
+  iron: 'iron_ingot', netherite: 'netherite_ingot', golden: 'gold_ingot',
 };
 for (const [tier, mat] of Object.entries(toolMats)) {
   shaped(`${tier}_pickaxe`, 1, ['MMM', ' R ', ' R '], { M: mat, R: 'stick' }, 'worktable');
@@ -275,6 +275,15 @@ shapeless('book', 1, ['paper', 'paper', 'paper', 'leather']);
 shaped('bookshelf', 1, ['PPP', 'BBB', 'PPP'], { P: 'oak_planks', B: 'book' }, 'worktable');
 shaped('lapis_block', 1, ['LLL', 'LLL', 'LLL'], { L: 'lapis_lazuli' }, 'worktable');
 shapeless('lapis_lazuli', 9, ['lapis_block']);
+
+// ── Gold ───────────────────────────────────────────────────────────
+SMELT.raw_gold = { out: 'gold_ingot', count: 1 };
+shaped('gold_block', 1, ['GGG', 'GGG', 'GGG'], { G: 'gold_ingot' }, 'worktable');
+shapeless('gold_ingot', 9, ['gold_block']);
+shaped('gold_ingot', 1, ['NNN', 'NNN', 'NNN'], { N: 'gold_nugget' }, 'worktable');
+shapeless('gold_nugget', 9, ['gold_ingot']);
+shaped('golden_apple', 1, ['GGG', 'GAG', 'GGG'], { G: 'gold_ingot', A: 'apple' }, 'worktable');
+shaped('golden_carrot', 1, ['NNN', 'NCN', 'NNN'], { N: 'gold_nugget', C: 'carrot' }, 'worktable');
 
 shapeless('flint_and_steel', 1, ['iron_ingot', 'flint']);           // MC-accurate alt
 shaped('tnt', 1, ['GSG', 'SGS', 'GSG'], { G: 'gunpowder', S: 'sand' }, 'worktable');

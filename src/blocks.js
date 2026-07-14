@@ -138,6 +138,7 @@ Object.assign(B, {
   DISPENSER: 326, HOPPER: 327, REDSTONE_ORE: 328,
   RAIL: 329, POWERED_RAIL: 330, DETECTOR_RAIL: 331,
   LAPIS_ORE: 332, LAPIS_BLOCK: 333, BOOKSHELF: 334,
+  GOLD_ORE: 335, GOLD_BLOCK: 336,
 });
 
 // ── Fluid helpers ─────────────────────────────────────────────────
@@ -256,7 +257,8 @@ def(B.OAK_LOG, 'oak_log', 'Oak Log', {
 def(B.OAK_LEAVES, 'oak_leaves', 'Oak Leaves', {
   hardness: 0.3, sound: 'plant', opaque: false, sway: true,
   drops: [{ item: 'oak_sapling', min: 1, max: 1, chance: 0.08 },
-          { item: 'stick', min: 1, max: 2, chance: 0.12 }],
+          { item: 'stick', min: 1, max: 2, chance: 0.12 },
+          { item: 'apple', min: 1, max: 1, chance: 0.05 }],
 });
 def(B.SPRUCE_LOG, 'spruce_log', 'Spruce Log', {
   hardness: 2.4, tool: 'axe', sound: 'wood',
@@ -552,6 +554,13 @@ def(B.LAPIS_BLOCK, 'lapis_block', 'Block of Lapis Lazuli', {
 def(B.BOOKSHELF, 'bookshelf', 'Bookshelf', {
   hardness: 1.5, tool: 'axe', sound: 'wood',
   tex: { top: 'oak_planks', bottom: 'oak_planks', side: 'bookshelf' } });
+
+// Gold ore + block (335..336)
+def(B.GOLD_ORE, 'gold_ore', 'Gold Ore', {
+  hardness: 4.5, tool: 'pick', minTier: 3, sound: 'stone',
+  drops: [{ item: 'raw_gold', min: 2, max: 3 }], tex: { all: 'gold_ore' } });
+def(B.GOLD_BLOCK, 'gold_block', 'Block of Gold', {
+  hardness: 4, tool: 'pick', minTier: 3, sound: 'metal', tex: { all: 'gold_block' } });
 // Decorative stone/sandstone building variants (228..234)
 const STONE_LIKE = { hardness: 6, tool: 'pick', minTier: 1, sound: 'stone' };
 def(B.SMOOTH_STONE, 'smooth_stone', 'Smooth Stone', { ...STONE_LIKE });
@@ -982,7 +991,7 @@ export const blockIdByKey = key => keyToId.get(key) ?? 0;
 // Assigns the next free id ≥ 210. Ids are stable for a given mod list +
 // order (worlds save raw ids, so changing the mod list can orphan blocks —
 // they degrade gracefully to air).
-let nextModId = 335;   // 210-331 base content; 332-334 lapis/bookshelf; mods after
+let nextModId = 337;   // 210-334 base content; 335-336 gold ore/block; mods after
 export function registerBlock(key, name, props = {}) {
   if (keyToId.has(key)) throw new Error(`block key "${key}" already registered`);
   while (nextModId < MAX_BLOCKS && BLOCKS[nextModId]) nextModId++;

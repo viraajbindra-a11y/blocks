@@ -79,8 +79,19 @@ for (let tier = 1; tier <= 5; tier++) {
   }
 }
 
+// Golden tools: the fastest tier but brittle, with stone-level harvest.
+for (const tt of TOOL_TYPES) {
+  item(`golden_${tt.item}`, `Golden ${tt.label}`, {
+    kind: 'tool', maxStack: 1, icon: `${tt.type}_gold`,
+    tool: { type: tt.type, tier: 2, speed: 14, durability: 32, damage: tt.type === 'blade' ? 4 : 1 },
+  });
+}
+
 // ── Materials ─────────────────────────────────────────────────────
 item('stick', 'Stick');
+item('raw_gold', 'Raw Gold');
+item('gold_ingot', 'Gold Ingot');
+item('gold_nugget', 'Gold Nugget');
 item('coal', 'Coal');
 item('clay_ball', 'Clay Ball');
 item('raw_copper', 'Raw Copper');
@@ -196,6 +207,10 @@ item('potato', 'Potato', { kind: 'food', food: { restore: 3 } });
 item('baked_potato', 'Baked Potato', { kind: 'food', food: { restore: 6 } });
 item('bread', 'Bread', { kind: 'food', food: { restore: 5 } });
 item('carrot', 'Carrot', { kind: 'food', food: { restore: 3 }, desc: 'Eat it, or plant it on farmland.' });
+item('apple', 'Apple', { kind: 'food', food: { restore: 4 } });
+item('golden_apple', 'Golden Apple', { kind: 'food', maxStack: 16,
+  food: { restore: 4, effect: { kind: 'regeneration', dur: 8, level: 2 } }, desc: 'Heals over time.' });
+item('golden_carrot', 'Golden Carrot', { kind: 'food', food: { restore: 6 } });
 item('pumpkin_seeds', 'Pumpkin Seeds', { desc: 'Plant on farmland to grow pumpkins.' });
 item('melon_seeds', 'Melon Seeds', { desc: 'Plant on farmland to grow melons.' });
 item('melon_slice', 'Melon Slice', { kind: 'food', food: { restore: 2 } });

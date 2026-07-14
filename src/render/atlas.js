@@ -1002,7 +1002,7 @@ for (let i = 0; i < 10; i++) P[`crack${i}`] = crackPainter(i);
 const TIER_HEAD = {
   timber: [138, 106, 66], stone: [144, 144, 144],
   copper: [196, 122, 74], iron: [216, 221, 226],
-  sunsteel: [255, 205, 110],
+  sunsteel: [255, 205, 110], gold: [246, 205, 70],
 };
 for (const tier of Object.keys(TIER_HEAD)) {
   for (const type of ['pick', 'axe', 'shovel', 'hoe', 'blade']) {
@@ -1301,6 +1301,33 @@ P.hopper_top = (d, rnd) => { noisyFill(d, rnd, [96, 96, 100], 0.05); border(d, [
   for (let x = 2; x <= 13; x++) { px(d, x, 3, [40, 40, 44]); px(d, x, 12, [40, 40, 44]); } };
 P.hopper_side = (d, rnd) => { noisyFill(d, rnd, [82, 82, 86], 0.05);
   for (let x = 4; x <= 11; x++) { px(d, x, 10, [50, 50, 54]); } vline(d, 7, 10, 15, [50, 50, 54]); vline(d, 8, 10, 15, [50, 50, 54]); };
+// ── Gold ───────────────────────────────────────────────────────────
+const GOLD = [244, 202, 66], GOLD_HI = [255, 236, 150], GOLD_D = [186, 142, 30];
+P.gold_ore = (d, rnd) => {
+  noisyFill(d, rnd, [128, 128, 130], 0.05);
+  for (let i = 0; i < 6; i++) { const x = 3 + ((rnd() * 10) | 0), y = 3 + ((rnd() * 10) | 0);
+    px(d, x, y, GOLD); px(d, x + 1, y, GOLD_HI); px(d, x, y + 1, GOLD_D); }
+};
+P.gold_block = (d, rnd) => { noisyFill(d, rnd, GOLD, 0.05); border(d, GOLD_D); speckle(d, rnd, [GOLD_HI], 0.08); };
+P.raw_gold = (d, rnd) => { blob(d, rnd, 8, 8.5, 3.6, 4, GOLD, { light: GOLD_HI, dark: GOLD_D }); speckle(d, rnd, [GOLD_HI], 0.14); };
+P.gold_ingot = (d, rnd) => {
+  for (let y = 6; y <= 11; y++) hline(d, 3, 12, y, GOLD);
+  hline(d, 3, 12, 6, GOLD_HI); hline(d, 3, 12, 11, GOLD_D); border(d, GOLD_D, 0);
+};
+P.gold_nugget = (d, rnd) => { for (let i = 0; i < 8; i++) px(d, 5 + ((rnd() * 6) | 0), 5 + ((rnd() * 6) | 0), i % 2 ? GOLD : GOLD_HI); };
+P.apple = (d, rnd) => {
+  blob(d, rnd, 8, 9, 4, 4.2, [206, 44, 40], { light: [236, 96, 84], dark: [140, 24, 24] });
+  px(d, 8, 3, [96, 66, 30]); px(d, 8, 2, [96, 66, 30]); px(d, 9, 3, [80, 150, 60]);   // stem + leaf
+};
+P.golden_apple = (d, rnd) => {
+  blob(d, rnd, 8, 9, 4, 4.2, GOLD, { light: GOLD_HI, dark: GOLD_D });
+  px(d, 8, 3, [140, 100, 30]); px(d, 9, 3, [200, 230, 120]); speckle(d, rnd, [GOLD_HI], 0.1);
+};
+P.golden_carrot = (d, rnd) => {
+  for (let y = 4; y <= 13; y++) { const w = Math.max(1, (13 - y) / 2 | 0); for (let x = 8 - w; x <= 8 + w; x++) px(d, x, y, GOLD); }
+  px(d, 8, 2, [120, 200, 90]); px(d, 8, 3, [120, 200, 90]); px(d, 9, 8, GOLD_HI);
+};
+
 // ── Lapis + bookshelf ──────────────────────────────────────────────
 const LAPIS = [38, 66, 168], LAPIS_HI = [86, 128, 224];
 P.lapis_lazuli = (d, rnd) => { for (let i = 0; i < 20; i++) px(d, 3 + ((rnd() * 10) | 0), 3 + ((rnd() * 10) | 0), i % 3 ? LAPIS : LAPIS_HI); };
