@@ -1301,6 +1301,42 @@ P.hopper_top = (d, rnd) => { noisyFill(d, rnd, [96, 96, 100], 0.05); border(d, [
   for (let x = 2; x <= 13; x++) { px(d, x, 3, [40, 40, 44]); px(d, x, 12, [40, 40, 44]); } };
 P.hopper_side = (d, rnd) => { noisyFill(d, rnd, [82, 82, 86], 0.05);
   for (let x = 4; x <= 11; x++) { px(d, x, 10, [50, 50, 54]); } vline(d, 7, 10, 15, [50, 50, 54]); vline(d, 8, 10, 15, [50, 50, 54]); };
+// ── Extra wood types ───────────────────────────────────────────────
+const WOOD_TEX = {
+  birch:  { bark: [214, 212, 200], barkD: [176, 172, 156], ring: [222, 220, 210], leaf: [128, 168, 96], plank: [200, 190, 158] },
+  jungle: { bark: [110, 84, 54], barkD: [78, 58, 36], ring: [150, 116, 74], leaf: [54, 118, 40], plank: [162, 120, 78] },
+  acacia: { bark: [122, 92, 78], barkD: [88, 64, 52], ring: [150, 112, 92], leaf: [112, 150, 70], plank: [190, 108, 58] },
+};
+for (const [w, c] of Object.entries(WOOD_TEX)) {
+  P[`${w}_log`] = (d, rnd) => {
+    noisyFill(d, rnd, c.bark, 0.05);
+    for (let x = 1; x < 16; x += 3) vline(d, x, 0, 15, jitter(c.barkD, rnd, 0.1));
+    speckle(d, rnd, [c.barkD], 0.05);
+    if (w === 'birch') for (let i = 0; i < 5; i++) { const y = 2 + ((rnd() * 12) | 0); hline(d, 2, 4, y, [44, 44, 44]); }
+  };
+  P[`${w}_log_top`] = (d, rnd) => {
+    noisyFill(d, rnd, c.ring, 0.04);
+    for (let r = 2; r <= 6; r += 2) for (let a = 0; a < 40; a++) {
+      const t = a / 40 * Math.PI * 2;
+      px(d, (7.5 + Math.cos(t) * r) | 0, (7.5 + Math.sin(t) * r) | 0, shade(c.ring, 0.82));
+    }
+    px(d, 7, 7, c.barkD); px(d, 8, 8, c.barkD);
+  };
+  P[`${w}_leaves`] = (d, rnd) => {
+    noisyFill(d, rnd, c.leaf, 0.08);
+    speckle(d, rnd, [shade(c.leaf, 0.78)], 0.14); speckle(d, rnd, [shade(c.leaf, 1.2)], 0.1);
+  };
+  P[`${w}_planks`] = (d, rnd) => {
+    noisyFill(d, rnd, c.plank, 0.05);
+    hline(d, 0, 15, 5, shade(c.plank, 0.8)); hline(d, 0, 15, 11, shade(c.plank, 0.8));
+    vline(d, 5, 0, 5, shade(c.plank, 0.85)); vline(d, 10, 6, 11, shade(c.plank, 0.85));
+  };
+  P[`${w}_sapling`] = (d, rnd) => {
+    for (let y = 8; y < 15; y++) { px(d, 7, y, [110, 82, 50]); px(d, 8, y, [90, 66, 40]); }
+    blob(d, rnd, 7.5, 5.5, 3.4, 3, c.leaf, { light: shade(c.leaf, 1.25), dark: shade(c.leaf, 0.7) });
+  };
+}
+
 // ── Gold ───────────────────────────────────────────────────────────
 const GOLD = [244, 202, 66], GOLD_HI = [255, 236, 150], GOLD_D = [186, 142, 30];
 P.gold_ore = (d, rnd) => {

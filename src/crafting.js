@@ -14,12 +14,13 @@ function shapeless(out, count, ingredients, station = null) {
 }
 
 const ANY_LOG = ['oak_log', 'spruce_log'];
-const ANY_PLANK = ['oak_planks'];
+const ANY_PLANK = ['oak_planks', 'birch_planks', 'jungle_planks', 'acacia_planks'];
 
 // ── Basics ────────────────────────────────────────────────────────
 shapeless('oak_planks', 4, [ANY_LOG]);
-shaped('stick', 4, ['P', 'P'], { P: 'oak_planks' });
-shaped('crafting_table', 1, ['PP', 'PP'], { P: 'oak_planks' });
+for (const w of ['birch', 'jungle', 'acacia']) shapeless(`${w}_planks`, 4, [`${w}_log`]);
+shaped('stick', 4, ['P', 'P'], { P: ANY_PLANK });
+shaped('crafting_table', 1, ['PP', 'PP'], { P: ANY_PLANK });
 shaped('furnace', 1, ['RRR', 'R R', 'RRR'], { R: 'cobblestone' }, 'worktable');
 
 // ── Tools (crafting table) ────────────────────────────────────────

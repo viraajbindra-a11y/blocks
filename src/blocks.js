@@ -141,6 +141,13 @@ Object.assign(B, {
   GOLD_ORE: 335, GOLD_BLOCK: 336,
 });
 
+// Extra wood types — birch / jungle / acacia, each log/leaves/planks/sapling.
+export const WOOD_ORDER = ['birch', 'jungle', 'acacia'];
+WOOD_ORDER.forEach((w, i) => {
+  const U = w.toUpperCase(), base = 337 + i * 4;
+  B[U + '_LOG'] = base; B[U + '_LEAVES'] = base + 1; B[U + '_PLANKS'] = base + 2; B[U + '_SAPLING'] = base + 3;
+});
+
 // ── Fluid helpers ─────────────────────────────────────────────────
 export const isWater = id => id >= 15 && id <= 21;
 export const isLava  = id => id >= 22 && id <= 25;
@@ -561,6 +568,23 @@ def(B.GOLD_ORE, 'gold_ore', 'Gold Ore', {
   drops: [{ item: 'raw_gold', min: 2, max: 3 }], tex: { all: 'gold_ore' } });
 def(B.GOLD_BLOCK, 'gold_block', 'Block of Gold', {
   hardness: 4, tool: 'pick', minTier: 3, sound: 'metal', tex: { all: 'gold_block' } });
+
+// Birch / jungle / acacia wood sets (337..348)
+WOOD_ORDER.forEach((w) => {
+  const T = titleCase(w);
+  def(B[w.toUpperCase() + '_LOG'], `${w}_log`, `${T} Log`, {
+    hardness: 2, tool: 'axe', sound: 'wood',
+    tex: { top: `${w}_log_top`, bottom: `${w}_log_top`, side: `${w}_log` } });
+  def(B[w.toUpperCase() + '_LEAVES'], `${w}_leaves`, `${T} Leaves`, {
+    hardness: 0.3, sound: 'plant', opaque: false, sway: true, lightOpacity: 1,
+    drops: [{ item: `${w}_sapling`, min: 1, max: 1, chance: 0.08 },
+            { item: 'stick', min: 1, max: 2, chance: 0.12 }],
+    tex: { all: `${w}_leaves` } });
+  def(B[w.toUpperCase() + '_PLANKS'], `${w}_planks`, `${T} Planks`, {
+    hardness: 2, tool: 'axe', sound: 'wood', tex: { all: `${w}_planks` } });
+  def(B[w.toUpperCase() + '_SAPLING'], `${w}_sapling`, `${T} Sapling`, plant({
+    randomTick: 'sprout', placeOn: [B.GRASS_BLOCK, B.DIRT], tex: { all: `${w}_sapling` } }));
+});
 // Decorative stone/sandstone building variants (228..234)
 const STONE_LIKE = { hardness: 6, tool: 'pick', minTier: 1, sound: 'stone' };
 def(B.SMOOTH_STONE, 'smooth_stone', 'Smooth Stone', { ...STONE_LIKE });
@@ -991,7 +1015,7 @@ export const blockIdByKey = key => keyToId.get(key) ?? 0;
 // Assigns the next free id ≥ 210. Ids are stable for a given mod list +
 // order (worlds save raw ids, so changing the mod list can orphan blocks —
 // they degrade gracefully to air).
-let nextModId = 337;   // 210-334 base content; 335-336 gold ore/block; mods after
+let nextModId = 349;   // 210-336 base content; 337-348 birch/jungle/acacia woods; mods after
 export function registerBlock(key, name, props = {}) {
   if (keyToId.has(key)) throw new Error(`block key "${key}" already registered`);
   while (nextModId < MAX_BLOCKS && BLOCKS[nextModId]) nextModId++;

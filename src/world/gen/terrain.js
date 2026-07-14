@@ -8,7 +8,7 @@ import {
 } from '../../core/constants.js';
 import { Simplex, mulberry32, hash2, hash3, normalizeSeed, clamp, lerp, smoothstep } from '../../math/noise.js';
 import { B, waterFlowId, opaqueAt } from '../../blocks.js';
-import { placeAlder, placeFern, placeSpineplant } from './features.js';
+import { placeAlder, placeFern, placeSpineplant, placeBroadleaf } from './features.js';
 import { placeStructures } from './structures.js';
 
 export const BIOME = {
@@ -265,6 +265,8 @@ export function makeGenerator(rawSeed, decorations = []) {
           case BIOME.FOREST:
             if (treeOk && r1 < 0.055) {
               (r2 < 0.7 ? placeAlder : placeFern)(setLocal, getLocal, treeRand, wx, h + 1, wz, false);
+            } else if (treeOk && r1 < 0.075) {
+              placeBroadleaf(setLocal, getLocal, treeRand, wx, h + 1, wz, B.BIRCH_LOG, B.BIRCH_LEAVES, 6, 8, 2);
             } else if (surf === B.GRASS) {
               if (r1 < 0.16) blocks[above] = B.TALLGRASS;
               else if (r1 < 0.175) blocks[above] = B.BERRYBUSH_RIPE;
@@ -273,6 +275,7 @@ export function makeGenerator(rawSeed, decorations = []) {
             break;
           case BIOME.PLAINS:
             if (treeOk && r1 < 0.004) placeAlder(setLocal, getLocal, treeRand, wx, h + 1, wz, false);
+            else if (treeOk && r1 < 0.007) placeBroadleaf(setLocal, getLocal, treeRand, wx, h + 1, wz, B.ACACIA_LOG, B.ACACIA_LEAVES, 5, 7, 3);
             else if (surf === B.GRASS) {
               if (r1 < 0.1) blocks[above] = B.TALLGRASS;
               else if (r1 < 0.12) blocks[above] = r2 < 0.5 ? B.EMBERBLOOM : B.AZUREBELL;
@@ -281,6 +284,7 @@ export function makeGenerator(rawSeed, decorations = []) {
             break;
           case BIOME.SWAMP:
             if (treeOk && r1 < 0.03) placeAlder(setLocal, getLocal, treeRand, wx, h + 1, wz, true);
+            else if (treeOk && r1 < 0.05) placeBroadleaf(setLocal, getLocal, treeRand, wx, h + 1, wz, B.JUNGLE_LOG, B.JUNGLE_LEAVES, 8, 12, 3);
             else if (r1 < 0.14 && (surf === B.GRASS || surf === B.SOIL)) blocks[above] = B.TALLGRASS;
             break;
           case BIOME.DESERT:

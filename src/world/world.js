@@ -12,7 +12,7 @@ import { BIOME } from './gen/terrain.js';
 import { dimension as dimensionOf } from './dimensions.js';
 import { FluidSim } from './fluids.js';
 import { RedstoneSim } from './redstone.js';
-import { placeAlder, placeFern, hasTreeRoom } from './gen/features.js';
+import { placeAlder, placeFern, hasTreeRoom, WOOD_TREE, placeWoodTree } from './gen/features.js';
 import { mulberry32 } from '../math/noise.js';
 
 const N4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
@@ -418,7 +418,8 @@ export class World {
         };
         const rand = mulberry32((x * 73856093 ^ z * 19349663 ^ y) >>> 0);
         this.setBlock(x, y, z, B.AIR, { now });
-        (id === B.ALDER_SPROUT ? placeAlder : placeFern)(set, get, rand, x, y, z);
+        if (WOOD_TREE[id]) placeWoodTree(set, get, rand, x, y, z, id);
+        else (id === B.ALDER_SPROUT ? placeAlder : placeFern)(set, get, rand, x, y, z);
         break;
       }
     }

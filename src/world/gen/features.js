@@ -28,6 +28,35 @@ export function placeAlder(set, get, rand, x, y, z, withVines = false) {
   for (let i = 0; i < h; i++) set(x, y + i, z, B.ALDER_LOG, true);
 }
 
+// Generic broadleaf tree (straight trunk + blobby canopy) for the extra woods.
+export function placeBroadleaf(set, get, rand, x, y, z, logId, leafId, minH, maxH, radius) {
+  const h = minH + (rand() * (maxH - minH + 1) | 0);
+  const topY = y + h - 1;
+  for (let dy = -2; dy <= 1; dy++) {
+    const r = dy <= -1 ? radius : Math.max(1, radius - 1);
+    for (let dx = -r; dx <= r; dx++) {
+      for (let dz = -r; dz <= r; dz++) {
+        if (dx === 0 && dz === 0 && dy < 1) continue;
+        if (Math.abs(dx) === r && Math.abs(dz) === r && (r === 1 || rand() < 0.5)) continue;
+        set(x + dx, topY + dy, z + dz, leafId, false);
+      }
+    }
+  }
+  set(x, topY + 1, z, leafId, false);
+  for (let i = 0; i < h; i++) set(x, y + i, z, logId, true);
+}
+
+// Sapling id → tree recipe, shared by worldgen + sprout growth.
+export const WOOD_TREE = {
+  [B.BIRCH_SAPLING]: { log: B.BIRCH_LOG, leaf: B.BIRCH_LEAVES, minH: 6, maxH: 8, r: 2 },
+  [B.JUNGLE_SAPLING]: { log: B.JUNGLE_LOG, leaf: B.JUNGLE_LEAVES, minH: 8, maxH: 12, r: 3 },
+  [B.ACACIA_SAPLING]: { log: B.ACACIA_LOG, leaf: B.ACACIA_LEAVES, minH: 5, maxH: 7, r: 3 },
+};
+export function placeWoodTree(set, get, rand, x, y, z, saplingId) {
+  const t = WOOD_TREE[saplingId];
+  if (t) placeBroadleaf(set, get, rand, x, y, z, t.log, t.leaf, t.minH, t.maxH, t.r);
+}
+
 // Tall conifer. Height 7-10, conical boughs.
 export function placeFern(set, get, rand, x, y, z) {
   const h = 7 + (rand() * 4 | 0);
