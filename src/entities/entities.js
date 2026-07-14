@@ -1729,6 +1729,23 @@ export class EntitySystem {
   }
 
   // A player-loosed arrow (from a drawn bow). power scales speed.
+  spawnTrident(origin, dir, dmg) {
+    const sp = 30;
+    this.entities.push({
+      kind: 'arrow', species: 'arrow', owner: 'player', trident: true, dmg, age: 0, dead: false,
+      pos: [origin[0] + dir[0] * 0.6, origin[1] + dir[1] * 0.6, origin[2] + dir[2] * 0.6],
+      vel: [dir[0] * sp, dir[1] * sp, dir[2] * sp],
+      yaw: Math.atan2(dir[0], dir[2]), pitch: Math.atan2(dir[1], Math.hypot(dir[0], dir[2])),
+      hw: 0.1, h: 0.1,
+    });
+  }
+
+  _dropTrident(e) {
+    if (e._dropped) return;
+    e._dropped = true;
+    this.spawnDrops(e.pos[0], e.pos[1], e.pos[2], [{ key: 'trident', count: 1 }]);
+  }
+
   spawnPlayerArrow(origin, dir, power, dmg, fire = false) {
     if (this._arrowCount() > 24) return;
     const sp = 26 * power;
@@ -1749,7 +1766,7 @@ export class EntitySystem {
 
   _updateArrow(e, dt, pp) {
     e.age += dt;
-    if (e.age > 4) { e.dead = true; return; }
+    if (e.age > 4) { if (e.trident) this._dropTrident(e); e.dead = true; return; }
     if (!e.straight) e.vel[1] += GRAVITY * dt * 0.35;        // arrows drop; fireballs fly straight
     if (e.splash) {
       const dx = pp[0] - e.pos[0], dy = (pp[1] + 0.9) - e.pos[1], dz = pp[2] - e.pos[2];
@@ -1772,6 +1789,7 @@ export class EntitySystem {
             e.pos[2] > b.min[2] - 0.15 && e.pos[2] < b.max[2] + 0.15) {
           const l = Math.hypot(e.vel[0], e.vel[2]) || 1;
           this.hitEntity(c, e.dmg, [e.vel[0] / l, 0.3, e.vel[2] / l]);
+          if (e.trident) this._dropTrident(e);
           e.dead = true; return;
         }
       }
@@ -1787,7 +1805,7 @@ export class EntitySystem {
     const hx = this._moveAxis(e, 0, e.vel[0] * dt);
     const hz = this._moveAxis(e, 2, e.vel[2] * dt);
     const hy = this._moveAxis(e, 1, e.vel[1] * dt);
-    if (hx || hy || hz) { e.dead = true; return; }            // stick on impact
+    if (hx || hy || hz) { if (e.trident) this._dropTrident(e); e.dead = true; return; }   // stick on impact
     e.yaw = Math.atan2(e.vel[0], e.vel[2]);
     e.pitch = Math.atan2(e.vel[1], Math.hypot(e.vel[0], e.vel[2]));
   }

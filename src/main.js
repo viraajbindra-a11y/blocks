@@ -265,6 +265,7 @@ class Game {
       castBobber: (x, y, z) => this.entities.castBobber(x, y, z),
       reelBobber: (b) => this.entities.reelBobber(b),
       throwPearl: (origin, dir) => this.entities.throwPearl(origin, dir),
+      throwTrident: (origin, dir, dmg) => this.entities.spawnTrident(origin, dir, dmg),
       teleportPlayer: (x, y, z) => {
         this.player.pos = [x, y + 0.1, z];
         this.player.vel = [0, 0, 0];

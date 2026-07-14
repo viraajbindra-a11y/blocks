@@ -286,6 +286,10 @@ shapeless('gold_nugget', 9, ['gold_ingot']);
 shaped('golden_apple', 1, ['GGG', 'GAG', 'GGG'], { G: 'gold_ingot', A: 'apple' }, 'worktable');
 shaped('golden_carrot', 1, ['NNN', 'NCN', 'NNN'], { N: 'gold_nugget', C: 'carrot' }, 'worktable');
 
+// ── Trident + elytra (obtainable here; found, not crafted, in Minecraft) ──
+shaped('trident', 1, ['I I', 'III', ' I '], { I: 'iron_ingot' }, 'worktable');
+shaped('elytra', 1, ['L L', 'LSL', 'L L'], { L: 'leather', S: 'string' }, 'worktable');
+
 shapeless('flint_and_steel', 1, ['iron_ingot', 'flint']);           // MC-accurate alt
 shaped('tnt', 1, ['GSG', 'SGS', 'GSG'], { G: 'gunpowder', S: 'sand' }, 'worktable');
 shaped('enchanting_table', 1, [' D ', 'DOD', 'OOO'], { D: 'diamond', O: 'obsidian' }, 'worktable');

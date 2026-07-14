@@ -274,8 +274,20 @@ export class Player {
         this.exhaustion += 0.08;
         if (this.hooks.onJump) this.hooks.onJump();
       }
-      this.vel[1] += GRAVITY * dt;
-      this.vel[1] = Math.max(this.vel[1], -54);
+      // Elytra: hold jump while airborne and falling to glide, steered by pitch.
+      const elytra = this.armor?.[1] && itemByKey(this.armor[1].key)?.glide;
+      if (this.onGround || this.inWater) this.gliding = false;
+      else if (elytra && move.jump && this.vel[1] < 0.2) this.gliding = true;
+      if (this.gliding) {
+        const cp = Math.cos(this.pitch), sp = Math.sin(this.pitch);
+        const fx = -Math.sin(this.yaw) * cp, fz = -Math.cos(this.yaw) * cp;
+        const glideSpeed = 9 + Math.max(0, -sp) * 6;          // dive to gain speed
+        this.vel[0] = fx * glideSpeed; this.vel[2] = fz * glideSpeed;
+        this.vel[1] = clamp(sp * glideSpeed - 1.4, -14, 2);
+      } else {
+        this.vel[1] += GRAVITY * dt;
+        this.vel[1] = Math.max(this.vel[1], -54);
+      }
     }
     if (this.inLava) {
       this.vel[0] *= (1 - 3 * dt); this.vel[2] *= (1 - 3 * dt);

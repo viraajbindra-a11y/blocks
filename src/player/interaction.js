@@ -426,6 +426,19 @@ export class Interaction {
       }
       return;
     }
+    if (held.key === 'trident') {
+      if (input.buttonPressed[2] && this.hooks.throwTrident) {
+        const eye = p.eyePos();
+        const cp = Math.cos(p.pitch), sp = Math.sin(p.pitch);
+        const cy = Math.cos(p.yaw), sy = Math.sin(p.yaw);
+        this.hooks.throwTrident(eye, [-sy * cp, sp, -cy * cp], 8);
+        p.consumeHeld(1);                                  // it flies off (recover where it lands)
+        this.hooks.audio.play('bow', { vol: 0.4 });
+        this.eatCooldown = 0.4;
+        this.swing = 1;
+      }
+      return;
+    }
 
     // 1c. Flint & steel: prime TNT, else ignite a rift frame
     if (held.key === 'flint_and_steel') {

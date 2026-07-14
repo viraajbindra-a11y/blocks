@@ -1301,6 +1301,21 @@ P.hopper_top = (d, rnd) => { noisyFill(d, rnd, [96, 96, 100], 0.05); border(d, [
   for (let x = 2; x <= 13; x++) { px(d, x, 3, [40, 40, 44]); px(d, x, 12, [40, 40, 44]); } };
 P.hopper_side = (d, rnd) => { noisyFill(d, rnd, [82, 82, 86], 0.05);
   for (let x = 4; x <= 11; x++) { px(d, x, 10, [50, 50, 54]); } vline(d, 7, 10, 15, [50, 50, 54]); vline(d, 8, 10, 15, [50, 50, 54]); };
+// ── Trident + elytra ───────────────────────────────────────────────
+P.trident = (d) => {
+  for (let y = 4; y <= 15; y++) { px(d, 7, y, [108, 168, 172]); px(d, 8, y, [78, 130, 134]); }   // shaft
+  const t = [150, 214, 216];
+  px(d, 6, 2, t); px(d, 6, 3, t); px(d, 7, 3, t); px(d, 8, 3, t); px(d, 9, 3, t); px(d, 9, 2, t);  // three prongs
+  px(d, 7, 1, t); px(d, 8, 1, t); px(d, 5, 1, t); px(d, 10, 1, t);
+};
+P.elytra = (d, rnd) => {
+  const m = [148, 122, 138];
+  for (let y = 4; y <= 13; y++) { const w = (13 - y) / 2 | 0;
+    for (let x = 2; x <= 2 + w; x++) px(d, x, y, jitter(m, rnd, 0.1));
+    for (let x = 13 - w; x <= 13; x++) px(d, x, y, jitter(m, rnd, 0.1)); }
+  vline(d, 3, 4, 12, [96, 78, 90]); vline(d, 12, 4, 12, [96, 78, 90]);   // wing ribs
+};
+
 // ── Extra wood types ───────────────────────────────────────────────
 const WOOD_TEX = {
   birch:  { bark: [214, 212, 200], barkD: [176, 172, 156], ring: [222, 220, 210], leaf: [128, 168, 96], plank: [200, 190, 158] },

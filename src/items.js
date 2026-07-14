@@ -177,6 +177,15 @@ item('crossbow', 'Crossbow', {
   tool: { type: 'crossbow', tier: 0, speed: 2.4, durability: 326, damage: 1 },
   desc: 'Slower to load than a bow, but its bolt flies flat and hits harder.',
 });
+item('trident', 'Trident', {
+  kind: 'tool', maxStack: 1, throwable: true,
+  tool: { type: 'blade', tier: 4, speed: 5, durability: 250, damage: 8 },
+  desc: 'A heavy spear — jab in melee, or right-click to hurl it.',
+});
+item('elytra', 'Elytra', {
+  kind: 'armor', maxStack: 1, glide: true, armor: { slot: 1, points: 0, mat: 'phantom_membrane' },
+  desc: 'Worn on the back — leap off a height and hold jump to glide.',
+});
 
 // ── Armor ─────────────────────────────────────────────────────────
 // slot 0 helmet · 1 chestplate · 2 leggings · 3 boots. points reduce
