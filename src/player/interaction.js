@@ -400,6 +400,10 @@ export class Interaction {
         if (input.buttonPressed[2] && this.hooks.editSign) { this.hooks.editSign(t.x, t.y, t.z); this.placeCooldown = 0.3; }
         return;
       }
+      if (block.use === 'brew') {
+        if (input.buttonPressed[2]) { this._useBrewStand(); this.placeCooldown = 0.3; }
+        return;
+      }
     }
 
     if (!held) return;
@@ -613,6 +617,28 @@ export class Interaction {
     this.hooks.audio?.blockSound?.('place', 'glass');
     this.placeCooldown = 0.5;
     this.swing = 0.7;
+  }
+
+  // Brewing stand: hold a reagent and right-click to brew, one bottle at a time.
+  // nether_wart turns a water bottle into an awkward potion; a reagent turns an
+  // awkward potion into its brew (mirrors the crafting-table recipes, no menu).
+  _useBrewStand() {
+    const p = this.player;
+    const held = p.heldStack();
+    if (!held) { this.hooks.toast?.('Hold a reagent to brew'); return; }
+    const BREW = { sweet_berries: 'potion_healing', glowstone_dust: 'potion_regeneration',
+      netherite_scrap: 'potion_strength', feather: 'potion_swiftness',
+      magma_cream: 'potion_fire_resistance', spider_eye: 'potion_poison' };
+    let out = null, spend = null;
+    if (held.key === 'nether_wart' && p.countOf('water_bottle') > 0) { out = 'awkward_potion'; spend = 'water_bottle'; }
+    else if (BREW[held.key] && p.countOf('awkward_potion') > 0) { out = BREW[held.key]; spend = 'awkward_potion'; }
+    if (!out) { this.hooks.toast?.('Need a water or awkward bottle in your pack'); return; }
+    p.removeItems(spend, 1);
+    p.consumeHeld(1);
+    p.addItem(out, 1);
+    this.hooks.audio?.blockSound?.('place', 'glass');
+    this.hooks.toast?.(`Brewed ${itemByKey(out)?.name ?? out}`);
+    this.swing = 0.6;
   }
 
   // Count bookshelves ringing the enchanting table (one air gap away, as in MC).

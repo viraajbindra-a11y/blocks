@@ -1301,6 +1301,13 @@ P.hopper_top = (d, rnd) => { noisyFill(d, rnd, [96, 96, 100], 0.05); border(d, [
   for (let x = 2; x <= 13; x++) { px(d, x, 3, [40, 40, 44]); px(d, x, 12, [40, 40, 44]); } };
 P.hopper_side = (d, rnd) => { noisyFill(d, rnd, [82, 82, 86], 0.05);
   for (let x = 4; x <= 11; x++) { px(d, x, 10, [50, 50, 54]); } vline(d, 7, 10, 15, [50, 50, 54]); vline(d, 8, 10, 15, [50, 50, 54]); };
+P.brewing_stand = (d, rnd) => {
+  vline(d, 7, 2, 12, [192, 192, 202]); vline(d, 8, 2, 12, [150, 150, 162]);     // central rod
+  px(d, 7, 2, [232, 212, 120]); px(d, 8, 2, [232, 212, 120]);                    // glowing tip
+  for (const x of [3, 7, 11]) { px(d, x, 13, [120, 160, 200]); px(d, x, 14, [150, 190, 220]); px(d, x + 1, 13, [120, 160, 200]); }
+  hline(d, 2, 13, 15, [90, 90, 96]);
+};
+
 // ── Signs + banners ────────────────────────────────────────────────
 P.oak_sign = (d, rnd) => {
   noisyFill(d, rnd, [150, 116, 72], 0.05); border(d, [104, 78, 46]);

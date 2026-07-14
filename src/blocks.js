@@ -152,6 +152,7 @@ WOOD_ORDER.forEach((w, i) => {
 Object.assign(B, { OAK_SIGN: 349 });
 export const BANNER_BASE = 350;
 WOOL_ORDER.forEach((c, i) => { B[c.toUpperCase() + '_BANNER'] = BANNER_BASE + i; });
+Object.assign(B, { BREWING_STAND: 366 });
 
 // ── Fluid helpers ─────────────────────────────────────────────────
 export const isWater = id => id >= 15 && id <= 21;
@@ -600,6 +601,10 @@ WOOL_ORDER.forEach((c, i) => {
     solid: false, opaque: false, cross: true, hardness: 1, sound: 'soft',
     needsFloor: true, tall: true, tex: { all: `${c}_banner` } });
 });
+// Brewing stand (366) — right-click to brew potions from held reagents.
+def(B.BREWING_STAND, 'brewing_stand', 'Brewing Stand', {
+  solid: false, opaque: false, cross: true, hardness: 0.5, tool: 'pick', sound: 'metal',
+  light: 1, needsFloor: true, use: 'brew', tex: { all: 'brewing_stand' } });
 // Decorative stone/sandstone building variants (228..234)
 const STONE_LIKE = { hardness: 6, tool: 'pick', minTier: 1, sound: 'stone' };
 def(B.SMOOTH_STONE, 'smooth_stone', 'Smooth Stone', { ...STONE_LIKE });
@@ -1030,7 +1035,7 @@ export const blockIdByKey = key => keyToId.get(key) ?? 0;
 // Assigns the next free id ≥ 210. Ids are stable for a given mod list +
 // order (worlds save raw ids, so changing the mod list can orphan blocks —
 // they degrade gracefully to air).
-let nextModId = 366;   // 210-348 base content; 349 sign, 350-365 banners; mods after
+let nextModId = 367;   // 210-365 base content; 366 brewing stand; mods after
 export function registerBlock(key, name, props = {}) {
   if (keyToId.has(key)) throw new Error(`block key "${key}" already registered`);
   while (nextModId < MAX_BLOCKS && BLOCKS[nextModId]) nextModId++;

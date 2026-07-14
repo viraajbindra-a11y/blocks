@@ -293,6 +293,7 @@ shaped('elytra', 1, ['L L', 'LSL', 'L L'], { L: 'leather', S: 'string' }, 'workt
 // ── Signs + banners ────────────────────────────────────────────────
 shaped('oak_sign', 3, ['PPP', 'PPP', ' R '], { P: ANY_PLANK, R: 'stick' }, 'worktable');
 for (const c of COLORS16) shaped(`${c}_banner`, 1, ['WWW', 'WWW', ' R '], { W: `${c}_wool`, R: 'stick' }, 'worktable');
+shaped('brewing_stand', 1, [' G ', 'CCC'], { G: 'glowstone_dust', C: 'cobblestone' }, 'worktable');
 
 shapeless('flint_and_steel', 1, ['iron_ingot', 'flint']);           // MC-accurate alt
 shaped('tnt', 1, ['GSG', 'SGS', 'GSG'], { G: 'gunpowder', S: 'sand' }, 'worktable');
