@@ -1729,11 +1729,11 @@ export class EntitySystem {
   }
 
   // A player-loosed arrow (from a drawn bow). power scales speed.
-  spawnPlayerArrow(origin, dir, power, dmg) {
+  spawnPlayerArrow(origin, dir, power, dmg, fire = false) {
     if (this._arrowCount() > 24) return;
     const sp = 26 * power;
     this.entities.push({
-      kind: 'arrow', species: 'arrow', owner: 'player',
+      kind: 'arrow', species: 'arrow', owner: 'player', fire,
       pos: [origin[0] + dir[0] * 0.6, origin[1] + dir[1] * 0.6, origin[2] + dir[2] * 0.6],
       vel: [dir[0] * sp, dir[1] * sp, dir[2] * sp],
       yaw: Math.atan2(dir[0], dir[2]), pitch: Math.atan2(dir[1], Math.hypot(dir[0], dir[2])),
@@ -1942,14 +1942,15 @@ export class EntitySystem {
     }
   }
 
-  hitEntity(e, dmg, dir) {
+  hitEntity(e, dmg, dir, kb = 0) {
     if (!e || e.dead || e.kind !== 'creature') return;
     e.health -= dmg;
     e.flash = 1;
     const kx = (dir && dir[0]) || 0, kz = (dir && dir[2]) || 0;
     const kl = Math.hypot(kx, kz) || 1;
-    e.vel[0] += (kx / kl) * 5.5;
-    e.vel[2] += (kz / kl) * 5.5;
+    const push = 5.5 + kb * 3.2;                    // Knockback enchant boosts this
+    e.vel[0] += (kx / kl) * push;
+    e.vel[2] += (kz / kl) * push;
     e.vel[1] = Math.max(e.vel[1], 4.2);
     e.onGround = false;
 

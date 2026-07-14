@@ -209,6 +209,7 @@ export function makeGenerator(rawSeed, decorations = []) {
     for (let v = 0; v < 6; v++)  vein(B.IRON_ORE, 4, 38, 2 + rng() * 3);
     if (rng() < 0.75) vein(B.SUNSTONE_ORE, 4, 14, 1 + rng() * 2);
     if (rng() < 0.14) vein(B.EMERALD_ORE, 6, 30, 1 + (rng() * 2 | 0));   // rare, single-ish
+    for (let v = 0; v < 2; v++) vein(B.LAPIS_ORE, 6, 34, 3 + rng() * 3);   // deep, small pockets
     for (let v = 0; v < 4; v++)  vein(B.SOIL, 24, 72, 5 + rng() * 5);
     for (let v = 0; v < 3; v++)  vein(B.GRAVEL, 12, 64, 4 + rng() * 5);
     for (let v = 0; v < 2; v++)  vein(B.MOSSROCK, 30, 60, 3 + rng() * 4);

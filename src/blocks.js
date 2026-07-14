@@ -137,6 +137,7 @@ Object.assign(B, {
   REDSTONE_LAMP: 324, REDSTONE_LAMP_ON: 325,
   DISPENSER: 326, HOPPER: 327, REDSTONE_ORE: 328,
   RAIL: 329, POWERED_RAIL: 330, DETECTOR_RAIL: 331,
+  LAPIS_ORE: 332, LAPIS_BLOCK: 333, BOOKSHELF: 334,
 });
 
 // ── Fluid helpers ─────────────────────────────────────────────────
@@ -541,6 +542,16 @@ const RAIL_DEF = { solid: false, opaque: false, cross: true, hardness: 0.7, tool
 def(B.RAIL, 'rail', 'Rail', { ...RAIL_DEF, tex: { all: 'rail' } });
 def(B.POWERED_RAIL, 'powered_rail', 'Powered Rail', { ...RAIL_DEF, tex: { all: 'powered_rail' } });
 def(B.DETECTOR_RAIL, 'detector_rail', 'Detector Rail', { ...RAIL_DEF, tex: { all: 'detector_rail' } });
+
+// Lapis + bookshelf (332..334)
+def(B.LAPIS_ORE, 'lapis_ore', 'Lapis Lazuli Ore', {
+  hardness: 4.5, tool: 'pick', minTier: 2, sound: 'stone',
+  drops: [{ item: 'lapis_lazuli', min: 4, max: 8 }], tex: { all: 'lapis_ore' } });
+def(B.LAPIS_BLOCK, 'lapis_block', 'Block of Lapis Lazuli', {
+  hardness: 4, tool: 'pick', minTier: 2, sound: 'stone', tex: { all: 'lapis_block' } });
+def(B.BOOKSHELF, 'bookshelf', 'Bookshelf', {
+  hardness: 1.5, tool: 'axe', sound: 'wood',
+  tex: { top: 'oak_planks', bottom: 'oak_planks', side: 'bookshelf' } });
 // Decorative stone/sandstone building variants (228..234)
 const STONE_LIKE = { hardness: 6, tool: 'pick', minTier: 1, sound: 'stone' };
 def(B.SMOOTH_STONE, 'smooth_stone', 'Smooth Stone', { ...STONE_LIKE });
@@ -971,7 +982,7 @@ export const blockIdByKey = key => keyToId.get(key) ?? 0;
 // Assigns the next free id ≥ 210. Ids are stable for a given mod list +
 // order (worlds save raw ids, so changing the mod list can orphan blocks —
 // they degrade gracefully to air).
-let nextModId = 332;   // 210-328 base content; 329-331 rails; mods after
+let nextModId = 335;   // 210-331 base content; 332-334 lapis/bookshelf; mods after
 export function registerBlock(key, name, props = {}) {
   if (keyToId.has(key)) throw new Error(`block key "${key}" already registered`);
   while (nextModId < MAX_BLOCKS && BLOCKS[nextModId]) nextModId++;

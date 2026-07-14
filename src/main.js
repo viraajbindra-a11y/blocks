@@ -244,7 +244,7 @@ class Game {
       openStation: (kind) => this.openInventory(kind),
       dropItems: (x, y, z, items) => this.entities.spawnDrops(x, y, z, items),
       getEntities: () => this.entities.entities,
-      onEntityHit: (e, dmg, dir) => this.entities.hitEntity(e, dmg, dir),
+      onEntityHit: (e, dmg, dir, kb) => this.entities.hitEntity(e, dmg, dir, kb),
       toast: (m) => this.hud.toast(m),
       onBroken: (x, y, z, id) => {
         if (id === B.STOWBOX) this._spillContainer(x, y, z);
@@ -256,7 +256,7 @@ class Game {
       sleep: (x, y, z) => this._trySleep(x, y, z),
       openContainer: (x, y, z) => this._openContainer(x, y, z),
       openFurnace: (x, y, z) => this._openFurnace(x, y, z),
-      fireArrow: (origin, dir, power, dmg) => this.entities.spawnPlayerArrow(origin, dir, power, dmg),
+      fireArrow: (origin, dir, power, dmg, fire) => this.entities.spawnPlayerArrow(origin, dir, power, dmg, fire),
       useOnEntity: (e, heldKey) => this.entities.useItemOn(e, heldKey),
       primeTnt: (x, y, z) => this.entities.primeTnt(x, y, z),
       mount: (e) => { this.player.riding = e; e.ridden = true; return true; },

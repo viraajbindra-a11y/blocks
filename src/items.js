@@ -205,6 +205,9 @@ item('nether_star', 'Nether Star', { maxStack: 1, desc: 'Torn from the Wither. A
 item('emerald', 'Emerald', { desc: 'A villager\'s currency.' });
 item('minecart', 'Minecart', { maxStack: 1, desc: 'Set it on rails, then ride.' });
 item('boat', 'Boat', { maxStack: 1, desc: 'Set it on water, then row.' });
+item('lapis_lazuli', 'Lapis Lazuli', { desc: 'Fuels the enchanting table.' });
+item('paper', 'Paper', { desc: 'Pressed from sugar cane.' });
+item('book', 'Book', { desc: 'Shelve it to empower enchanting.' });
 item('cake', 'Cake', { kind: 'block', block: B.CAKE_0, icon: 'cake_side', maxStack: 1, desc: 'Place it, then eat a slice at a time.' });
 item('raw_porkchop', 'Raw Porkchop', { kind: 'food', food: { restore: 2 } });
 item('cooked_porkchop', 'Cooked Porkchop', { kind: 'food', food: { restore: 7 } });
@@ -227,16 +230,19 @@ export const itemByKey = (key) => ITEMS.get(key) || null;
 export const ENCHANT_NAMES = {
   efficiency: 'Efficiency', sharpness: 'Sharpness', power: 'Power',
   protection: 'Protection', unbreaking: 'Unbreaking',
+  fortune: 'Fortune', silk_touch: 'Silk Touch', fire_aspect: 'Fire Aspect',
+  knockback: 'Knockback', flame: 'Flame', infinity: 'Infinity', feather_falling: 'Feather Falling',
 };
 // Which enchants may land on a given item.
 export function enchantsFor(def) {
   if (!def) return [];
-  if (def.kind === 'armor') return ['protection', 'unbreaking'];
+  if (def.kind === 'armor') return ['protection', 'unbreaking', 'feather_falling'];
   if (def.tool) {
     const t = def.tool.type;
-    if (t === 'blade') return ['sharpness', 'unbreaking'];
-    if (t === 'bow') return ['power', 'unbreaking'];
-    if (t === 'pick' || t === 'axe' || t === 'shovel' || t === 'hoe') return ['efficiency', 'unbreaking'];
+    if (t === 'blade') return ['sharpness', 'unbreaking', 'fire_aspect', 'knockback'];
+    if (t === 'bow') return ['power', 'unbreaking', 'flame', 'infinity'];
+    if (t === 'pick' || t === 'shovel') return ['efficiency', 'unbreaking', 'fortune', 'silk_touch'];
+    if (t === 'axe' || t === 'hoe') return ['efficiency', 'unbreaking', 'fortune'];
   }
   return [];
 }

@@ -59,9 +59,11 @@ export class Interaction {
       const hit = this._entityUnderRay(eye, dir);
       if (hit && (!this.target || hit.dist < this.target.dist)) {
         const tool = p.heldItem()?.tool;
-        const dmg = (tool ? tool.damage : 1) + (p.heldStack()?.ench?.sharpness || 0)
+        const ench = p.heldStack()?.ench || {};
+        const dmg = (tool ? tool.damage : 1) + (ench.sharpness || 0)
+          + (ench.fire_aspect || 0) * 2                 // Fire Aspect: extra searing damage
           + p.effectLevel('strength') * 2;
-        this.hooks.onEntityHit(hit.entity, dmg, [dir[0], 0.4, dir[2]]);
+        this.hooks.onEntityHit(hit.entity, dmg, [dir[0], 0.4, dir[2]], ench.knockback || 0);
         if (tool) p.damageHeldTool(1);
         this.swing = 1;
         this._resetMining();
@@ -196,7 +198,17 @@ export class Interaction {
         this._brightAt(t.x, t.y, t.z));
     }
     if (this.player.mode !== MODE_BUILDER && canHarvest) {
-      const drops = rollDrops(block);
+      const ench = this.player.heldStack()?.ench || {};
+      let drops;
+      if (ench.silk_touch && !block.cross && (block.item ?? block.key) && block.drops !== 'self' && block.id !== B.AIR) {
+        drops = [{ key: block.item ?? block.key, count: 1 }];          // Silk Touch: the block itself
+      } else {
+        drops = rollDrops(block);
+        if (ench.fortune && Array.isArray(block.drops)) {               // Fortune: extra ore/crop yield
+          const mult = 1 + (Math.random() * (ench.fortune + 1) | 0);
+          for (const dd of drops) dd.count *= mult;
+        }
+      }
       if (drops.length) this.hooks.dropItems(t.x + 0.5, t.y + 0.35, t.z + 0.5, drops);
       // Ores yield experience, as in Minecraft.
       const oreXp = { [B.COAL_ORE]: 1, [B.DIAMOND_ORE]: 4, [B.GLOWSTONE]: 2 }[block.id];
@@ -556,18 +568,44 @@ export class Interaction {
     const def = s && itemByKey(s.key);
     const opts = enchantsFor(def);
     if (!s || !opts.length) { this.hooks.toast?.('Hold a tool, weapon, bow, or armor to enchant'); return; }
+    const survival = p.mode !== MODE_BUILDER;
     const COST = 3;
-    if (p.mode !== MODE_BUILDER && p.xpLevel < COST) { this.hooks.toast?.(`Needs ${COST} XP levels`); return; }
+    if (survival && p.xpLevel < COST) { this.hooks.toast?.(`Needs ${COST} XP levels`); return; }
+    if (survival && p.countOf('lapis_lazuli') < 1) { this.hooks.toast?.('Needs 1 lapis lazuli'); return; }
+    // Nearby bookshelves raise the level cap and can grant a second enchant.
+    const shelves = this._countBookshelves();
+    const maxLvl = 3 + Math.min(2, (shelves >= 4 ? 1 : 0) + (shelves >= 8 ? 1 : 0));   // 3..5
+    const capOf = (e) => (e === 'silk_touch' || e === 'infinity') ? 1 : maxLvl;
+    const rolls = shelves >= 6 ? 2 : 1;
     s.ench = s.ench || {};
-    const choices = opts.filter((e) => (s.ench[e] || 0) < 3);
-    if (!choices.length) { this.hooks.toast?.('Already fully enchanted'); return; }
-    const pick = choices[(Math.random() * choices.length) | 0];
-    s.ench[pick] = (s.ench[pick] || 0) + 1;
-    if (p.mode !== MODE_BUILDER) p.xpLevel -= COST;
+    let applied = 0;
+    for (let r = 0; r < rolls; r++) {
+      const choices = opts.filter((e) => (s.ench[e] || 0) < capOf(e));
+      if (!choices.length) break;
+      const pick = choices[(Math.random() * choices.length) | 0];
+      s.ench[pick] = (s.ench[pick] || 0) + 1;
+      this.hooks.toast?.(`Enchanted — ${ENCHANT_NAMES[pick]} ${s.ench[pick]}`);
+      applied++;
+    }
+    if (!applied) { this.hooks.toast?.('Already fully enchanted'); return; }
+    if (survival) { p.xpLevel -= COST; p.removeItems('lapis_lazuli', 1); }
     this.hooks.audio?.blockSound?.('place', 'glass');
-    this.hooks.toast?.(`Enchanted — ${ENCHANT_NAMES[pick]} ${s.ench[pick]}`);
     this.placeCooldown = 0.5;
     this.swing = 0.7;
+  }
+
+  // Count bookshelves ringing the enchanting table (one air gap away, as in MC).
+  _countBookshelves() {
+    const t = this.target;
+    if (!t) return 0;
+    let n = 0;
+    for (let dy = 0; dy <= 1; dy++)
+      for (let dx = -2; dx <= 2; dx++)
+        for (let dz = -2; dz <= 2; dz++) {
+          if (Math.abs(dx) < 2 && Math.abs(dz) < 2) continue;    // must sit on the outer ring
+          if (this.world.getBlock(t.x + dx, t.y + dy, t.z + dz) === B.BOOKSHELF) n++;
+        }
+    return Math.min(15, n);
   }
 
   // Grindstone: strip enchantments (refunding XP) and grind off tool wear.
@@ -644,15 +682,16 @@ export class Interaction {
 
   _fireBow(charge, weapon = 'bow') {
     const p = this.player;
-    if (p.mode !== MODE_BUILDER) p.removeItems('arrow', 1);
+    const ench = p.heldStack()?.ench || {};
+    if (p.mode !== MODE_BUILDER && !ench.infinity) p.removeItems('arrow', 1);   // Infinity: no ammo drain
     const eye = p.eyePos();
     const cp = Math.cos(p.pitch), sp = Math.sin(p.pitch);
     const cy = Math.cos(p.yaw), sy = Math.sin(p.yaw);
     const dir = [-sy * cp, sp, -cy * cp];
     const cross = weapon === 'crossbow';                // flatter, faster, harder-hitting
     const power = (cross ? 0.9 : 0.45) + charge * (cross ? 0.4 : 0.55);
-    const dmg = Math.max(1, Math.round(1 + charge * 5)) + (cross ? 1 : 0) + (p.heldStack()?.ench?.power || 0);
-    if (this.hooks.fireArrow) this.hooks.fireArrow(eye, dir, power, dmg);
+    const dmg = Math.max(1, Math.round(1 + charge * 5)) + (cross ? 1 : 0) + (ench.power || 0);
+    if (this.hooks.fireArrow) this.hooks.fireArrow(eye, dir, power, dmg, !!ench.flame);   // Flame: fiery arrows
     p.damageHeldTool(1);
     this.swing = 1;
   }

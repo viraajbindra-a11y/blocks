@@ -1301,6 +1301,29 @@ P.hopper_top = (d, rnd) => { noisyFill(d, rnd, [96, 96, 100], 0.05); border(d, [
   for (let x = 2; x <= 13; x++) { px(d, x, 3, [40, 40, 44]); px(d, x, 12, [40, 40, 44]); } };
 P.hopper_side = (d, rnd) => { noisyFill(d, rnd, [82, 82, 86], 0.05);
   for (let x = 4; x <= 11; x++) { px(d, x, 10, [50, 50, 54]); } vline(d, 7, 10, 15, [50, 50, 54]); vline(d, 8, 10, 15, [50, 50, 54]); };
+// ── Lapis + bookshelf ──────────────────────────────────────────────
+const LAPIS = [38, 66, 168], LAPIS_HI = [86, 128, 224];
+P.lapis_lazuli = (d, rnd) => { for (let i = 0; i < 20; i++) px(d, 3 + ((rnd() * 10) | 0), 3 + ((rnd() * 10) | 0), i % 3 ? LAPIS : LAPIS_HI); };
+P.lapis_ore = (d, rnd) => {
+  noisyFill(d, rnd, [128, 128, 130], 0.05);
+  for (let i = 0; i < 6; i++) { const x = 3 + ((rnd() * 10) | 0), y = 3 + ((rnd() * 10) | 0);
+    px(d, x, y, LAPIS); px(d, x + 1, y, LAPIS_HI); px(d, x, y + 1, shade(LAPIS, 0.7)); }
+};
+P.lapis_block = (d, rnd) => { noisyFill(d, rnd, LAPIS, 0.08); border(d, shade(LAPIS, 0.6)); speckle(d, rnd, [LAPIS_HI], 0.1); };
+P.paper = (d, rnd) => { noisyFill(d, rnd, [236, 234, 224], 0.02); border(d, [206, 202, 188]);
+  for (let y = 5; y <= 11; y += 2) hline(d, 4, 11, y, [176, 178, 196]); };
+P.book = (d, rnd) => { for (let y = 3; y <= 13; y++) hline(d, 4, 11, y, [150, 40, 44]); border(d, [96, 24, 26]);
+  vline(d, 4, 3, 13, [230, 226, 210]); px(d, 8, 8, [214, 178, 90]); };   // red cover + gold clasp
+P.bookshelf = (d, rnd) => {
+  noisyFill(d, rnd, [122, 88, 52], 0.05);                                // plank frame
+  hline(d, 0, 15, 0, [80, 56, 32]); hline(d, 0, 15, 7, [80, 56, 32]); hline(d, 0, 15, 15, [80, 56, 32]);
+  const spine = [[176, 52, 48], [72, 120, 180], [96, 168, 88], [214, 176, 70], [150, 90, 170]];
+  for (let row = 0; row < 2; row++) for (let x = 1; x < 15; x += 2) {
+    const c = spine[(x + row) % spine.length];
+    for (let y = row * 7 + 1; y <= row * 7 + 6; y++) px(d, x, y, c);
+  }
+};
+
 // ── Rails + vehicles ───────────────────────────────────────────────
 function railPainter(tie) {
   return (d, rnd) => {

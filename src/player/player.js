@@ -301,7 +301,9 @@ export class Player {
       const fall = this.fallStart - this.pos[1];
       this.fallStart = null;
       if (!builder && fall > FALL_SAFE && !this.inWater) {
-        const dmg = Math.floor(fall - FALL_SAFE);
+        let dmg = Math.floor(fall - FALL_SAFE);
+        const ff = this.armor?.[3]?.ench?.feather_falling || 0;   // Feather Falling (boots)
+        if (ff) dmg = Math.round(dmg * Math.max(0, 1 - ff * 0.25));
         if (dmg > 0) this.damage(dmg, 'fall');
       }
       if (fall > 1.2 && this.hooks.onLand) this.hooks.onLand(fall);

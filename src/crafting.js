@@ -269,6 +269,13 @@ shaped('detector_rail', 6, ['I I', 'IRI', 'ISI'], { I: 'iron_ingot', R: 'redston
 shaped('minecart', 1, ['I I', 'III'], { I: 'iron_ingot' }, 'worktable');
 shaped('boat', 1, ['P P', 'PPP'], { P: 'oak_planks' }, 'worktable');
 
+// ── Enchanting supplies ────────────────────────────────────────────
+shaped('paper', 3, ['SSS'], { S: 'sugar_cane' }, 'worktable');
+shapeless('book', 1, ['paper', 'paper', 'paper', 'leather']);
+shaped('bookshelf', 1, ['PPP', 'BBB', 'PPP'], { P: 'oak_planks', B: 'book' }, 'worktable');
+shaped('lapis_block', 1, ['LLL', 'LLL', 'LLL'], { L: 'lapis_lazuli' }, 'worktable');
+shapeless('lapis_lazuli', 9, ['lapis_block']);
+
 shapeless('flint_and_steel', 1, ['iron_ingot', 'flint']);           // MC-accurate alt
 shaped('tnt', 1, ['GSG', 'SGS', 'GSG'], { G: 'gunpowder', S: 'sand' }, 'worktable');
 shaped('enchanting_table', 1, [' D ', 'DOD', 'OOO'], { D: 'diamond', O: 'obsidian' }, 'worktable');
