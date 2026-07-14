@@ -396,6 +396,10 @@ export class Interaction {
         }
         return;
       }
+      if (block.use === 'sign') {
+        if (input.buttonPressed[2] && this.hooks.editSign) { this.hooks.editSign(t.x, t.y, t.z); this.placeCooldown = 0.3; }
+        return;
+      }
     }
 
     if (!held) return;

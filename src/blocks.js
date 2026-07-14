@@ -148,6 +148,11 @@ WOOD_ORDER.forEach((w, i) => {
   B[U + '_LOG'] = base; B[U + '_LEAVES'] = base + 1; B[U + '_PLANKS'] = base + 2; B[U + '_SAPLING'] = base + 3;
 });
 
+// Sign (349) + 16 coloured banners (350..365)
+Object.assign(B, { OAK_SIGN: 349 });
+export const BANNER_BASE = 350;
+WOOL_ORDER.forEach((c, i) => { B[c.toUpperCase() + '_BANNER'] = BANNER_BASE + i; });
+
 // ── Fluid helpers ─────────────────────────────────────────────────
 export const isWater = id => id >= 15 && id <= 21;
 export const isLava  = id => id >= 22 && id <= 25;
@@ -585,6 +590,16 @@ WOOD_ORDER.forEach((w) => {
   def(B[w.toUpperCase() + '_SAPLING'], `${w}_sapling`, `${T} Sapling`, plant({
     randomTick: 'sprout', placeOn: [B.GRASS_BLOCK, B.DIRT], tex: { all: `${w}_sapling` } }));
 });
+
+// Sign + banners (349..365) — decorative, standing cloth/plaque.
+def(B.OAK_SIGN, 'oak_sign', 'Sign', {
+  solid: false, opaque: false, cross: true, hardness: 1, tool: 'axe', sound: 'wood',
+  needsFloor: true, use: 'sign', tex: { all: 'oak_sign' } });
+WOOL_ORDER.forEach((c, i) => {
+  def(BANNER_BASE + i, `${c}_banner`, `${titleCase(c)} Banner`, {
+    solid: false, opaque: false, cross: true, hardness: 1, sound: 'soft',
+    needsFloor: true, tall: true, tex: { all: `${c}_banner` } });
+});
 // Decorative stone/sandstone building variants (228..234)
 const STONE_LIKE = { hardness: 6, tool: 'pick', minTier: 1, sound: 'stone' };
 def(B.SMOOTH_STONE, 'smooth_stone', 'Smooth Stone', { ...STONE_LIKE });
@@ -1015,7 +1030,7 @@ export const blockIdByKey = key => keyToId.get(key) ?? 0;
 // Assigns the next free id ≥ 210. Ids are stable for a given mod list +
 // order (worlds save raw ids, so changing the mod list can orphan blocks —
 // they degrade gracefully to air).
-let nextModId = 349;   // 210-336 base content; 337-348 birch/jungle/acacia woods; mods after
+let nextModId = 366;   // 210-348 base content; 349 sign, 350-365 banners; mods after
 export function registerBlock(key, name, props = {}) {
   if (keyToId.has(key)) throw new Error(`block key "${key}" already registered`);
   while (nextModId < MAX_BLOCKS && BLOCKS[nextModId]) nextModId++;

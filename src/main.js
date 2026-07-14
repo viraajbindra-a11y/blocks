@@ -266,6 +266,13 @@ class Game {
       reelBobber: (b) => this.entities.reelBobber(b),
       throwPearl: (origin, dir) => this.entities.throwPearl(origin, dir),
       throwTrident: (origin, dir, dmg) => this.entities.spawnTrident(origin, dir, dmg),
+      editSign: (x, y, z) => {
+        this._signs = this._signs || new Map();
+        const key = `${x},${y},${z}`, cur = this._signs.get(key) || '';
+        const txt = typeof prompt === 'function' ? prompt('Sign text:', cur) : null;
+        if (txt !== null) { this._signs.set(key, txt); this.hud.toast(txt || '(blank sign)'); }
+        else if (cur) this.hud.toast(cur);
+      },
       teleportPlayer: (x, y, z) => {
         this.player.pos = [x, y + 0.1, z];
         this.player.vel = [0, 0, 0];

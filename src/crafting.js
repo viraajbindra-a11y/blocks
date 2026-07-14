@@ -290,6 +290,10 @@ shaped('golden_carrot', 1, ['NNN', 'NCN', 'NNN'], { N: 'gold_nugget', C: 'carrot
 shaped('trident', 1, ['I I', 'III', ' I '], { I: 'iron_ingot' }, 'worktable');
 shaped('elytra', 1, ['L L', 'LSL', 'L L'], { L: 'leather', S: 'string' }, 'worktable');
 
+// ── Signs + banners ────────────────────────────────────────────────
+shaped('oak_sign', 3, ['PPP', 'PPP', ' R '], { P: ANY_PLANK, R: 'stick' }, 'worktable');
+for (const c of COLORS16) shaped(`${c}_banner`, 1, ['WWW', 'WWW', ' R '], { W: `${c}_wool`, R: 'stick' }, 'worktable');
+
 shapeless('flint_and_steel', 1, ['iron_ingot', 'flint']);           // MC-accurate alt
 shaped('tnt', 1, ['GSG', 'SGS', 'GSG'], { G: 'gunpowder', S: 'sand' }, 'worktable');
 shaped('enchanting_table', 1, [' D ', 'DOD', 'OOO'], { D: 'diamond', O: 'obsidian' }, 'worktable');

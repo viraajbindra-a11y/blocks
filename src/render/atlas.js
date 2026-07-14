@@ -1301,6 +1301,21 @@ P.hopper_top = (d, rnd) => { noisyFill(d, rnd, [96, 96, 100], 0.05); border(d, [
   for (let x = 2; x <= 13; x++) { px(d, x, 3, [40, 40, 44]); px(d, x, 12, [40, 40, 44]); } };
 P.hopper_side = (d, rnd) => { noisyFill(d, rnd, [82, 82, 86], 0.05);
   for (let x = 4; x <= 11; x++) { px(d, x, 10, [50, 50, 54]); } vline(d, 7, 10, 15, [50, 50, 54]); vline(d, 8, 10, 15, [50, 50, 54]); };
+// ── Signs + banners ────────────────────────────────────────────────
+P.oak_sign = (d, rnd) => {
+  noisyFill(d, rnd, [150, 116, 72], 0.05); border(d, [104, 78, 46]);
+  for (let y = 4; y <= 10; y += 3) hline(d, 3, 12, y, [96, 72, 42]);      // engraved text lines
+  vline(d, 7, 11, 15, [110, 84, 50]); vline(d, 8, 11, 15, [90, 66, 40]);  // post
+};
+for (const [bc, bcol] of Object.entries(WOOL_COLORS)) {
+  P[`${bc}_banner`] = (d, rnd) => {
+    for (let y = 1; y <= 12; y++) hline(d, 4, 11, y, jitter(bcol, rnd, 0.06));
+    hline(d, 4, 11, 12, shade(bcol, 0.7));
+    px(d, 5, 13, shade(bcol, 0.6)); px(d, 8, 13, shade(bcol, 0.6)); px(d, 10, 13, shade(bcol, 0.6));  // fringe
+    vline(d, 7, 14, 15, [110, 84, 50]); vline(d, 8, 14, 15, [110, 84, 50]);   // post
+  };
+}
+
 // ── Trident + elytra ───────────────────────────────────────────────
 P.trident = (d) => {
   for (let y = 4; y <= 15; y++) { px(d, 7, y, [108, 168, 172]); px(d, 8, y, [78, 130, 134]); }   // shaft
