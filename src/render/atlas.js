@@ -1322,6 +1322,20 @@ P.brewing_stand = (d, rnd) => {
   hline(d, 2, 13, 15, [90, 90, 96]);
 };
 
+// ── Stained glass + concrete powder (16 colours each) ─────────────
+for (const [sc, scol] of Object.entries(WOOL_COLORS)) {
+  P[`${sc}_stained_glass`] = (d, rnd) => {
+    noisyFill(d, rnd, scol, 0.03, 150);                    // semi-transparent pane
+    border(d, shade(scol, 0.68), 205);
+    px(d, 4, 4, [255, 255, 255], 95); px(d, 11, 5, [255, 255, 255], 70);   // glints
+  };
+  P[`${sc}_concrete_powder`] = (d, rnd) => {
+    noisyFill(d, rnd, shade(scol, 1.08), 0.1);             // loose, grainy
+    speckle(d, rnd, [shade(scol, 0.8)], 0.22);
+    speckle(d, rnd, [shade(scol, 1.22)], 0.16);
+  };
+}
+
 // ── Stone variants + deepslate ─────────────────────────────────────
 const STONE_VARIANTS = {
   granite:  { base: [154, 106, 88],  fleck: [176, 130, 110], dark: [124, 82, 66] },

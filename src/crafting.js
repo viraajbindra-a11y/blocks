@@ -226,8 +226,11 @@ for (const c of ['orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink', 'g
 const COLORS16 = ['white', 'orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink',
   'gray', 'light_gray', 'cyan', 'purple', 'blue', 'brown', 'green', 'red', 'black'];
 for (const c of COLORS16) {
-  shapeless(`${c}_concrete`, 8,
+  // Sand + gravel + dye makes POWDER; water sets it into concrete (as in MC).
+  shapeless(`${c}_concrete_powder`, 8,
     ['sand', 'sand', 'sand', 'sand', 'gravel', 'gravel', 'gravel', 'gravel', `${c}_dye`], 'worktable');
+  shaped(`${c}_stained_glass`, 8, ['GGG', 'GDG', 'GGG'], { G: 'glass', D: `${c}_dye` }, 'worktable');
+  shaped(`${c}_stained_glass_pane`, 16, ['GGG', 'GGG'], { G: `${c}_stained_glass` }, 'worktable');
   if (c !== 'white') {
     shapeless(`${c}_terracotta`, 8, [...Array(8).fill('white_terracotta'), `${c}_dye`], 'worktable');
   }

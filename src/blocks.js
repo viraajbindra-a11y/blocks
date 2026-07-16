@@ -166,6 +166,15 @@ export const FLOWER_ORDER = ['dandelion', 'allium', 'azure_bluet', 'blue_orchid'
   'lily_of_the_valley', 'red_tulip', 'orange_tulip', 'white_tulip', 'pink_tulip'];
 FLOWER_ORDER.forEach((f, i) => { B[f.toUpperCase()] = 379 + i; });
 
+// Stained glass + panes + concrete powder, 16 colours each (391..438)
+export const STAINED_GLASS_BASE = 391, STAINED_PANE_BASE = 407, CONCRETE_POWDER_BASE = 423;
+WOOL_ORDER.forEach((c, i) => {
+  const U = c.toUpperCase();
+  B[U + '_STAINED_GLASS'] = STAINED_GLASS_BASE + i;
+  B[U + '_STAINED_GLASS_PANE'] = STAINED_PANE_BASE + i;
+  B[U + '_CONCRETE_POWDER'] = CONCRETE_POWDER_BASE + i;
+});
+
 // ── Fluid helpers ─────────────────────────────────────────────────
 export const isWater = id => id >= 15 && id <= 21;
 export const isLava  = id => id >= 22 && id <= 25;
@@ -852,6 +861,22 @@ paneBlock(B.GLASS_PANE, 'glass_pane', 'Glass Pane',
 paneBlock(B.END_GLASS_PANE, 'end_glass_pane', 'End Glass Pane',
   { all: 'end_glass' }, BLOCKS[B.END_GLASS]);
 
+// ── Stained glass, panes & concrete powder (391..438) ─────────────
+// Concrete powder is the real Minecraft chain: sand + gravel + dye makes
+// powder, which sets solid the moment water touches it (randomTick 'powder').
+WOOL_ORDER.forEach((c, i) => {
+  const T = titleCase(c);
+  const glass = def(STAINED_GLASS_BASE + i, `${c}_stained_glass`, `${T} Stained Glass`, {
+    hardness: 0.4, sound: 'glass', opaque: false, translucent: true, drops: [],
+  });
+  paneBlock(STAINED_PANE_BASE + i, `${c}_stained_glass_pane`, `${T} Stained Glass Pane`,
+    { all: `${c}_stained_glass` }, glass);
+  def(CONCRETE_POWDER_BASE + i, `${c}_concrete_powder`, `${T} Concrete Powder`, {
+    hardness: 0.5, tool: 'shovel', sound: 'soft',
+    randomTick: 'powder', concrete: B[c.toUpperCase() + '_CONCRETE'],
+  });
+});
+
 // Connection bitmask: bit 0 = +x, 1 = -x, 2 = +z, 3 = -z. Matches the
 // horizontal-neighbor order that the mesher / collision walk in. The bit
 // direction vectors, for callers computing `conn`.
@@ -1066,7 +1091,7 @@ export const blockIdByKey = key => keyToId.get(key) ?? 0;
 // Assigns the next free id ≥ 210. Ids are stable for a given mod list +
 // order (worlds save raw ids, so changing the mod list can orphan blocks —
 // they degrade gracefully to air).
-let nextModId = 391;   // 210-366 base content; 367-390 stone variants/flowers/mushrooms; mods after
+let nextModId = 439;   // 210-390 base content; 391-438 stained glass/panes/concrete powder; mods after
 export function registerBlock(key, name, props = {}) {
   if (keyToId.has(key)) throw new Error(`block key "${key}" already registered`);
   while (nextModId < MAX_BLOCKS && BLOCKS[nextModId]) nextModId++;

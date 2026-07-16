@@ -7,7 +7,7 @@ import {
 } from '../core/constants.js';
 import { Chunk, chunkKey, ST_LOADING, ST_BLOCKS, ST_LIT, computeHeightmap } from './chunk.js';
 import { initChunkLight, relightBlockChange } from './lighting.js';
-import { B, BLOCKS, blockById, isFluid, isLava, solidAt, opaqueAt, isShaped, shapeBoxes, connMask } from '../blocks.js';
+import { B, BLOCKS, blockById, isFluid, isLava, isWater, solidAt, opaqueAt, isShaped, shapeBoxes, connMask } from '../blocks.js';
 import { BIOME } from './gen/terrain.js';
 import { dimension as dimensionOf } from './dimensions.js';
 import { FluidSim } from './fluids.js';
@@ -398,6 +398,16 @@ export class World {
         const below = this.getBlock(x + dx, y - 1, z + dz);
         if (below === B.FARMLAND || below === B.SOIL || below === B.GRASS || below === B.SAND) {
           this.setBlock(x + dx, y, z + dz, fruit, { now });
+        }
+        break;
+      }
+      case 'powder': {
+        // Concrete powder sets solid the moment water touches it.
+        for (const [dx, dy, dz] of DIRS) {
+          if (isWater(this.getBlock(x + dx, y + dy, z + dz))) {
+            this.setBlock(x, y, z, BLOCKS[id].concrete, { now });
+            break;
+          }
         }
         break;
       }
