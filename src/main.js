@@ -235,6 +235,7 @@ class Game {
         const d = Math.hypot(p.pos[0] - x, (p.pos[1] + 0.9) - y, p.pos[2] - z);
         if (d < 3.5 && effect) p.addEffect(effect, 8, 1);
       },
+      playerHidden: () => this.player.hasEffect('invisibility'),   // mobs lose track of you
     });
 
     this.interaction = new Interaction(this.world, this.player, {

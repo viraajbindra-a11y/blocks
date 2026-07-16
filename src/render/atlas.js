@@ -1130,6 +1130,8 @@ P.awkward_potion = potionPainter([120, 90, 170]);
 const POTIONS = {
   potion_healing: [232, 74, 92], potion_regeneration: [214, 96, 176], potion_strength: [150, 40, 34],
   potion_swiftness: [116, 196, 224], potion_fire_resistance: [228, 148, 54], potion_poison: [86, 154, 60],
+  potion_water_breathing: [46, 130, 160], potion_jump_boost: [140, 200, 80],
+  potion_slow_falling: [232, 228, 210], potion_invisibility: [180, 184, 196],
 };
 for (const [k, col] of Object.entries(POTIONS)) P[k] = potionPainter(col);
 
@@ -1301,6 +1303,18 @@ P.hopper_top = (d, rnd) => { noisyFill(d, rnd, [96, 96, 100], 0.05); border(d, [
   for (let x = 2; x <= 13; x++) { px(d, x, 3, [40, 40, 44]); px(d, x, 12, [40, 40, 44]); } };
 P.hopper_side = (d, rnd) => { noisyFill(d, rnd, [82, 82, 86], 0.05);
   for (let x = 4; x <= 11; x++) { px(d, x, 10, [50, 50, 54]); } vline(d, 7, 10, 15, [50, 50, 54]); vline(d, 8, 10, 15, [50, 50, 54]); };
+P.phantom_membrane = (d, rnd) => {                       // translucent tattered wing skin
+  const m = [150, 142, 168];
+  for (let y = 3; y <= 12; y++) { const w = 5 - Math.abs(y - 7) / 2 | 0;
+    for (let x = 8 - w; x <= 8 + w; x++) px(d, x, y, jitter(m, rnd, 0.12), 225); }
+  vline(d, 8, 3, 12, [110, 102, 132], 235);
+  px(d, 5, 10, [90, 84, 110], 200); px(d, 11, 6, [90, 84, 110], 200);   // tears
+};
+P.fermented_spider_eye = (d, rnd) => {
+  blob(d, rnd, 8, 8.5, 3.6, 3.6, [96, 130, 78], { light: [140, 178, 108], dark: [56, 82, 44] });
+  px(d, 7, 7, [40, 30, 46]); px(d, 8, 7, [40, 30, 46]); px(d, 7, 8, [40, 30, 46]); px(d, 8, 8, [40, 30, 46]);
+  speckle(d, rnd, [[150, 190, 120]], 0.08);
+};
 P.brewing_stand = (d, rnd) => {
   vline(d, 7, 2, 12, [192, 192, 202]); vline(d, 8, 2, 12, [150, 150, 162]);     // central rod
   px(d, 7, 2, [232, 212, 120]); px(d, 8, 2, [232, 212, 120]);                    // glowing tip

@@ -628,7 +628,9 @@ export class Interaction {
     if (!held) { this.hooks.toast?.('Hold a reagent to brew'); return; }
     const BREW = { sweet_berries: 'potion_healing', glowstone_dust: 'potion_regeneration',
       netherite_scrap: 'potion_strength', feather: 'potion_swiftness',
-      magma_cream: 'potion_fire_resistance', spider_eye: 'potion_poison' };
+      magma_cream: 'potion_fire_resistance', spider_eye: 'potion_poison',
+      raw_cod: 'potion_water_breathing', slimeball: 'potion_jump_boost',
+      phantom_membrane: 'potion_slow_falling', fermented_spider_eye: 'potion_invisibility' };
     let out = null, spend = null;
     if (held.key === 'nether_wart' && p.countOf('water_bottle') > 0) { out = 'awkward_potion'; spend = 'water_bottle'; }
     else if (BREW[held.key] && p.countOf('awkward_potion') > 0) { out = BREW[held.key]; spend = 'awkward_potion'; }

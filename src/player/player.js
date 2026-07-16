@@ -269,7 +269,7 @@ export class Player {
       if (move.fwd !== 0 || move.strafe !== 0) this.vel[1] = Math.max(this.vel[1], -0.4);
     } else {
       if (move.jump && this.onGround) {
-        this.vel[1] = JUMP_SPEED;
+        this.vel[1] = JUMP_SPEED * (1 + 0.18 * this.effectLevel('jump_boost'));   // Leaping
         this.onGround = false;
         this.exhaustion += 0.08;
         if (this.hooks.onJump) this.hooks.onJump();
@@ -284,6 +284,9 @@ export class Player {
         const glideSpeed = 9 + Math.max(0, -sp) * 6;          // dive to gain speed
         this.vel[0] = fx * glideSpeed; this.vel[2] = fz * glideSpeed;
         this.vel[1] = clamp(sp * glideSpeed - 1.4, -14, 2);
+      } else if (this.effects.slow_falling) {          // Slow Falling: drift down gently
+        this.vel[1] += GRAVITY * dt * 0.22;
+        this.vel[1] = Math.max(this.vel[1], -2.2);
       } else {
         this.vel[1] += GRAVITY * dt;
         this.vel[1] = Math.max(this.vel[1], -54);
@@ -312,7 +315,7 @@ export class Player {
     if (this.onGround && this.fallStart !== null) {
       const fall = this.fallStart - this.pos[1];
       this.fallStart = null;
-      if (!builder && fall > FALL_SAFE && !this.inWater) {
+      if (!builder && fall > FALL_SAFE && !this.inWater && !this.effects.slow_falling) {
         let dmg = Math.floor(fall - FALL_SAFE);
         const ff = this.armor?.[3]?.ench?.feather_falling || 0;   // Feather Falling (boots)
         if (ff) dmg = Math.round(dmg * Math.max(0, 1 - ff * 0.25));
@@ -547,7 +550,7 @@ export class Player {
       this.regenTimer = 0;
     }
     // Drowning
-    if (this.headInWater) {
+    if (this.headInWater && !this.effects.water_breathing) {   // Water Breathing: lungs never empty
       this.airTimer = (this.airTimer ?? 0) + dt;
       if (this.airTimer >= 1.1) {
         this.airTimer = 0;

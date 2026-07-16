@@ -229,7 +229,9 @@ const SPECIES = {
     hw: 0.5, h: 0.5, health: 10, walkSpeed: 2.5, grazes: false, hopper: false,
     hostile: true, flying: true, nightOnly: true, dmg: 3,
     biomes: new Set([BIOME.PLAINS, BIOME.FOREST, BIOME.BEACH, BIOME.DESERT, BIOME.MOUNTAIN, BIOME.TUNDRA]),
-    drops(rng) { return rng() < 0.6 ? [{ key: 'leather', count: 1 }] : []; },
+    drops(rng) {
+      return rng() < 0.6 ? [{ key: 'phantom_membrane', count: 1 }] : [{ key: 'leather', count: 1 }];
+    },
   },
   witch: {
     hw: 0.4, h: 1.8, health: 16, walkSpeed: 1.4, grazes: false, hopper: false,
@@ -1362,7 +1364,9 @@ export class EntitySystem {
 
     const dx = pp[0] - e.pos[0], dz = pp[2] - e.pos[2];
     const distSq = dx * dx + dz * dz;
-    const chasing = distSq < 16 * 16;
+    // Invisibility: they only notice you if you're right on top of them.
+    const seeRange = this.hooks.playerHidden?.() ? 3 : 16;
+    const chasing = distSq < seeRange * seeRange;
     const wandering = distSq > 24 * 24;
 
     let moving = false, speed = s.walkSpeed;

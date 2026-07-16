@@ -8,6 +8,8 @@ import { itemByKey } from '../items.js';
 const EFFECT_LABEL = {
   regeneration: 'Regen', strength: 'Strength', swiftness: 'Swiftness',
   fire_resistance: 'Fire Resist', poison: 'Poison',
+  water_breathing: 'Water Breathing', jump_boost: 'Leaping',
+  slow_falling: 'Slow Falling', invisibility: 'Invisible',
 };
 
 function el(tag, cls, parent) {

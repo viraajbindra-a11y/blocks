@@ -309,6 +309,11 @@ shapeless('potion_strength', 1, ['awkward_potion', 'netherite_scrap'], 'worktabl
 shapeless('potion_swiftness', 1, ['awkward_potion', 'feather'], 'worktable');
 shapeless('potion_fire_resistance', 1, ['awkward_potion', 'magma_cream'], 'worktable');
 shapeless('potion_poison', 1, ['awkward_potion', 'spider_eye'], 'worktable');
+shapeless('fermented_spider_eye', 1, ['spider_eye', 'sugar']);
+shapeless('potion_water_breathing', 1, ['awkward_potion', 'raw_cod'], 'worktable');
+shapeless('potion_jump_boost', 1, ['awkward_potion', 'slimeball'], 'worktable');
+shapeless('potion_slow_falling', 1, ['awkward_potion', 'phantom_membrane'], 'worktable');
+shapeless('potion_invisibility', 1, ['awkward_potion', 'fermented_spider_eye'], 'worktable');
 for (const [tier, mat] of [['leather', 'leather'], ['iron', 'iron_ingot'], ['diamond', 'diamond']]) {
   shaped(`${tier}_helmet`, 1, ['MMM', 'M M'], { M: mat }, 'worktable');
   shaped(`${tier}_chestplate`, 1, ['M M', 'MMM', 'MMM'], { M: mat }, 'worktable');

@@ -150,6 +150,12 @@ potion('potion_strength', 'Potion of Strength', { type: 'strength', duration: 45
 potion('potion_swiftness', 'Potion of Swiftness', { type: 'swiftness', duration: 45, level: 1, color: [116, 196, 224] });
 potion('potion_fire_resistance', 'Potion of Fire Resistance', { type: 'fire_resistance', duration: 90, level: 1, color: [228, 148, 54] });
 potion('potion_poison', 'Potion of Poison', { type: 'poison', duration: 12, level: 1, color: [86, 154, 60] });
+potion('potion_water_breathing', 'Potion of Water Breathing', { type: 'water_breathing', duration: 90, level: 1, color: [46, 130, 160] });
+potion('potion_jump_boost', 'Potion of Leaping', { type: 'jump_boost', duration: 60, level: 1, color: [140, 200, 80] });
+potion('potion_slow_falling', 'Potion of Slow Falling', { type: 'slow_falling', duration: 60, level: 1, color: [232, 228, 210] });
+potion('potion_invisibility', 'Potion of Invisibility', { type: 'invisibility', duration: 45, level: 1, color: [180, 184, 196] });
+item('phantom_membrane', 'Phantom Membrane', { desc: 'Torn from a night flyer — brews slow falling.' });
+item('fermented_spider_eye', 'Fermented Spider Eye', { desc: 'Soured. Brews invisibility.' });
 
 // ── Ranged + shears ───────────────────────────────────────────────
 item('bow', 'Bow', {
