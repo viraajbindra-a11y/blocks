@@ -7,6 +7,7 @@
 import { CHUNK_X, CHUNK_Y, CHUNK_Z, CHUNK_VOL, bIdx } from '../../core/constants.js';
 import { Simplex, mulberry32, hash2, normalizeSeed, clamp } from '../../math/noise.js';
 import { B, opaqueAt } from '../../blocks.js';
+import { placeSmolderStructures } from './structures.js';
 
 export const LAVA_LEVEL = 32;
 const CEILING = 108;
@@ -166,6 +167,16 @@ export function makeSmolderGenerator(rawSeed) {
         break;
       }
     }
+
+    // Nether fortresses — deterministic from the seed, clipped to this chunk
+    // so they span chunk borders without neighbour writes (see structures.js).
+    const setLocal = (wx, wy, wz, id, force) => {
+      const lx = wx - ox, lz = wz - oz;
+      if (lx < 0 || lx > 15 || lz < 0 || lz > 15 || wy < 0 || wy > CHUNK_Y - 1) return;
+      const i = bIdx(lx, wy, lz);
+      if (force || blocks[i] === B.AIR) blocks[i] = id;
+    };
+    placeSmolderStructures(cx, cz, seed, setLocal);
 
     // Heightmap: highest OPAQUE block (decorations don't count) — same
     // semantics as terrain.js.

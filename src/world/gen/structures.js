@@ -103,6 +103,46 @@ function stronghold(set, rng, sx, sy, sz) {
   set(sx - 2, y0 + 1, sz - 2, B.LANTERN, true);
 }
 
+// ── Smolder: a nether fortress — brick bridge + tower over the lava ──
+const F_CELL = 96;
+const FORT_Y = 50;                  // rides above the lava sea (LAVA_LEVEL 32)
+
+function fortress(set, rng, sx, sy, sz) {
+  const NB = B.NETHER_BRICKS;
+  // A 3-wide bridge running along x, railed, on pillars.
+  for (let dx = -16; dx <= 16; dx++) {
+    for (let dz = -1; dz <= 1; dz++) set(sx + dx, sy, sz + dz, NB, true);
+    for (const dz of [-2, 2]) { set(sx + dx, sy, sz + dz, NB, true); set(sx + dx, sy + 1, sz + dz, NB, true); }
+    if ((dx + 16) % 8 === 0) {
+      for (let y = sy - 1; y > sy - 18; y--) { set(sx + dx, y, sz - 2, NB, true); set(sx + dx, y, sz + 2, NB, true); }
+    }
+  }
+  // Central tower with a doorway, a wart patch and a loot chest.
+  box(set, sx - 3, sy + 1, sz - 3, sx + 3, sy + 6, sz + 3, NB, true);
+  set(sx, sy + 2, sz - 3, B.AIR, true); set(sx, sy + 3, sz - 3, B.AIR, true);
+  for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
+    set(sx + dx, sy + 1, sz + dz, B.SOUL_SAND, true);
+    if (rng() < 0.6) set(sx + dx, sy + 2, sz + dz, B.NETHER_WART_BLOCK, true);
+  }
+  set(sx + 2, sy + 2, sz + 2, B.CHEST, true);
+}
+
+// Draw any fortress overlapping this Smolder chunk (clipped by `set`).
+export function placeSmolderStructures(cx, cz, seed, set) {
+  const ox = cx * 16, oz = cz * 16, R = 20;
+  const g0x = Math.floor((ox - R) / F_CELL), g1x = Math.floor((ox + 15 + R) / F_CELL);
+  const g0z = Math.floor((oz - R) / F_CELL), g1z = Math.floor((oz + 15 + R) / F_CELL);
+  for (let gx = g0x; gx <= g1x; gx++) {
+    for (let gz = g0z; gz <= g1z; gz++) {
+      if (cellRand(gx, gz, seed, 11) > 0.5) continue;
+      const jx = (cellRand(gx, gz, seed, 12) * 40 | 0) + 28;
+      const jz = (cellRand(gx, gz, seed, 13) * 40 | 0) + 28;
+      const sx = gx * F_CELL + jx, sz = gz * F_CELL + jz;
+      fortress(set, mulberry((sx * 73856093 ^ sz * 19349663 ^ seed) >>> 0), sx, FORT_Y, sz);
+    }
+  }
+}
+
 // Decide the structure (if any) for a region cell.
 function structureFor(gx, gz, seed, heightAt, biomeAt) {
   if (cellRand(gx, gz, seed, 1) > 0.34) return null;      // ~1 in 3 cells
