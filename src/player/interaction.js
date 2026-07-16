@@ -697,13 +697,57 @@ export class Interaction {
 
   // Anvil: spend the held tool's tier material + 1 XP level to restore
   // a chunk of its durability. No menu — repairs whatever you're holding.
-  _useAnvil() {
+  // Rename the held item at an anvil (1 XP level).
+  _anvilRename() {
     const p = this.player;
     const s = p.heldStack();
+    if (!s) { this.hooks.toast?.('Hold an item to rename'); return; }
+    if (p.mode !== MODE_BUILDER && p.xpLevel < 1) { this.hooks.toast?.('Needs an XP level'); return; }
+    const cur = s.name || itemByKey(s.key)?.name || s.key;
+    const next = this.hooks.renamePrompt?.(cur);
+    if (next === null || next === undefined) return;
+    const clean = String(next).trim().slice(0, 32);
+    if (!clean || clean === cur) return;
+    s.name = clean;
+    if (p.mode !== MODE_BUILDER) p.xpLevel -= 1;
+    this.hooks.audio?.blockSound?.('break', 'metal');
+    this.hooks.toast?.(`Renamed to “${clean}”`);
+    this.swing = 0.6;
+  }
+
+  // Combine the held item with another of the same kind in the pack, taking
+  // the best of each enchantment (Minecraft's anvil merge, without a menu).
+  _anvilMerge() {
+    const p = this.player;
+    const s = p.heldStack();
+    if (!s) return false;
+    for (let i = 0; i < p.slots.length; i++) {
+      if (i === p.selected) continue;
+      const o = p.slots[i];
+      if (!o || o.key !== s.key || !o.ench || !Object.keys(o.ench).length) continue;
+      if (p.mode !== MODE_BUILDER && p.xpLevel < 2) { this.hooks.toast?.('Needs 2 XP levels to combine'); return true; }
+      s.ench = s.ench || {};
+      for (const [k, lv] of Object.entries(o.ench)) s.ench[k] = Math.max(s.ench[k] || 0, lv);
+      p.slots[i] = null;
+      if (p.mode !== MODE_BUILDER) p.xpLevel -= 2;
+      this.hooks.audio?.blockSound?.('break', 'metal');
+      this.hooks.toast?.('Combined enchantments');
+      this.swing = 0.6;
+      return true;
+    }
+    return false;
+  }
+
+  // Anvil does three jobs, in order: fold in a twin's enchantments, mend a
+  // damaged tool, or (for anything else) rename it.
+  _useAnvil() {
+    const p = this.player;
+    if (this._anvilMerge()) return;
+    const s = p.heldStack();
     const def = s && itemByKey(s.key);
-    if (!s || !def || !def.tool || s.dur === undefined) { this.hooks.toast?.('Hold a damaged tool to repair'); return; }
-    const maxDur = def.tool.durability;
-    if (s.dur >= maxDur) { this.hooks.toast?.('That tool is already pristine'); return; }
+    if (!s) { this.hooks.toast?.('Hold an item'); return; }
+    const maxDur = def?.tool?.durability;
+    if (!maxDur || s.dur === undefined || s.dur >= maxDur) { this._anvilRename(); return; }
     const mat = TIER_MAT[def.tool.tier];
     if (!mat) { this.hooks.toast?.('This anvil can’t mend that'); return; }
     if (p.countOf(mat) < 1) { this.hooks.toast?.(`Needs ${itemByKey(mat)?.name ?? mat} to repair`); return; }

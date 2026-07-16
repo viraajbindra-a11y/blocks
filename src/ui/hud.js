@@ -146,7 +146,7 @@ export class HUD {
       const st = slots[i];
       if (!st) continue;
       const def = itemByKey(st.key);
-      slot.title = def ? def.name : st.key;
+      slot.title = st.name || (def ? def.name : st.key);   // anvil-renamed items keep their name
       const img = el('img', '', slot);
       img.src = this.iconFor(st.key);
       img.alt = '';

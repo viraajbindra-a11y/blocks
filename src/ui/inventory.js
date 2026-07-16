@@ -626,7 +626,7 @@ export class InventoryUI {
     if (!def || this.cursor) return;   // no tooltips while holding a stack
     const tip = this.tipEl;
     tip.textContent = '';
-    el('div', 'tt-name', tip).textContent = def.name;
+    el('div', 'tt-name', tip).textContent = (stack && stack.name) || def.name;
     if (stack && stack.ench) {
       for (const [k, lv] of Object.entries(stack.ench)) {
         if (lv > 0) el('div', 'tt-ench', tip).textContent = `${ENCHANT_NAMES[k] || k} ${lv}`;

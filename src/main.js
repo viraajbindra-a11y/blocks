@@ -268,6 +268,7 @@ class Game {
       reelBobber: (b) => this.entities.reelBobber(b),
       throwPearl: (origin, dir) => this.entities.throwPearl(origin, dir),
       throwTrident: (origin, dir, dmg) => this.entities.spawnTrident(origin, dir, dmg),
+      renamePrompt: (cur) => (typeof prompt === 'function' ? prompt('Rename item:', cur) : null),
       editSign: (x, y, z) => {
         this._signs = this._signs || new Map();
         const key = `${x},${y},${z}`, cur = this._signs.get(key) || '';
