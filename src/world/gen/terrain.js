@@ -7,7 +7,10 @@ import {
   CHUNK_X, CHUNK_Y, CHUNK_Z, CHUNK_VOL, SEA_LEVEL, bIdx,
 } from '../../core/constants.js';
 import { Simplex, mulberry32, hash2, hash3, normalizeSeed, clamp, lerp, smoothstep } from '../../math/noise.js';
-import { B, waterFlowId, opaqueAt } from '../../blocks.js';
+import { B, waterFlowId, opaqueAt, FLOWER_ORDER } from '../../blocks.js';
+
+// Flower block ids, for scattering meadows.
+const FLOWER_IDS = FLOWER_ORDER.map((f) => B[f.toUpperCase()]);
 import { placeAlder, placeFern, placeSpineplant, placeBroadleaf } from './features.js';
 import { placeStructures } from './structures.js';
 
@@ -108,7 +111,8 @@ export function makeGenerator(rawSeed, decorations = []) {
 
         for (let y = bedrockTop + 1; y <= h; y++) {
           const depth = h - y;
-          let id = B.STONE;
+          // Deep rock turns to deepslate, with a ragged boundary.
+          let id = y <= 14 + (hash2(wx, wz, seed + 31) * 4 | 0) ? B.DEEPSLATE : B.STONE;
           switch (biome) {
             case BIOME.OCEAN:
             case BIOME.RIVER:
@@ -199,7 +203,9 @@ export function makeGenerator(rawSeed, decorations = []) {
           const px = bx + dx, py = by + dy, pz = bz + dz;
           if (px < 0 || px > 15 || pz < 0 || pz > 15 || py < 1 || py > 126) continue;
           const i = bIdx(px, py, pz);
-          if (blocks[i] === B.STONE) blocks[i] = ore;
+          // Deepslate counts as host rock too, or nothing would generate below
+          // the deepslate boundary (diamonds, lapis, gold all live down there).
+          if (blocks[i] === B.STONE || blocks[i] === B.DEEPSLATE) blocks[i] = ore;
         }
         x += (rng() - 0.5) * 2.4; y += (rng() - 0.5) * 1.6; z += (rng() - 0.5) * 2.4;
       }
@@ -211,6 +217,12 @@ export function makeGenerator(rawSeed, decorations = []) {
     if (rng() < 0.14) vein(B.EMERALD_ORE, 6, 30, 1 + (rng() * 2 | 0));   // rare, single-ish
     for (let v = 0; v < 2; v++) vein(B.LAPIS_ORE, 6, 34, 3 + rng() * 3);   // deep, small pockets
     for (let v = 0; v < 2; v++) vein(B.GOLD_ORE, 4, 30, 3 + rng() * 3);    // deep gold
+    // Stone variants as big blobs, plus tuff/calcite pockets down deep.
+    for (let v = 0; v < 3; v++) vein(B.GRANITE, 6, 78, 18 + rng() * 14);
+    for (let v = 0; v < 3; v++) vein(B.DIORITE, 6, 78, 18 + rng() * 14);
+    for (let v = 0; v < 3; v++) vein(B.ANDESITE, 6, 78, 18 + rng() * 14);
+    for (let v = 0; v < 2; v++) vein(B.TUFF, 4, 24, 8 + rng() * 8);
+    if (rng() < 0.3) vein(B.CALCITE, 4, 26, 5 + rng() * 5);
     for (let v = 0; v < 4; v++)  vein(B.SOIL, 24, 72, 5 + rng() * 5);
     for (let v = 0; v < 3; v++)  vein(B.GRAVEL, 12, 64, 4 + rng() * 5);
     for (let v = 0; v < 2; v++)  vein(B.MOSSROCK, 30, 60, 3 + rng() * 4);
@@ -271,6 +283,8 @@ export function makeGenerator(rawSeed, decorations = []) {
               if (r1 < 0.16) blocks[above] = B.TALLGRASS;
               else if (r1 < 0.175) blocks[above] = B.BERRYBUSH_RIPE;
               else if (r1 < 0.19) blocks[above] = r2 < 0.5 ? B.EMBERBLOOM : B.AZUREBELL;
+              else if (r1 < 0.215) blocks[above] = FLOWER_IDS[(r2 * FLOWER_IDS.length) | 0];
+              else if (r1 < 0.222) blocks[above] = r2 < 0.5 ? B.BROWN_MUSHROOM : B.RED_MUSHROOM;
             }
             break;
           case BIOME.PLAINS:
@@ -280,6 +294,7 @@ export function makeGenerator(rawSeed, decorations = []) {
               if (r1 < 0.1) blocks[above] = B.TALLGRASS;
               else if (r1 < 0.12) blocks[above] = r2 < 0.5 ? B.EMBERBLOOM : B.AZUREBELL;
               else if (r1 < 0.125) blocks[above] = B.BERRYBUSH_RIPE;
+              else if (r1 < 0.165) blocks[above] = FLOWER_IDS[(r2 * FLOWER_IDS.length) | 0];   // meadow blooms
             }
             break;
           case BIOME.SWAMP:

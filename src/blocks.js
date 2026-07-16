@@ -154,6 +154,18 @@ export const BANNER_BASE = 350;
 WOOL_ORDER.forEach((c, i) => { B[c.toUpperCase() + '_BANNER'] = BANNER_BASE + i; });
 Object.assign(B, { BREWING_STAND: 366 });
 
+// Stone variants, deepslate, flowers & mushrooms (367..390)
+Object.assign(B, {
+  GRANITE: 367, POLISHED_GRANITE: 368, DIORITE: 369, POLISHED_DIORITE: 370,
+  ANDESITE: 371, POLISHED_ANDESITE: 372, TUFF: 373, CALCITE: 374,
+  DEEPSLATE: 375, COBBLED_DEEPSLATE: 376, POLISHED_DEEPSLATE: 377, DEEPSLATE_BRICKS: 378,
+  BROWN_MUSHROOM: 389, RED_MUSHROOM: 390,
+});
+// 10 flowers, each dyeing to its own colour.
+export const FLOWER_ORDER = ['dandelion', 'allium', 'azure_bluet', 'blue_orchid', 'oxeye_daisy',
+  'lily_of_the_valley', 'red_tulip', 'orange_tulip', 'white_tulip', 'pink_tulip'];
+FLOWER_ORDER.forEach((f, i) => { B[f.toUpperCase()] = 379 + i; });
+
 // ── Fluid helpers ─────────────────────────────────────────────────
 export const isWater = id => id >= 15 && id <= 21;
 export const isLava  = id => id >= 22 && id <= 25;
@@ -605,6 +617,11 @@ WOOL_ORDER.forEach((c, i) => {
 def(B.BREWING_STAND, 'brewing_stand', 'Brewing Stand', {
   solid: false, opaque: false, cross: true, hardness: 0.5, tool: 'pick', sound: 'metal',
   light: 1, needsFloor: true, use: 'brew', tex: { all: 'brewing_stand' } });
+
+// ── Flowers (379..388) + mushrooms (389..390) ─────────────────────
+FLOWER_ORDER.forEach((f) => def(B[f.toUpperCase()], f, titleCase(f), plant()));
+def(B.BROWN_MUSHROOM, 'brown_mushroom', 'Brown Mushroom', plant({ light: 1 }));
+def(B.RED_MUSHROOM, 'red_mushroom', 'Red Mushroom', plant());
 // Decorative stone/sandstone building variants (228..234)
 const STONE_LIKE = { hardness: 6, tool: 'pick', minTier: 1, sound: 'stone' };
 def(B.SMOOTH_STONE, 'smooth_stone', 'Smooth Stone', { ...STONE_LIKE });
@@ -614,6 +631,20 @@ def(B.MOSSY_STONE_BRICKS, 'mossy_stone_bricks', 'Mossy Stone Bricks', { ...STONE
 def(B.SMOOTH_SANDSTONE, 'smooth_sandstone', 'Smooth Sandstone', { ...STONE_LIKE, hardness: 4 });
 def(B.CUT_SANDSTONE, 'cut_sandstone', 'Cut Sandstone', { ...STONE_LIKE, hardness: 4 });
 def(B.CHISELED_SANDSTONE, 'chiseled_sandstone', 'Chiseled Sandstone', { ...STONE_LIKE, hardness: 4 });
+
+// ── Stone variants + deepslate (367..378) ─────────────────────────
+for (const name of ['granite', 'diorite', 'andesite']) {
+  const id = B[name.toUpperCase()];
+  def(id, name, titleCase(name), { ...STONE_LIKE });
+  def(id + 1, `polished_${name}`, `Polished ${titleCase(name)}`, { ...STONE_LIKE });
+}
+def(B.TUFF, 'tuff', 'Tuff', { ...STONE_LIKE, hardness: 5 });
+def(B.CALCITE, 'calcite', 'Calcite', { ...STONE_LIKE, hardness: 4.5 });
+def(B.DEEPSLATE, 'deepslate', 'Deepslate', {
+  ...STONE_LIKE, hardness: 7, drops: [{ item: 'cobbled_deepslate', min: 1, max: 1 }] });
+def(B.COBBLED_DEEPSLATE, 'cobbled_deepslate', 'Cobbled Deepslate', { ...STONE_LIKE, hardness: 7 });
+def(B.POLISHED_DEEPSLATE, 'polished_deepslate', 'Polished Deepslate', { ...STONE_LIKE, hardness: 7 });
+def(B.DEEPSLATE_BRICKS, 'deepslate_bricks', 'Deepslate Bricks', { ...STONE_LIKE, hardness: 7 });
 def(B.ANVIL, 'anvil', 'Anvil', {
   hardness: 5, tool: 'pick', minTier: 1, sound: 'metal', use: 'anvil', opaque: false,
   tex: { top: 'anvil_top', bottom: 'iron_block', side: 'anvil_side' },
@@ -1035,7 +1066,7 @@ export const blockIdByKey = key => keyToId.get(key) ?? 0;
 // Assigns the next free id ≥ 210. Ids are stable for a given mod list +
 // order (worlds save raw ids, so changing the mod list can orphan blocks —
 // they degrade gracefully to air).
-let nextModId = 367;   // 210-365 base content; 366 brewing stand; mods after
+let nextModId = 391;   // 210-366 base content; 367-390 stone variants/flowers/mushrooms; mods after
 export function registerBlock(key, name, props = {}) {
   if (keyToId.has(key)) throw new Error(`block key "${key}" already registered`);
   while (nextModId < MAX_BLOCKS && BLOCKS[nextModId]) nextModId++;

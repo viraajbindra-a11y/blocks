@@ -295,6 +295,24 @@ shaped('oak_sign', 3, ['PPP', 'PPP', ' R '], { P: ANY_PLANK, R: 'stick' }, 'work
 for (const c of COLORS16) shaped(`${c}_banner`, 1, ['WWW', 'WWW', ' R '], { W: `${c}_wool`, R: 'stick' }, 'worktable');
 shaped('brewing_stand', 1, [' G ', 'CCC'], { G: 'glowstone_dust', C: 'cobblestone' }, 'worktable');
 
+// ── Stone variants + deepslate ─────────────────────────────────────
+for (const n of ['granite', 'diorite', 'andesite']) shaped(`polished_${n}`, 4, ['SS', 'SS'], { S: n }, 'worktable');
+shaped('polished_deepslate', 4, ['SS', 'SS'], { S: 'cobbled_deepslate' }, 'worktable');
+shaped('deepslate_bricks', 4, ['SS', 'SS'], { S: 'polished_deepslate' }, 'worktable');
+SMELT.cobbled_deepslate = { out: 'deepslate', count: 1 };
+
+// ── Flowers are the natural dye sources ────────────────────────────
+for (const [flower, dye] of [
+  ['dandelion', 'yellow_dye'], ['allium', 'magenta_dye'], ['azure_bluet', 'light_gray_dye'],
+  ['blue_orchid', 'light_blue_dye'], ['oxeye_daisy', 'light_gray_dye'], ['lily_of_the_valley', 'white_dye'],
+  ['red_tulip', 'red_dye'], ['orange_tulip', 'orange_dye'], ['white_tulip', 'light_gray_dye'],
+  ['pink_tulip', 'pink_dye'],
+]) shapeless(dye, 1, [flower]);
+
+// ── Bowl + mushroom stew ───────────────────────────────────────────
+shaped('bowl', 4, ['P P', ' P '], { P: ANY_PLANK }, 'worktable');
+shapeless('mushroom_stew', 1, ['brown_mushroom', 'red_mushroom', 'bowl']);
+
 shapeless('flint_and_steel', 1, ['iron_ingot', 'flint']);           // MC-accurate alt
 shaped('tnt', 1, ['GSG', 'SGS', 'GSG'], { G: 'gunpowder', S: 'sand' }, 'worktable');
 shaped('enchanting_table', 1, [' D ', 'DOD', 'OOO'], { D: 'diamond', O: 'obsidian' }, 'worktable');

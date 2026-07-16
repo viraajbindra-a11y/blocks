@@ -1322,6 +1322,69 @@ P.brewing_stand = (d, rnd) => {
   hline(d, 2, 13, 15, [90, 90, 96]);
 };
 
+// ── Stone variants + deepslate ─────────────────────────────────────
+const STONE_VARIANTS = {
+  granite:  { base: [154, 106, 88],  fleck: [176, 130, 110], dark: [124, 82, 66] },
+  diorite:  { base: [206, 206, 208], fleck: [232, 232, 234], dark: [166, 166, 170] },
+  andesite: { base: [136, 138, 136], fleck: [158, 160, 158], dark: [108, 110, 110] },
+};
+for (const [n, c] of Object.entries(STONE_VARIANTS)) {
+  P[n] = (d, rnd) => { noisyFill(d, rnd, c.base, 0.06); speckle(d, rnd, [c.fleck], 0.16); speckle(d, rnd, [c.dark], 0.14); };
+  P[`polished_${n}`] = (d, rnd) => {
+    noisyFill(d, rnd, c.base, 0.02); speckle(d, rnd, [c.fleck], 0.04);
+    hline(d, 0, 15, 7, c.dark); vline(d, 7, 0, 7, c.dark); vline(d, 8, 8, 15, c.dark);   // cut seams
+  };
+}
+P.tuff = (d, rnd) => { noisyFill(d, rnd, [108, 110, 100], 0.08); speckle(d, rnd, [[86, 88, 80]], 0.18); speckle(d, rnd, [[132, 134, 122]], 0.1); };
+P.calcite = (d, rnd) => { noisyFill(d, rnd, [224, 224, 218], 0.03); speckle(d, rnd, [[204, 204, 198]], 0.1); };
+const DEEP = [72, 72, 78];
+P.deepslate = (d, rnd) => { noisyFill(d, rnd, DEEP, 0.07); for (let x = 2; x < 16; x += 5) vline(d, x, 0, 15, shade(DEEP, 0.78)); speckle(d, rnd, [shade(DEEP, 1.2)], 0.06); };
+P.cobbled_deepslate = (d, rnd) => { noisyFill(d, rnd, DEEP, 0.1); speckle(d, rnd, [shade(DEEP, 0.7)], 0.2); speckle(d, rnd, [shade(DEEP, 1.3)], 0.12); };
+P.polished_deepslate = (d, rnd) => { noisyFill(d, rnd, shade(DEEP, 1.05), 0.03); hline(d, 0, 15, 7, shade(DEEP, 0.72)); vline(d, 7, 0, 7, shade(DEEP, 0.72)); vline(d, 8, 8, 15, shade(DEEP, 0.72)); };
+P.deepslate_bricks = (d, rnd) => {
+  noisyFill(d, rnd, shade(DEEP, 1.1), 0.05);
+  const m = shade(DEEP, 0.62);
+  hline(d, 0, 15, 7, m); hline(d, 0, 15, 15, m);
+  vline(d, 7, 0, 7, m); vline(d, 15, 0, 7, m); vline(d, 3, 8, 15, m); vline(d, 11, 8, 15, m);
+};
+
+// ── Flowers + mushrooms ────────────────────────────────────────────
+const FLOWER_TEX = {
+  dandelion: [248, 220, 60], allium: [180, 130, 220], azure_bluet: [222, 232, 240],
+  blue_orchid: [58, 178, 222], oxeye_daisy: [242, 242, 236], lily_of_the_valley: [250, 250, 246],
+  red_tulip: [220, 50, 45], orange_tulip: [236, 142, 40], white_tulip: [246, 246, 246], pink_tulip: [240, 160, 200],
+};
+for (const [f, col] of Object.entries(FLOWER_TEX)) {
+  P[f] = (d, rnd) => {
+    for (let y = 8; y < 15; y++) { px(d, 7, y, [72, 128, 54]); px(d, 8, y, [56, 106, 44]); }   // stem
+    px(d, 5, 11, [82, 140, 60]); px(d, 10, 10, [82, 140, 60]);                                 // leaves
+    blob(d, rnd, 7.5, 5.5, 2.8, 2.4, col, { light: shade(col, 1.2), dark: shade(col, 0.66) }); // bloom
+    px(d, 7, 5, shade(col, 0.7)); px(d, 8, 6, shade(col, 1.25));
+  };
+}
+function mushroomPainter(cap, spot) {
+  return (d, rnd) => {
+    for (let y = 9; y < 14; y++) { px(d, 7, y, [226, 220, 206]); px(d, 8, y, [200, 194, 180]); }  // stalk
+    for (let y = 5; y <= 8; y++) { const w = y - 3; hline(d, 8 - w, 7 + w, y, jitter(cap, rnd, 0.06)); }
+    hline(d, 4, 11, 9, shade(cap, 0.7));
+    px(d, 6, 6, spot); px(d, 9, 7, spot); px(d, 8, 5, spot);
+  };
+}
+P.brown_mushroom = mushroomPainter([150, 110, 80], [186, 150, 116]);
+P.red_mushroom = mushroomPainter([206, 56, 50], [246, 244, 238]);
+function bowlPainter(fill) {
+  return (d, rnd) => {
+    for (let y = 7; y <= 12; y++) {                       // wooden bowl
+      const w = 6 - Math.max(0, y - 10);
+      for (let x = 8 - w; x <= 7 + w; x++) px(d, x, y, jitter([150, 108, 66], rnd, 0.08));
+    }
+    hline(d, 2, 13, 7, [186, 140, 92]);
+    if (fill) { for (let y = 7; y <= 9; y++) hline(d, 4, 11, y, jitter(fill, rnd, 0.1)); }
+  };
+}
+P.bowl = bowlPainter(null);
+P.mushroom_stew = bowlPainter([176, 128, 84]);
+
 // ── Signs + banners ────────────────────────────────────────────────
 P.oak_sign = (d, rnd) => {
   noisyFill(d, rnd, [150, 116, 72], 0.05); border(d, [104, 78, 46]);
