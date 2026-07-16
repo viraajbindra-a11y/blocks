@@ -204,7 +204,8 @@ class Game {
         zombie: 0.55, skeleton: 0.95, creeper: 0.7,
         spider: 1.2, slime: 0.9, blaze: 0.8, phantom: 1.4, witch: 1.1, ghast: 0.5,
         enderman: 0.7, wither: 0.4, villager: 1.0, wolf: 1.3, cat: 1.7,
-        horse: 0.9, minecart: 1.4, boat: 1.2 }[species] ?? 1;
+        horse: 0.9, minecart: 1.4, boat: 1.2,
+        husk: 0.85, drowned: 0.75, stray: 1.15, magma_cube: 0.7 }[species] ?? 1;
       this.audio.play(kind === 'death' ? 'death' : 'hurt', { pitch, vol: 0.45 });
     };
     this.entities = new EntitySystem(this.world, {

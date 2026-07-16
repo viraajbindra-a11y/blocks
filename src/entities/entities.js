@@ -78,6 +78,41 @@ const SPECIES = {
               { key: 'glowstone_dust', count: 3 + (rng() * 3 | 0) }];
     },
   },
+  // Husk — a desert zombie that shrugs off the sun.
+  husk: {
+    hw: 0.4, h: 1.8, health: 20, walkSpeed: 1.4, grazes: false, hopper: false,
+    hostile: true, dmg: 3,
+    biomes: new Set([BIOME.DESERT]),
+    drops(rng) { return rng() < 0.2 ? [{ key: 'sand', count: 1 }] : []; },
+  },
+  // Drowned — a waterlogged zombie of shores and mires; sometimes armed.
+  drowned: {
+    hw: 0.4, h: 1.8, health: 20, walkSpeed: 1.3, grazes: false, hopper: false,
+    hostile: true, nightOnly: true, dmg: 3,
+    biomes: new Set([BIOME.BEACH, BIOME.SWAMP, BIOME.RIVER]),
+    drops(rng) {
+      if (rng() < 0.06) return [{ key: 'trident', count: 1 }];   // the classic prize
+      return rng() < 0.4 ? [{ key: 'bone', count: 1 }] : [];
+    },
+  },
+  // Stray — a frostbitten skeleton of the tundra.
+  stray: {
+    hw: 0.4, h: 1.8, health: 16, walkSpeed: 1.5, grazes: false, hopper: false,
+    hostile: true, nightOnly: true, dmg: 2, ranged: true,
+    biomes: new Set([BIOME.TUNDRA, BIOME.MOUNTAIN]),
+    drops(rng) {
+      const o = [{ key: 'bone', count: 1 + (rng() * 2 | 0) }];
+      if (rng() < 0.4) o.push({ key: 'arrow', count: 1 + (rng() * 2 | 0) });
+      return o;
+    },
+  },
+  // Magma cube — the Smolder's answer to the slime; splits when struck down.
+  magma_cube: {
+    hw: 0.5, h: 0.9, health: 14, walkSpeed: 1.6, grazes: false, hopper: false,
+    hostile: true, dmg: 3, splits: true, dims: new Set(['smolder']),
+    biomes: new Set(),
+    drops(rng) { return [{ key: 'magma_cream', count: 1 + (rng() * 2 | 0) }]; },
+  },
   // Villager — passive; right-click to trade goods for emeralds (and back).
   villager: {
     hw: 0.4, h: 1.9, health: 20, walkSpeed: 1.3, grazes: false, hopper: false,
@@ -314,6 +349,10 @@ const C = {
   hoBody: [0.55, 0.38, 0.22], hoMane: [0.28, 0.19, 0.11], hoLeg: [0.40, 0.28, 0.16], hoHoof: [0.16, 0.13, 0.10],
   mcBody: [0.52, 0.52, 0.56], mcWheel: [0.28, 0.28, 0.30],
   btWood: [0.62, 0.46, 0.28], btTrim: [0.46, 0.33, 0.19],
+  huSkin: [0.62, 0.55, 0.36], huShirt: [0.45, 0.38, 0.26], huLimb: [0.52, 0.46, 0.30],
+  drSkin: [0.22, 0.45, 0.44], drShirt: [0.16, 0.34, 0.38], drLimb: [0.18, 0.38, 0.38], drEye: [0.45, 0.85, 0.80],
+  stBone: [0.80, 0.88, 0.92], stBone2: [0.66, 0.76, 0.84], stEye: [0.42, 0.72, 0.88],
+  mgBody: [0.86, 0.32, 0.10], mgCore: [1.0, 0.72, 0.22], mgEye: [0.20, 0.08, 0.05],
 };
 
 // ── Matrix helpers ────────────────────────────────────────────────
@@ -563,34 +602,41 @@ function chickenParts(e, parts, nowS) {
 }
 
 // ── Minecraft hostiles ──
-function zombieParts(e, parts) {
+// Shared shambling-humanoid shape — zombie, husk and drowned differ only in palette.
+function zombieLike(e, parts, skin, shirt, limb, eye) {
   const b = baseMat(e);
   const moving = Math.hypot(e.vel[0], e.vel[2]) > 0.2;
   const sw = moving ? Math.sin(e.walkPhase) * 0.6 : 0;
-  addPart(parts, b, C.zomLimb, -0.13, 0.44, 0, sw, 0, -0.22, 0, 0.16, 0.46, 0.16);   // legs
-  addPart(parts, b, C.zomLimb, 0.13, 0.44, 0, -sw, 0, -0.22, 0, 0.16, 0.46, 0.16);
-  addPart(parts, b, C.zomShirt, 0, 1.02, 0, 0, 0, 0, 0, 0.42, 0.62, 0.24);           // torso
-  addPart(parts, b, C.zomSkin, -0.29, 1.28, 0.02, -1.45, 0, -0.24, 0, 0.14, 0.5, 0.14); // arms out
-  addPart(parts, b, C.zomSkin, 0.29, 1.28, 0.02, -1.45, 0, -0.24, 0, 0.14, 0.5, 0.14);
-  addPart(parts, b, C.zomSkin, 0, 1.5, 0.02, 0, 0, 0, 0, 0.34, 0.34, 0.34);          // head
-  addPart(parts, b, C.zomEye, -0.08, 1.54, 0.18, 0, 0, 0, 0, 0.06, 0.05, 0.04);
-  addPart(parts, b, C.zomEye, 0.08, 1.54, 0.18, 0, 0, 0, 0, 0.06, 0.05, 0.04);
+  addPart(parts, b, limb, -0.13, 0.44, 0, sw, 0, -0.22, 0, 0.16, 0.46, 0.16);   // legs
+  addPart(parts, b, limb, 0.13, 0.44, 0, -sw, 0, -0.22, 0, 0.16, 0.46, 0.16);
+  addPart(parts, b, shirt, 0, 1.02, 0, 0, 0, 0, 0, 0.42, 0.62, 0.24);           // torso
+  addPart(parts, b, skin, -0.29, 1.28, 0.02, -1.45, 0, -0.24, 0, 0.14, 0.5, 0.14); // arms out
+  addPart(parts, b, skin, 0.29, 1.28, 0.02, -1.45, 0, -0.24, 0, 0.14, 0.5, 0.14);
+  addPart(parts, b, skin, 0, 1.5, 0.02, 0, 0, 0, 0, 0.34, 0.34, 0.34);          // head
+  addPart(parts, b, eye, -0.08, 1.54, 0.18, 0, 0, 0, 0, 0.06, 0.05, 0.04);
+  addPart(parts, b, eye, 0.08, 1.54, 0.18, 0, 0, 0, 0, 0.06, 0.05, 0.04);
 }
+const zombieParts = (e, parts) => zombieLike(e, parts, C.zomSkin, C.zomShirt, C.zomLimb, C.zomEye);
+const huskParts = (e, parts) => zombieLike(e, parts, C.huSkin, C.huShirt, C.huLimb, C.zomEye);
+const drownedParts = (e, parts) => zombieLike(e, parts, C.drSkin, C.drShirt, C.drLimb, C.drEye);
 
-function skeletonParts(e, parts) {
+// Shared bony archer shape — skeleton and stray differ only in palette.
+function skeletonLike(e, parts, bone, bone2, eye) {
   const b = baseMat(e);
   const moving = Math.hypot(e.vel[0], e.vel[2]) > 0.2;
   const sw = moving ? Math.sin(e.walkPhase) * 0.6 : 0;
-  addPart(parts, b, C.skBone, -0.11, 0.44, 0, sw, 0, -0.22, 0, 0.1, 0.48, 0.1);      // legs
-  addPart(parts, b, C.skBone, 0.11, 0.44, 0, -sw, 0, -0.22, 0, 0.1, 0.48, 0.1);
-  addPart(parts, b, C.skBone2, 0, 1.02, 0, 0, 0, 0, 0, 0.3, 0.6, 0.18);              // ribcage
-  addPart(parts, b, C.skBone, 0, 1.28, 0, 0, 0, 0, 0, 0.36, 0.12, 0.2);             // shoulders
-  addPart(parts, b, C.skBone, -0.24, 1.32, 0.02, -1.4, 0, -0.24, 0, 0.09, 0.46, 0.09); // arms aiming
-  addPart(parts, b, C.skBone, 0.24, 1.32, 0.02, -1.4, 0, -0.24, 0, 0.09, 0.46, 0.09);
-  addPart(parts, b, C.skBone, 0, 1.5, 0.02, 0, 0, 0, 0, 0.3, 0.3, 0.3);              // skull
-  addPart(parts, b, C.skEye, -0.07, 1.52, 0.16, 0, 0, 0, 0, 0.06, 0.06, 0.04);
-  addPart(parts, b, C.skEye, 0.07, 1.52, 0.16, 0, 0, 0, 0, 0.06, 0.06, 0.04);
+  addPart(parts, b, bone, -0.11, 0.44, 0, sw, 0, -0.22, 0, 0.1, 0.48, 0.1);      // legs
+  addPart(parts, b, bone, 0.11, 0.44, 0, -sw, 0, -0.22, 0, 0.1, 0.48, 0.1);
+  addPart(parts, b, bone2, 0, 1.02, 0, 0, 0, 0, 0, 0.3, 0.6, 0.18);              // ribcage
+  addPart(parts, b, bone, 0, 1.28, 0, 0, 0, 0, 0, 0.36, 0.12, 0.2);             // shoulders
+  addPart(parts, b, bone, -0.24, 1.32, 0.02, -1.4, 0, -0.24, 0, 0.09, 0.46, 0.09); // arms aiming
+  addPart(parts, b, bone, 0.24, 1.32, 0.02, -1.4, 0, -0.24, 0, 0.09, 0.46, 0.09);
+  addPart(parts, b, bone, 0, 1.5, 0.02, 0, 0, 0, 0, 0.3, 0.3, 0.3);              // skull
+  addPart(parts, b, eye, -0.07, 1.52, 0.16, 0, 0, 0, 0, 0.06, 0.06, 0.04);
+  addPart(parts, b, eye, 0.07, 1.52, 0.16, 0, 0, 0, 0, 0.06, 0.06, 0.04);
 }
+const skeletonParts = (e, parts) => skeletonLike(e, parts, C.skBone, C.skBone2, C.skEye);
+const strayParts = (e, parts) => skeletonLike(e, parts, C.stBone, C.stBone2, C.stEye);
 
 function creeperParts(e, parts) {
   const b = baseMat(e);
@@ -729,16 +775,19 @@ function spiderParts(e, parts) {
 }
 
 // Slime: a translucent green cube that squashes on landing, with a face.
-function slimeParts(e, parts, nowS) {
+// Shared gelatinous-cube shape — slime and magma cube differ only in palette.
+function slimeLike(e, parts, body, core, eye) {
   const b = baseMat(e);
   const sq = Math.max(0.2, e.h * 0.86);
-  addPart(parts, b, C.slBody, 0, sq * 0.5, 0, 0, 0, 0, 0, sq, sq, sq);
-  addPart(parts, b, C.slCore, 0, sq * 0.5, 0, 0, 0, 0, 0, sq * 0.5, sq * 0.5, sq * 0.5);
+  addPart(parts, b, body, 0, sq * 0.5, 0, 0, 0, 0, 0, sq, sq, sq);
+  addPart(parts, b, core, 0, sq * 0.5, 0, 0, 0, 0, 0, sq * 0.5, sq * 0.5, sq * 0.5);
   const ex = sq * 0.22, ey = sq * 0.55, ez = sq * 0.5;
-  addPart(parts, b, C.slEye, -ex, ey, ez, 0, 0, 0, 0, 0.08, 0.08, 0.03);
-  addPart(parts, b, C.slEye, ex, ey, ez, 0, 0, 0, 0, 0.08, 0.08, 0.03);
-  addPart(parts, b, C.slEye, 0, sq * 0.38, ez, 0, 0, 0, 0, 0.06, 0.05, 0.03);
+  addPart(parts, b, eye, -ex, ey, ez, 0, 0, 0, 0, 0.08, 0.08, 0.03);
+  addPart(parts, b, eye, ex, ey, ez, 0, 0, 0, 0, 0.08, 0.08, 0.03);
+  addPart(parts, b, eye, 0, sq * 0.38, ez, 0, 0, 0, 0, 0.06, 0.05, 0.03);
 }
+const slimeParts = (e, parts) => slimeLike(e, parts, C.slBody, C.slCore, C.slEye);
+const magmaCubeParts = (e, parts) => slimeLike(e, parts, C.mgBody, C.mgCore, C.mgEye);
 
 function endermanParts(e, parts) {
   const b = baseMat(e);
@@ -866,7 +915,11 @@ const PART_BUILDERS = {
   sheep: sheepParts,
   chicken: chickenParts,
   zombie: zombieParts,
+  husk: huskParts,
+  drowned: drownedParts,
   skeleton: skeletonParts,
+  stray: strayParts,
+  magma_cube: magmaCubeParts,
   creeper: creeperParts,
   spider: spiderParts,
   slime: slimeParts,
@@ -1135,7 +1188,7 @@ export class EntitySystem {
       fuse: 0,                                // creeper detonation timer
       love: 0, baby: false, growT: 0,         // breeding
       sheared: false, woolT: 0,               // sheep fleece regrow
-      size: species === 'slime' ? 2 : 0,      // slime split tier
+      size: s.splits ? 2 : 0,                 // slime / magma-cube split tier
       variant: species === 'mosshopper' && biome === BIOME.TUNDRA ? 'snow' : null,
       aabb: makeAabb(),
     };
@@ -1955,7 +2008,7 @@ export class EntitySystem {
     const ns = e.size - 1, sc = ns / 2;
     for (let i = 0; i < 2; i++) {
       const off = (i - 0.5) * 0.7;
-      const c = this._makeCreature('slime', e.pos[0] + off, e.pos[1] + 0.1, e.pos[2] + off, 0);
+      const c = this._makeCreature(e.species, e.pos[0] + off, e.pos[1] + 0.1, e.pos[2] + off, 0);
       c.size = ns;
       c.hw = e.def.hw * sc; c.h = e.def.h * sc;
       c.health = Math.max(1, Math.round(e.def.health * sc));
@@ -1979,7 +2032,7 @@ export class EntitySystem {
     if (e.health <= 0) {
       e.dead = true;
       if (e.def.boss) this._bossesDown.add(e.species);   // don't respawn this boss this session
-      if (e.species === 'slime' && (e.size || 0) > 1) this._splitSlime(e);
+      if (e.def.splits && (e.size || 0) > 1) this._splitSlime(e);
       this.hooks.audio?.creature?.(e.species, 'death');
       const xp = e.def.boss ? 50 : e.def.hostile ? 5 : 1 + (this.rng() * 3 | 0);
       this.hooks.awardXp?.(xp);
