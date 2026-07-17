@@ -1322,6 +1322,106 @@ P.brewing_stand = (d, rnd) => {
   hline(d, 2, 13, 15, [90, 90, 96]);
 };
 
+// ── Building & natural blocks ─────────────────────────────────────
+// One style factory drives the whole catalogue: [base colour, style].
+function texFor(col, style) {
+  const dark = shade(col, 0.64), lite = shade(col, 1.28);
+  const brick = (d, rnd) => {
+    noisyFill(d, rnd, col, 0.05);
+    hline(d, 0, 15, 7, dark); hline(d, 0, 15, 15, dark);
+    vline(d, 7, 0, 7, dark); vline(d, 15, 0, 7, dark);
+    vline(d, 3, 8, 15, dark); vline(d, 11, 8, 15, dark);
+  };
+  switch (style) {
+    case 'smooth': return (d, rnd) => { noisyFill(d, rnd, col, 0.02); speckle(d, rnd, [lite], 0.03); };
+    case 'brick': return brick;
+    case 'cracked': return (d, rnd) => {
+      brick(d, rnd);
+      for (let i = 0; i < 3; i++) line(d, 2 + ((rnd() * 12) | 0), 2, 2 + ((rnd() * 12) | 0), 13, shade(col, 0.4));
+    };
+    case 'pillar': return (d, rnd) => {
+      noisyFill(d, rnd, col, 0.03);
+      vline(d, 2, 0, 15, dark); vline(d, 7, 0, 15, dark); vline(d, 12, 0, 15, dark);
+      vline(d, 3, 0, 15, lite); vline(d, 8, 0, 15, lite);
+    };
+    case 'chiseled': return (d, rnd) => {
+      noisyFill(d, rnd, col, 0.04); border(d, dark);
+      for (let y = 3; y <= 12; y++) { px(d, 7, y, dark); px(d, 8, y, lite); }
+      hline(d, 4, 11, 3, dark); hline(d, 4, 11, 12, dark);
+    };
+    case 'gilded': return (d, rnd) => {
+      noisyFill(d, rnd, col, 0.06); speckle(d, rnd, [dark], 0.1);
+      for (let i = 0; i < 5; i++) { const x = 3 + ((rnd() * 10) | 0), y = 3 + ((rnd() * 10) | 0);
+        px(d, x, y, [244, 202, 66]); px(d, x + 1, y, [255, 236, 150]); }
+    };
+    case 'grain': return (d, rnd) => {           // sand / soil
+      noisyFill(d, rnd, col, 0.1); speckle(d, rnd, [dark], 0.2); speckle(d, rnd, [lite], 0.16);
+    };
+    case 'metal': return (d, rnd) => {
+      noisyFill(d, rnd, col, 0.04); border(d, dark);
+      vline(d, 5, 2, 13, lite); vline(d, 10, 2, 13, dark); hline(d, 3, 12, 8, lite);
+    };
+    default: return (d, rnd) => {                // plain rock
+      noisyFill(d, rnd, col, 0.06); speckle(d, rnd, [lite], 0.1); speckle(d, rnd, [dark], 0.1);
+    };
+  }
+}
+const SIMPLE_TEX = {
+  blackstone: [[44, 38, 46], 'rock'],
+  polished_blackstone: [[54, 48, 56], 'smooth'],
+  polished_blackstone_bricks: [[52, 46, 54], 'brick'],
+  chiseled_polished_blackstone: [[56, 50, 58], 'chiseled'],
+  cracked_polished_blackstone_bricks: [[50, 44, 52], 'cracked'],
+  gilded_blackstone: [[48, 40, 46], 'gilded'],
+  soul_soil: [[78, 60, 48], 'grain'],
+  shroomlight: [[238, 150, 70], 'rock'],
+  ancient_debris: [[92, 62, 54], 'metal'],
+  quartz_block: [[236, 232, 224], 'smooth'],
+  quartz_bricks: [[232, 228, 220], 'brick'],
+  quartz_pillar: [[234, 230, 222], 'pillar'],
+  chiseled_quartz_block: [[234, 230, 222], 'chiseled'],
+  smooth_quartz: [[238, 234, 226], 'smooth'],
+  amethyst_block: [[150, 106, 204], 'rock'],
+  dripstone_block: [[142, 112, 96], 'rock'],
+  moss_block: [[84, 118, 48], 'grain'],
+  tuff_bricks: [[112, 114, 104], 'brick'],
+  coarse_dirt: [[128, 92, 62], 'grain'],
+  podzol: [[92, 68, 34], 'grain'],
+  rooted_dirt: [[144, 106, 76], 'grain'],
+  mycelium: [[124, 108, 116], 'grain'],
+  red_sand: [[190, 104, 48], 'grain'],
+  red_sandstone: [[184, 100, 44], 'rock'],
+  chiseled_red_sandstone: [[186, 102, 46], 'chiseled'],
+  cut_red_sandstone: [[188, 104, 48], 'brick'],
+  smooth_red_sandstone: [[190, 106, 50], 'smooth'],
+  snow_block: [[240, 246, 250], 'smooth'],
+  packed_ice: [[164, 196, 240], 'smooth'],
+  blue_ice: [[116, 168, 240], 'smooth'],
+  coal_block: [[26, 26, 28], 'rock'],
+  netherite_block: [[62, 54, 56], 'metal'],
+  raw_iron_block: [[196, 156, 122], 'metal'],
+  raw_copper_block: [[176, 110, 72], 'metal'],
+  raw_gold_block: [[220, 176, 60], 'metal'],
+  bone_block: [[226, 222, 200], 'pillar'],
+  hay_block: [[196, 158, 40], 'pillar'],
+  magma_block: [[112, 52, 30], 'rock'],
+  packed_mud: [[142, 108, 82], 'rock'],
+  mud_bricks: [[136, 102, 78], 'brick'],
+  end_stone_bricks: [[220, 224, 164], 'brick'],
+  terracotta: [[150, 92, 66], 'rock'],
+};
+for (const [k, [col, style]] of Object.entries(SIMPLE_TEX)) P[k] = texFor(col, style);
+P.nether_quartz_ore = (d, rnd) => {              // netherrack shot through with quartz
+  noisyFill(d, rnd, [112, 56, 56], 0.08);
+  for (let i = 0; i < 6; i++) { const x = 3 + ((rnd() * 10) | 0), y = 3 + ((rnd() * 10) | 0);
+    px(d, x, y, [236, 232, 224]); px(d, x + 1, y, [200, 196, 188]); }
+};
+P.quartz = (d, rnd) => { blob(d, rnd, 8, 8.5, 3.6, 4, [236, 232, 224], { light: [255, 255, 255], dark: [190, 186, 178] }); };
+P.amethyst_shard = (d, rnd) => {
+  blob(d, rnd, 8, 9, 3, 4.4, [168, 120, 220], { light: [212, 176, 250], dark: [104, 66, 156] });
+  vline(d, 8, 4, 13, [220, 190, 255]);
+};
+
 // ── Stained glass + concrete powder (16 colours each) ─────────────
 for (const [sc, scol] of Object.entries(WOOL_COLORS)) {
   P[`${sc}_stained_glass`] = (d, rnd) => {

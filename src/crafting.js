@@ -231,12 +231,8 @@ for (const c of COLORS16) {
     ['sand', 'sand', 'sand', 'sand', 'gravel', 'gravel', 'gravel', 'gravel', `${c}_dye`], 'worktable');
   shaped(`${c}_stained_glass`, 8, ['GGG', 'GDG', 'GGG'], { G: 'glass', D: `${c}_dye` }, 'worktable');
   shaped(`${c}_stained_glass_pane`, 16, ['GGG', 'GGG'], { G: `${c}_stained_glass` }, 'worktable');
-  if (c !== 'white') {
-    shapeless(`${c}_terracotta`, 8, [...Array(8).fill('white_terracotta'), `${c}_dye`], 'worktable');
-  }
   SMELT[`${c}_terracotta`] = { out: `${c}_glazed_terracotta`, count: 1 };
 }
-SMELT.clay = { out: 'white_terracotta', count: 1 };   // fired clay block → terracotta
 
 // ── Pumpkin / melon / sugar cane / cake ────────────────────────────
 shapeless('pumpkin_seeds', 4, ['pumpkin']);
@@ -315,6 +311,48 @@ for (const [flower, dye] of [
 // ── Bowl + mushroom stew ───────────────────────────────────────────
 shaped('bowl', 4, ['P P', ' P '], { P: ANY_PLANK }, 'worktable');
 shapeless('mushroom_stew', 1, ['brown_mushroom', 'red_mushroom', 'bowl']);
+
+// ── Building & natural blocks ──────────────────────────────────────
+// Storage blocks (9 ⇄ 1)
+for (const [block, unit] of [['coal_block', 'coal'], ['netherite_block', 'netherite_ingot'],
+  ['raw_iron_block', 'raw_iron'], ['raw_copper_block', 'raw_copper'], ['raw_gold_block', 'raw_gold'],
+  ['amethyst_block', 'amethyst_shard']]) {
+  shaped(block, 1, ['UUU', 'UUU', 'UUU'], { U: unit }, 'worktable');
+  shapeless(unit, 9, [block]);
+}
+shaped('bone_block', 1, ['MMM', 'MMM', 'MMM'], { M: 'bone_meal' }, 'worktable');
+shapeless('bone_meal', 9, ['bone_block']);
+shaped('hay_block', 1, ['WWW', 'WWW', 'WWW'], { W: 'wheat' }, 'worktable');
+shapeless('wheat', 9, ['hay_block']);
+shaped('snow_block', 1, ['SS', 'SS'], { S: 'snow' }, 'worktable');
+shaped('packed_ice', 1, ['II', 'II'], { I: 'ice' }, 'worktable');
+shaped('blue_ice', 1, ['II', 'II'], { I: 'packed_ice' }, 'worktable');
+shapeless('magma_block', 1, ['magma_cream', 'magma_cream', 'magma_cream', 'magma_cream']);
+// Blackstone working
+shaped('polished_blackstone', 4, ['BB', 'BB'], { B: 'blackstone' }, 'worktable');
+shaped('polished_blackstone_bricks', 4, ['BB', 'BB'], { B: 'polished_blackstone' }, 'worktable');
+shapeless('chiseled_polished_blackstone', 1, ['polished_blackstone']);
+SMELT.polished_blackstone_bricks = { out: 'cracked_polished_blackstone_bricks', count: 1 };
+// Quartz working
+shaped('quartz_block', 1, ['QQ', 'QQ'], { Q: 'quartz' }, 'worktable');
+shaped('quartz_bricks', 4, ['QQ', 'QQ'], { Q: 'quartz_block' }, 'worktable');
+shaped('quartz_pillar', 2, ['Q', 'Q'], { Q: 'quartz_block' }, 'worktable');
+shapeless('chiseled_quartz_block', 1, ['quartz_block']);
+SMELT.quartz_block = { out: 'smooth_quartz', count: 1 };
+// Mud, red sandstone, tuff, end stone, terracotta
+shapeless('packed_mud', 1, ['mud', 'wheat']);
+shaped('mud_bricks', 4, ['MM', 'MM'], { M: 'packed_mud' }, 'worktable');
+shaped('red_sandstone', 1, ['SS', 'SS'], { S: 'red_sand' }, 'worktable');
+shaped('cut_red_sandstone', 4, ['SS', 'SS'], { S: 'red_sandstone' }, 'worktable');
+shaped('chiseled_red_sandstone', 1, ['S', 'S'], { S: 'red_sandstone' }, 'worktable');
+SMELT.red_sandstone = { out: 'smooth_red_sandstone', count: 1 };
+shaped('tuff_bricks', 4, ['TT', 'TT'], { T: 'tuff' }, 'worktable');
+shaped('end_stone_bricks', 4, ['EE', 'EE'], { E: 'end_stone' }, 'worktable');
+shapeless('coarse_dirt', 2, ['dirt', 'dirt', 'gravel', 'gravel']);
+SMELT.ancient_debris = { out: 'netherite_scrap', count: 1 };
+// Terracotta is fired clay; the colours dye from it (was white_terracotta before).
+SMELT.clay = { out: 'terracotta', count: 1 };
+for (const c of COLORS16) shapeless(`${c}_terracotta`, 8, [...Array(8).fill('terracotta'), `${c}_dye`], 'worktable');
 
 shapeless('flint_and_steel', 1, ['iron_ingot', 'flint']);           // MC-accurate alt
 shaped('tnt', 1, ['GSG', 'SGS', 'GSG'], { G: 'gunpowder', S: 'sand' }, 'worktable');

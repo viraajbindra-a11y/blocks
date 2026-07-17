@@ -1091,7 +1091,69 @@ export const blockIdByKey = key => keyToId.get(key) ?? 0;
 // Assigns the next free id ≥ 210. Ids are stable for a given mod list +
 // order (worlds save raw ids, so changing the mod list can orphan blocks —
 // they degrade gracefully to air).
-let nextModId = 439;   // 210-390 base content; 391-438 stained glass/panes/concrete powder; mods after
+// ── Building & natural blocks (439+) ──────────────────────────────
+// Data-driven: ids are assigned in order, and each key doubles as its
+// texture key (def() defaults tex to {all:key}) and its item key.
+const SOFT = { hardness: 0.6, tool: 'shovel', sound: 'soft' };
+const SIMPLE_BLOCKS = [
+  // Blackstone (Smolder rock) + its worked forms
+  ['blackstone', 'Blackstone', { ...STONE_LIKE }],
+  ['polished_blackstone', 'Polished Blackstone', { ...STONE_LIKE }],
+  ['polished_blackstone_bricks', 'Polished Blackstone Bricks', { ...STONE_LIKE }],
+  ['chiseled_polished_blackstone', 'Chiseled Polished Blackstone', { ...STONE_LIKE }],
+  ['cracked_polished_blackstone_bricks', 'Cracked Polished Blackstone Bricks', { ...STONE_LIKE }],
+  ['gilded_blackstone', 'Gilded Blackstone', { ...STONE_LIKE, drops: [{ item: 'gold_nugget', min: 2, max: 5 }] }],
+  ['soul_soil', 'Soul Soil', { ...SOFT, hardness: 1 }],
+  ['shroomlight', 'Shroomlight', { hardness: 1, sound: 'soft', light: 15 }],
+  ['ancient_debris', 'Ancient Debris', { ...STONE_LIKE, hardness: 12, minTier: 4, sound: 'metal' }],
+  ['nether_quartz_ore', 'Nether Quartz Ore', { ...STONE_LIKE, drops: [{ item: 'quartz', min: 1, max: 1 }] }],
+  // Quartz
+  ['quartz_block', 'Block of Quartz', { ...STONE_LIKE, hardness: 3 }],
+  ['quartz_bricks', 'Quartz Bricks', { ...STONE_LIKE, hardness: 3 }],
+  ['quartz_pillar', 'Quartz Pillar', { ...STONE_LIKE, hardness: 3 }],
+  ['chiseled_quartz_block', 'Chiseled Quartz Block', { ...STONE_LIKE, hardness: 3 }],
+  ['smooth_quartz', 'Smooth Quartz', { ...STONE_LIKE, hardness: 3 }],
+  // Deep/cave natural rock
+  ['amethyst_block', 'Block of Amethyst', { hardness: 3, tool: 'pick', minTier: 1, sound: 'glass',
+    drops: [{ item: 'amethyst_shard', min: 2, max: 4 }] }],
+  ['dripstone_block', 'Dripstone Block', { ...STONE_LIKE, hardness: 3 }],
+  ['moss_block', 'Moss Block', { ...SOFT, hardness: 0.4 }],
+  ['tuff_bricks', 'Tuff Bricks', { ...STONE_LIKE, hardness: 5 }],
+  // Surface soils
+  ['coarse_dirt', 'Coarse Dirt', { ...SOFT }],
+  ['podzol', 'Podzol', { ...SOFT }],
+  ['rooted_dirt', 'Rooted Dirt', { ...SOFT }],
+  ['mycelium', 'Mycelium', { ...SOFT }],
+  ['red_sand', 'Red Sand', { ...SOFT, hardness: 0.5 }],
+  ['red_sandstone', 'Red Sandstone', { ...STONE_LIKE, hardness: 4 }],
+  ['chiseled_red_sandstone', 'Chiseled Red Sandstone', { ...STONE_LIKE, hardness: 4 }],
+  ['cut_red_sandstone', 'Cut Red Sandstone', { ...STONE_LIKE, hardness: 4 }],
+  ['smooth_red_sandstone', 'Smooth Red Sandstone', { ...STONE_LIKE, hardness: 4 }],
+  // Ice + snow
+  ['snow_block', 'Snow Block', { ...SOFT, hardness: 0.4 }],
+  ['packed_ice', 'Packed Ice', { hardness: 1, tool: 'pick', sound: 'glass' }],
+  ['blue_ice', 'Blue Ice', { hardness: 1.4, tool: 'pick', sound: 'glass' }],
+  // Storage / worked blocks
+  ['coal_block', 'Block of Coal', { ...STONE_LIKE, hardness: 5 }],
+  ['netherite_block', 'Block of Netherite', { ...STONE_LIKE, hardness: 12, minTier: 4, sound: 'metal' }],
+  ['raw_iron_block', 'Block of Raw Iron', { ...STONE_LIKE, hardness: 5, minTier: 2, sound: 'metal' }],
+  ['raw_copper_block', 'Block of Raw Copper', { ...STONE_LIKE, hardness: 5, minTier: 2, sound: 'metal' }],
+  ['raw_gold_block', 'Block of Raw Gold', { ...STONE_LIKE, hardness: 5, minTier: 3, sound: 'metal' }],
+  ['bone_block', 'Bone Block', { hardness: 2, tool: 'pick', sound: 'stone' }],
+  ['hay_block', 'Hay Bale', { hardness: 0.5, sound: 'soft' }],
+  ['magma_block', 'Magma Block', { ...STONE_LIKE, hardness: 1, light: 3 }],
+  ['packed_mud', 'Packed Mud', { ...STONE_LIKE, hardness: 1 }],
+  ['mud_bricks', 'Mud Bricks', { ...STONE_LIKE, hardness: 1.5 }],
+  ['end_stone_bricks', 'End Stone Bricks', { ...STONE_LIKE, hardness: 4.5 }],
+  ['terracotta', 'Terracotta', { ...STONE_LIKE, hardness: 1.25 }],
+];
+SIMPLE_BLOCKS.forEach(([key, name, props], i) => {
+  const id = 439 + i;
+  B[key.toUpperCase()] = id;
+  def(id, key, name, props);
+});
+
+let nextModId = 439 + SIMPLE_BLOCKS.length;   // mods start after the base catalogue
 export function registerBlock(key, name, props = {}) {
   if (keyToId.has(key)) throw new Error(`block key "${key}" already registered`);
   while (nextModId < MAX_BLOCKS && BLOCKS[nextModId]) nextModId++;

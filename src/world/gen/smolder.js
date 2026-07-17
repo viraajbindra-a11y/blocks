@@ -168,6 +168,26 @@ export function makeSmolderGenerator(rawSeed) {
       }
     }
 
+    // Smolder rock: blackstone shelves, soul soil, quartz seams, and rare
+    // ancient debris / gilded blackstone buried deep.
+    for (let t = 0; t < 70; t++) {
+      const x = rng() * 16 | 0, z = rng() * 16 | 0, y = 2 + (rng() * 70 | 0);
+      const i = bIdx(x, y, z);
+      if (blocks[i] !== B.SCORCHSTONE) continue;
+      const r = rng();
+      if (r < 0.34) blocks[i] = B.BLACKSTONE;
+      else if (r < 0.5) blocks[i] = B.SOUL_SOIL;
+      else if (r < 0.72) blocks[i] = B.NETHER_QUARTZ_ORE;
+      else if (r < 0.76 && y < 22) blocks[i] = B.ANCIENT_DEBRIS;
+      else if (r < 0.8 && y < 30) blocks[i] = B.GILDED_BLACKSTONE;
+    }
+    // Shroomlights glowing in the charfungus groves.
+    for (let t = 0; t < 4; t++) {
+      const x = rng() * 16 | 0, z = rng() * 16 | 0, y = 2 + (rng() * 70 | 0);
+      const i = bIdx(x, y, z);
+      if (blocks[i] === B.CHARFUNGUS && rng() < 0.4) blocks[i] = B.SHROOMLIGHT;
+    }
+
     // Nether fortresses — deterministic from the seed, clipped to this chunk
     // so they span chunk borders without neighbour writes (see structures.js).
     const setLocal = (wx, wy, wz, id, force) => {

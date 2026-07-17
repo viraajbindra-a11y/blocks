@@ -223,6 +223,9 @@ export function makeGenerator(rawSeed, decorations = []) {
     for (let v = 0; v < 3; v++) vein(B.ANDESITE, 6, 78, 18 + rng() * 14);
     for (let v = 0; v < 2; v++) vein(B.TUFF, 4, 24, 8 + rng() * 8);
     if (rng() < 0.3) vein(B.CALCITE, 4, 26, 5 + rng() * 5);
+    if (rng() < 0.22) vein(B.AMETHYST_BLOCK, 4, 30, 4 + rng() * 4);   // geode-ish pockets
+    for (let v = 0; v < 2; v++) vein(B.DRIPSTONE_BLOCK, 6, 40, 6 + rng() * 6);
+    if (rng() < 0.35) vein(B.MOSS_BLOCK, 20, 52, 6 + rng() * 8);
     for (let v = 0; v < 4; v++)  vein(B.SOIL, 24, 72, 5 + rng() * 5);
     for (let v = 0; v < 3; v++)  vein(B.GRAVEL, 12, 64, 4 + rng() * 5);
     for (let v = 0; v < 2; v++)  vein(B.MOSSROCK, 30, 60, 3 + rng() * 4);
