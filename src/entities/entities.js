@@ -1786,10 +1786,10 @@ export class EntitySystem {
   }
 
   // A player-loosed arrow (from a drawn bow). power scales speed.
-  spawnTrident(origin, dir, dmg) {
+  spawnTrident(origin, dir, dmg, loyal = false) {
     const sp = 30;
     this.entities.push({
-      kind: 'arrow', species: 'arrow', owner: 'player', trident: true, dmg, age: 0, dead: false,
+      kind: 'arrow', species: 'arrow', owner: 'player', trident: true, loyal, dmg, age: 0, dead: false,
       pos: [origin[0] + dir[0] * 0.6, origin[1] + dir[1] * 0.6, origin[2] + dir[2] * 0.6],
       vel: [dir[0] * sp, dir[1] * sp, dir[2] * sp],
       yaw: Math.atan2(dir[0], dir[2]), pitch: Math.atan2(dir[1], Math.hypot(dir[0], dir[2])),
@@ -1800,14 +1800,16 @@ export class EntitySystem {
   _dropTrident(e) {
     if (e._dropped) return;
     e._dropped = true;
+    // Loyalty returns it straight to the thrower; otherwise it lies where it fell.
+    if (e.loyal && this.hooks.giveItem?.('trident', 1)) return;
     this.spawnDrops(e.pos[0], e.pos[1], e.pos[2], [{ key: 'trident', count: 1 }]);
   }
 
-  spawnPlayerArrow(origin, dir, power, dmg, fire = false) {
+  spawnPlayerArrow(origin, dir, power, dmg, fire = false, punch = 0) {
     if (this._arrowCount() > 24) return;
     const sp = 26 * power;
     this.entities.push({
-      kind: 'arrow', species: 'arrow', owner: 'player', fire,
+      kind: 'arrow', species: 'arrow', owner: 'player', fire, punch,
       pos: [origin[0] + dir[0] * 0.6, origin[1] + dir[1] * 0.6, origin[2] + dir[2] * 0.6],
       vel: [dir[0] * sp, dir[1] * sp, dir[2] * sp],
       yaw: Math.atan2(dir[0], dir[2]), pitch: Math.atan2(dir[1], Math.hypot(dir[0], dir[2])),
@@ -1845,7 +1847,8 @@ export class EntitySystem {
             e.pos[1] > b.min[1] - 0.15 && e.pos[1] < b.max[1] + 0.15 &&
             e.pos[2] > b.min[2] - 0.15 && e.pos[2] < b.max[2] + 0.15) {
           const l = Math.hypot(e.vel[0], e.vel[2]) || 1;
-          this.hitEntity(c, e.dmg, [e.vel[0] / l, 0.3, e.vel[2] / l]);
+          c._looting = e.looting || 0;
+          this.hitEntity(c, e.dmg, [e.vel[0] / l, 0.3, e.vel[2] / l], e.punch || 0);   // Punch
           if (e.trident) this._dropTrident(e);
           e.dead = true; return;
         }
@@ -2036,7 +2039,10 @@ export class EntitySystem {
       this.hooks.audio?.creature?.(e.species, 'death');
       const xp = e.def.boss ? 50 : e.def.hostile ? 5 : 1 + (this.rng() * 3 | 0);
       this.hooks.awardXp?.(xp);
-      this.spawnDrops(e.pos[0], e.pos[1] + e.h * 0.5, e.pos[2], e.def.drops(this.rng));
+      const loot = e.def.drops(this.rng);
+      // Looting: the killing blade multiplies what falls.
+      if (e._looting) for (const d of loot) d.count += 1 + (this.rng() * e._looting | 0);
+      this.spawnDrops(e.pos[0], e.pos[1] + e.h * 0.5, e.pos[2], loot);
       this.hooks.particles?.burstBlock?.(
         Math.floor(e.pos[0]), Math.floor(e.pos[1]), Math.floor(e.pos[2]), 0, 12, 0.7, this.rng);
       return;

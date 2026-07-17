@@ -266,19 +266,38 @@ export const ENCHANT_NAMES = {
   protection: 'Protection', unbreaking: 'Unbreaking',
   fortune: 'Fortune', silk_touch: 'Silk Touch', fire_aspect: 'Fire Aspect',
   knockback: 'Knockback', flame: 'Flame', infinity: 'Infinity', feather_falling: 'Feather Falling',
+  looting: 'Looting', mending: 'Mending', respiration: 'Respiration', aqua_affinity: 'Aqua Affinity',
+  depth_strider: 'Depth Strider', fire_protection: 'Fire Protection', blast_protection: 'Blast Protection',
+  projectile_protection: 'Projectile Protection', smite: 'Smite', bane_of_arthropods: 'Bane of Arthropods',
+  punch: 'Punch', multishot: 'Multishot', quick_charge: 'Quick Charge', impaling: 'Impaling', loyalty: 'Loyalty',
 };
 // Which enchants may land on a given item.
 export function enchantsFor(def) {
   if (!def) return [];
-  if (def.kind === 'armor') return ['protection', 'unbreaking', 'feather_falling'];
+  const COMMON = ['unbreaking', 'mending'];
+  if (def.kind === 'armor') {
+    const a = ['protection', 'fire_protection', 'blast_protection', 'projectile_protection', ...COMMON];
+    if (def.armor?.slot === 0) a.push('respiration', 'aqua_affinity');   // helmet
+    if (def.armor?.slot === 3) a.push('feather_falling', 'depth_strider'); // boots
+    return a;
+  }
+  if (def.key === 'trident') return ['impaling', 'loyalty', 'sharpness', ...COMMON];
   if (def.tool) {
     const t = def.tool.type;
-    if (t === 'blade') return ['sharpness', 'unbreaking', 'fire_aspect', 'knockback'];
-    if (t === 'bow') return ['power', 'unbreaking', 'flame', 'infinity'];
-    if (t === 'pick' || t === 'shovel') return ['efficiency', 'unbreaking', 'fortune', 'silk_touch'];
-    if (t === 'axe' || t === 'hoe') return ['efficiency', 'unbreaking', 'fortune'];
+    if (t === 'blade') return ['sharpness', 'smite', 'bane_of_arthropods', 'fire_aspect', 'knockback', 'looting', ...COMMON];
+    if (t === 'bow') return ['power', 'punch', 'flame', 'infinity', ...COMMON];
+    if (t === 'crossbow') return ['power', 'multishot', 'quick_charge', 'piercing_none', ...COMMON].filter(e => e !== 'piercing_none');
+    if (t === 'pick' || t === 'shovel') return ['efficiency', 'fortune', 'silk_touch', ...COMMON];
+    if (t === 'axe' || t === 'hoe') return ['efficiency', 'fortune', ...COMMON];
   }
   return [];
+}
+
+// Best level of an enchant across worn armor (protections stack by piece).
+export function armorEnch(armor, key) {
+  let n = 0;
+  for (const s of armor || []) if (s?.ench?.[key]) n += s.ench[key];
+  return n;
 }
 
 // ── Save migration ────────────────────────────────────────────────

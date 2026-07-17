@@ -3,7 +3,11 @@
 
 import { REACH, MODE_BUILDER, MAX_HEALTH } from '../core/constants.js';
 import { B, BLOCKS, blockById, blockIdByKey, isFluid, isWater, isShaped, shapeBoxes, connMask } from '../blocks.js';
-import { itemByKey, enchantsFor, ENCHANT_NAMES } from '../items.js';
+import { itemByKey, enchantsFor, ENCHANT_NAMES, armorEnch } from '../items.js';
+
+// Smite / Bane of Arthropods pick their targets by species.
+const UNDEAD = new Set(['zombie', 'husk', 'drowned', 'skeleton', 'stray', 'wither', 'zombie_villager']);
+const ARTHROPODS = new Set(['spider', 'cave_spider', 'silverfish', 'endermite', 'bee']);
 import { PLAYER_W, PLAYER_H } from '../core/constants.js';
 
 // Repair material per tool tier (1..5), for the anvil.
@@ -60,9 +64,14 @@ export class Interaction {
       if (hit && (!this.target || hit.dist < this.target.dist)) {
         const tool = p.heldItem()?.tool;
         const ench = p.heldStack()?.ench || {};
-        const dmg = (tool ? tool.damage : 1) + (ench.sharpness || 0)
+        const sp = hit.entity.species;
+        let dmg = (tool ? tool.damage : 1) + (ench.sharpness || 0)
           + (ench.fire_aspect || 0) * 2                 // Fire Aspect: extra searing damage
           + p.effectLevel('strength') * 2;
+        if (ench.smite && UNDEAD.has(sp)) dmg += ench.smite * 2.5;                  // Smite
+        if (ench.bane_of_arthropods && ARTHROPODS.has(sp)) dmg += ench.bane_of_arthropods * 2.5;
+        if (ench.impaling && hit.entity.def?.rideable === 'water') dmg += ench.impaling * 2;
+        hit.entity._looting = ench.looting || 0;        // Looting: richer drops on the kill
         this.hooks.onEntityHit(hit.entity, dmg, [dir[0], 0.4, dir[2]], ench.knockback || 0);
         if (tool) p.damageHeldTool(1);
         this.swing = 1;
@@ -126,7 +135,8 @@ export class Interaction {
     let time = bt.time; const canHarvest = bt.canHarvest;
     const eff = p.heldStack()?.ench?.efficiency || 0;
     if (eff > 0) time /= (1 + eff * 0.35);              // Efficiency: faster mining
-    const slow = p.headInWater ? 2.2 : 1;
+    // Aqua Affinity (helmet) cancels the underwater mining penalty.
+    const slow = p.headInWater && !armorEnch(p.armor, 'aqua_affinity') ? 2.2 : 1;
     this.breakProgress += dt / (time * slow);
     this.swing = Math.max(this.swing, 0.55);
 
@@ -436,10 +446,12 @@ export class Interaction {
     }
     if (held.key === 'trident') {
       if (input.buttonPressed[2] && this.hooks.throwTrident) {
+        const tEnch = p.heldStack()?.ench || {};
         const eye = p.eyePos();
         const cp = Math.cos(p.pitch), sp = Math.sin(p.pitch);
         const cy = Math.cos(p.yaw), sy = Math.sin(p.yaw);
-        this.hooks.throwTrident(eye, [-sy * cp, sp, -cy * cp], 8);
+        // Loyalty: the spear flies back to your pack instead of sticking where it lands.
+        this.hooks.throwTrident(eye, [-sy * cp, sp, -cy * cp], 8 + (tEnch.impaling || 0) * 2, !!tEnch.loyalty);
         p.consumeHeld(1);                                  // it flies off (recover where it lands)
         this.hooks.audio.play('bow', { vol: 0.4 });
         this.eatCooldown = 0.4;
@@ -574,7 +586,9 @@ export class Interaction {
     const p = this.player;
     const held = p.heldItem();
     if (!held || (held.key !== 'bow' && held.key !== 'crossbow')) { this.bowCharge = 0; return false; }
-    const drawT = held.key === 'crossbow' ? 1.1 : 0.85;                // crossbow loads slower
+    // Quick Charge shortens the pull.
+    const qc = p.heldStack()?.ench?.quick_charge || 0;
+    const drawT = (held.key === 'crossbow' ? 1.1 : 0.85) / (1 + qc * 0.25);   // crossbow loads slower
     const hasAmmo = p.mode === MODE_BUILDER || p.countOf('arrow') > 0;
     if (rightHeld && hasAmmo) {
       this.bowCharge = Math.min(1, this.bowCharge + dt / drawT);
@@ -784,7 +798,15 @@ export class Interaction {
     const cross = weapon === 'crossbow';                // flatter, faster, harder-hitting
     const power = (cross ? 0.9 : 0.45) + charge * (cross ? 0.4 : 0.55);
     const dmg = Math.max(1, Math.round(1 + charge * 5)) + (cross ? 1 : 0) + (ench.power || 0);
-    if (this.hooks.fireArrow) this.hooks.fireArrow(eye, dir, power, dmg, !!ench.flame);   // Flame: fiery arrows
+    if (this.hooks.fireArrow) {
+      // Multishot (crossbow) looses a spread of three.
+      const shots = cross && ench.multishot ? [-0.13, 0, 0.13] : [0];
+      for (const spread of shots) {
+        const sx = Math.cos(spread) * dir[0] - Math.sin(spread) * dir[2];
+        const sz = Math.sin(spread) * dir[0] + Math.cos(spread) * dir[2];
+        this.hooks.fireArrow(eye, [sx, dir[1], sz], power, dmg, !!ench.flame, ench.punch || 0);
+      }
+    }
     p.damageHeldTool(1);
     this.swing = 1;
   }

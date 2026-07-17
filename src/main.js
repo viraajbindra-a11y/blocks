@@ -237,6 +237,7 @@ class Game {
         if (d < 3.5 && effect) p.addEffect(effect, 8, 1);
       },
       playerHidden: () => this.player.hasEffect('invisibility'),   // mobs lose track of you
+      giveItem: (key, n) => this.player.addItem(key, n) === 0,     // true if it fit (Loyalty)
     });
 
     this.interaction = new Interaction(this.world, this.player, {
@@ -258,7 +259,7 @@ class Game {
       sleep: (x, y, z) => this._trySleep(x, y, z),
       openContainer: (x, y, z) => this._openContainer(x, y, z),
       openFurnace: (x, y, z) => this._openFurnace(x, y, z),
-      fireArrow: (origin, dir, power, dmg, fire) => this.entities.spawnPlayerArrow(origin, dir, power, dmg, fire),
+      fireArrow: (origin, dir, power, dmg, fire, punch) => this.entities.spawnPlayerArrow(origin, dir, power, dmg, fire, punch),
       useOnEntity: (e, heldKey) => this.entities.useItemOn(e, heldKey),
       primeTnt: (x, y, z) => this.entities.primeTnt(x, y, z),
       mount: (e) => { this.player.riding = e; e.ridden = true; return true; },
@@ -267,7 +268,7 @@ class Game {
       castBobber: (x, y, z) => this.entities.castBobber(x, y, z),
       reelBobber: (b) => this.entities.reelBobber(b),
       throwPearl: (origin, dir) => this.entities.throwPearl(origin, dir),
-      throwTrident: (origin, dir, dmg) => this.entities.spawnTrident(origin, dir, dmg),
+      throwTrident: (origin, dir, dmg, loyal) => this.entities.spawnTrident(origin, dir, dmg, loyal),
       renamePrompt: (cur) => (typeof prompt === 'function' ? prompt('Rename item:', cur) : null),
       editSign: (x, y, z) => {
         this._signs = this._signs || new Map();

@@ -8,7 +8,7 @@ import {
   FALL_SAFE, MAX_HEALTH, MAX_HUNGER, MAX_AIR, MODE_BUILDER, CHUNK_Y,
 } from '../core/constants.js';
 import { B, BLOCKS, blockById, isWater, isLava, isFluid } from '../blocks.js';
-import { itemByKey } from '../items.js';
+import { itemByKey, armorEnch } from '../items.js';
 import { clamp, lerp } from '../math/noise.js';
 
 const HALF_W = PLAYER_W / 2;
@@ -162,6 +162,17 @@ export class Player {
   xpNeeded() { return 5 + this.xpLevel * 2; }
   addXp(n) {
     if (this.mode === MODE_BUILDER || n <= 0) return;
+    // Mending: experience mends a worn tool in your hand before it levels you.
+    const s = this.heldStack();
+    if (s?.ench?.mending && s.dur !== undefined) {
+      const max = itemByKey(s.key)?.tool?.durability;
+      if (max && s.dur < max) {
+        const mend = Math.min(max - s.dur, n * 2);
+        s.dur += mend;
+        n -= Math.ceil(mend / 2);
+        if (n <= 0) return;
+      }
+    }
     this.xp += n;
     while (this.xp >= this.xpNeeded()) { this.xp -= this.xpNeeded(); this.xpLevel++; }
   }
@@ -243,6 +254,8 @@ export class Player {
       : this.sprinting ? SPRINT_SPEED
       : WALK_SPEED;
     if (this.effects.swiftness && !this.flying) speed *= 1 + 0.2 * this.effects.swiftness.level;
+    // Depth Strider (boots) drives you through water.
+    if (this.inWater) speed *= 1 + 0.28 * armorEnch(this.armor, 'depth_strider');
 
     // Horizontal acceleration (full on ground, reduced in air)
     const accel = (this.onGround || this.flying || this.inWater ? 42 : 42 * AIR_CONTROL);
@@ -552,7 +565,8 @@ export class Player {
     // Drowning
     if (this.headInWater && !this.effects.water_breathing) {   // Water Breathing: lungs never empty
       this.airTimer = (this.airTimer ?? 0) + dt;
-      if (this.airTimer >= 1.1) {
+      // Respiration (helmet) stretches each breath.
+      if (this.airTimer >= 1.1 * (1 + armorEnch(this.armor, 'respiration'))) {
         this.airTimer = 0;
         if (this.air > 0) this.air--;
         else this.damage(2, 'drown', true);
@@ -582,6 +596,14 @@ export class Player {
     if (blockable) {
       const reduce = Math.min(0.8, this.armorPoints() * 0.04);
       amount = amount * (1 - reduce);
+    }
+    // Specialised protections stack on top, each against its own damage type.
+    const guard = (cause === 'lava' || cause === 'fire') ? 'fire_protection'
+      : (cause === 'explosion' || cause === 'blast') ? 'blast_protection'
+      : (cause === 'arrow' || cause === 'fireball' || cause === 'projectile') ? 'projectile_protection' : null;
+    if (guard) {
+      const lv = armorEnch(this.armor, guard);
+      if (lv) amount *= Math.max(0.2, 1 - lv * 0.08);
     }
     this.health -= amount;
     if (this.hooks.onDamage) this.hooks.onDamage(amount, cause);
